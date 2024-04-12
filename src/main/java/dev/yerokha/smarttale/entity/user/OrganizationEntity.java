@@ -48,7 +48,7 @@ public class OrganizationEntity {
     @OneToMany(mappedBy = "organization")
     private Set<UserDetailsEntity> employees;
 
-    @Column(name = "deleted")
-    private boolean deleted;
+    @Column(name = "is_deleted")
+    private boolean isDeleted;
 
 }

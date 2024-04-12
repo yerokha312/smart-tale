@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.entity.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +13,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,7 +24,8 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "users")
-public class AppUserEntity implements UserDetails {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class UserEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,6 +64,21 @@ public class AppUserEntity implements UserDetails {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
+    @Transient
+    private String verificationCode;
+
+
+    public UserEntity() {
+    }
+
+    public UserEntity(String firstName, String lastName, String fatherName, String email, Set<Role> authorities) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.fatherName = fatherName;
+        this.email = email;
+        this.authorities = authorities;
+    }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -95,5 +113,9 @@ public class AppUserEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+    public String getName() {
+        return firstName + " " + (fatherName == null ? "" : fatherName + " ") + lastName;
     }
 }

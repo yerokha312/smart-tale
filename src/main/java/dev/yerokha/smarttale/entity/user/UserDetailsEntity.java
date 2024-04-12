@@ -30,7 +30,7 @@ public class UserDetailsEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "details_id")
-    private AppUserEntity user;
+    private UserEntity user;
 
     @OneToMany(mappedBy = "postedUser")
     private List<OrderEntity> orders;

@@ -1,0 +1,16 @@
+rsa:
+  private-key: classpath:certs/private.pem
+  public-key: classpath:certs/public.pem
+
+spring:
+  main:
+    banner-mode: off
+  jpa:
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      schema-locations: classpath:schema.sql
+logging:
+  level:
+    root: warn
