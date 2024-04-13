@@ -8,32 +8,26 @@ import org.hibernate.validator.constraints.Length;
 
 public record RegistrationRequest(
         @NotNull @Length(min = 2, max = 20, message = "Name must be between 2 and 20 characters")
-        @Pattern.List({
-                @Pattern(regexp = "^[a-zA-Z\\s-]+$", message = "Name must contain either Latin or Cyrillic characters, hyphens, and spaces"),
-                @Pattern(regexp = "^[\\p{IsCyrillic}\\s-]+$", message = "Name must contain either Latin or Cyrillic characters, hyphens, and spaces")
-        })
+        @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
+                message = "First name must be either Latin or Cyrillic, not a mix")
         String firstName,
         @NotNull @Length(min = 2, max = 20, message = "Name must be between 2 and 20 characters")
-        @Pattern.List({
-                @Pattern(regexp = "^[a-zA-Z\\s-]+$", message = "Name must contain either Latin or Cyrillic characters, hyphens, and spaces"),
-                @Pattern(regexp = "^[\\p{IsCyrillic}\\s-]+$", message = "Name must contain either Latin or Cyrillic characters, hyphens, and spaces")
-        })
+        @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
+                message = "Last name must be either Latin or Cyrillic, not a mix")
         String lastName,
-        @Length(min = 2, max = 20, message = "Name must be between 2 and 20 characters")
-        @Pattern.List({
-                @Pattern(regexp = "^[a-zA-Z\\s-]+$", message = "Name must contain either Latin or Cyrillic characters, hyphens, and spaces"),
-                @Pattern(regexp = "^[\\p{IsCyrillic}\\s-]+$", message = "Name must contain either Latin or Cyrillic characters, hyphens, and spaces")
-        })
+        @Length(max = 20, message = "Name must be between 2 and 20 characters")
+        @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
+                message = "Father name must be either Latin or Cyrillic, not a mix")
         String fatherName,
         @NotNull @Email @NotEmpty
         String email
 ) {
-        public boolean isValid() {
-                boolean isFirstLatin = firstName.matches("^[a-zA-Z\\s-]+$");
-                boolean isLastLatin = lastName.matches("^[a-zA-Z\\s-]+$");
-                boolean isFatherLatin = fatherName == null || fatherName.matches("^[a-zA-Z\\s-]*$");
+    public boolean isValid() {
+        boolean isFirstLatin = firstName.matches("^[a-zA-Z\\s-]+$");
+        boolean isLastLatin = lastName.matches("^[a-zA-Z\\s-]+$");
+        boolean isFatherLatin = fatherName == null || fatherName.matches("^[a-zA-Z\\s-]*$");
 
-            // All fields are consistent (either all Latin or all Cyrillic)
-            return isFirstLatin == isLastLatin && (fatherName == null || isFatherLatin == isFirstLatin);
-        }
+        // All fields are consistent (either all Latin or all Cyrillic)
+        return isFirstLatin == isLastLatin && (fatherName == null || isFatherLatin == isFirstLatin);
+    }
 }

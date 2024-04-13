@@ -95,7 +95,7 @@ class AuthenticationControllerTest {
                         .content(json)
                         .contentType(APP_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Name must be between 2 and 30 characters"));
+                .andExpect(content().string("Name must be between 2 and 20 characters"));
     }
 
     @Test
@@ -114,7 +114,7 @@ class AuthenticationControllerTest {
                         .content(json)
                         .contentType(APP_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Name must contain only letters, hyphens and spaces"));
+                .andExpect(content().string("First name must be either Latin or Cyrillic, not a mix"));
     }
 
     @Test
@@ -252,7 +252,7 @@ class AuthenticationControllerTest {
     @Test
     @Order(6)
     void refreshToken() throws Exception {
-        Thread.sleep(600);
+        Thread.sleep(1000);
         MvcResult result = mockMvc.perform(post("/v1/auth/refresh-token")
                         .contentType(APP_JSON)
                         .content("Bearer " + refreshToken))
