@@ -7,6 +7,7 @@ import dev.yerokha.smarttale.exception.EmailAlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,8 +88,10 @@ public class AuthenticationService {
             throw new IllegalArgumentException("Invalid code, please try again");
         }
 
-        user.setEnabled(true);
-        userRepository.save(user);
+        if (!user.isEnabled()) {
+            user.setEnabled(true);
+            userRepository.save(user);
+        }
         deleteKey(email);
         return new LoginResponse(
                 tokenService.generateAccessToken(user),
@@ -100,6 +103,16 @@ public class AuthenticationService {
 
     public boolean isEmailAvailable(String email) {
         return userRepository.findByEmail(email).isEmpty();
+    }
+
+    public LoginResponse refreshToken(String refreshToken) {
+        return tokenService.refreshAccessToken(refreshToken);
+    }
+
+    public void revoke(String refreshToken, HttpServletRequest request) {
+        final String accessToken = request.getHeader("Authorization");
+        tokenService.revokeToken(accessToken);
+        tokenService.revokeToken(refreshToken);
     }
 
     private static String generateVerificationCode() {

@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -247,6 +248,61 @@ class AuthenticationControllerTest {
                 .andExpect(content().string("false"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @Order(6)
+    void refreshToken() throws Exception {
+        Thread.sleep(600);
+        MvcResult result = mockMvc.perform(post("/v1/auth/refresh-token")
+                        .contentType(APP_JSON)
+                        .content("Bearer " + refreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken", not(initialAccessToken)))
+                .andReturn();
+
+        accessToken = extractToken(result.getResponse().getContentAsString(), "accessToken");
+    }
+
+    @Test
+    @Order(6)
+    void refreshToken_InvalidToken() throws Exception {
+        mockMvc.perform(post("/v1/auth/refresh-token")
+                        .contentType(APP_JSON)
+                        .content("Bearer " + "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzZWxmIiwic3ViIjoiZXJib2xhdHRAbGl2ZS5jb20iLCJzY29wZXMiOiJVU0VSIiwiZXhwIjoxNzEwODQ1NTcyLCJ0b2tlblR5cGUiOiJSRUZSRVNIIiwiaWF0IjoxNzEwMjQwNzcyfQ.kkbdqPjcrut98KUWu2q6ah3LEflUiW7KLIHMjJsw9VLi6HVerIkIYwgm4c0qs4yPhiaW2YOU1e6u5afr18Iw5DsDdivHhLugEW83cC-lskruRrAmJKFbvyplL7bpxNFvKuEowlT_bLrNzjzKmutLr-5eYeEQahFap6YkEwm4XDo7MSeOfNtD3zvhsmZEQ05VKlxFnjL59-JuW_8tc8U4lHXIYIyCt4sJ8xozRYj2p2kco-ojNVZXXqKbEZpJ-81lqExxoC4VTVN7aamjqmpktNE58o2IakiA-IZVEs4riSBg3sB3VWp7fPLXDymqaMvHf2GOExM16KGUAg-K3X2NNA"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @Order(7)
+    void revoke() throws Exception {
+        mockMvc.perform(post("/v1/auth/logout")
+                        .contentType(APP_JSON)
+                        .content("Bearer " + refreshToken)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Logout success"));
+    }
+
+    @Test
+    @Order(7)
+    void revoke_OldToken() throws Exception {
+        mockMvc.perform(post("/v1/auth/logout")
+                        .header("Authorization", "Bearer " + initialAccessToken)
+                        .content("Bearer " + refreshToken))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @Order(8)
+    void refreshToken_RevokedShouldFail() throws Exception {
+        Thread.sleep(600);
+        mockMvc.perform(post("/v1/auth/refresh-token")
+                        .contentType(APP_JSON)
+                        .content("Bearer " + refreshToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Token is revoked"));
+    }
+
 
     static String extractToken(String responseContent, String tokenName) throws JSONException {
         JSONObject jsonResponse = new JSONObject(responseContent);
