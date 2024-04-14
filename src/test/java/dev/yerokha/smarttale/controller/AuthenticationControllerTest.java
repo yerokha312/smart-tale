@@ -100,6 +100,25 @@ class AuthenticationControllerTest {
 
     @Test
     @Order(1)
+    void register_NameFieldsWithDifferentLanguage() throws Exception {
+        RegistrationRequest request = new RegistrationRequest(
+                "John",
+                "Доу",
+                "Максимович",
+                "regular@email.com"
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+
+        mockMvc.perform(post("/v1/auth/registration")
+                        .content(json)
+                        .contentType(APP_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Name fields should be either all Latin or all Cyrillic"));
+    }
+
+    @Test
+    @Order(1)
     void register_NameWithNumbers() throws Exception {
         RegistrationRequest request = new RegistrationRequest(
                 "John 1",
