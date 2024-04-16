@@ -1,20 +1,11 @@
 # Set up GitLab environment variables
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  DB_HOST: "$DB_HOST"
   DB_NAME: "railway"
-  DB_PASSWORD: "$DB_PASSWORD"
   DB_PORT: "59906"
-  DB_USERNAME: "$DB_USERNAME"
-  ENCRYPTION_KEY: "$ENCRYPTION_KEY"
-  GMAIL_PASSWORD: "$GMAIL_PASSWORD"
-  GMAIL_USERNAME: "$GMAIL_USERNAME"
-  REDIS_HOST: "$REDIS_HOST"
-  REDIS_PASSWORD: "$REDIS_PASSWORD"
   REDIS_PORT: "31511"
   REDIS_USER: "default"
-  RSA_PRIVATE_KEY: "$RSA_PRIVATE_KEY"
-  RSA_PUBLIC_KEY: "$RSA_PUBLIC_KEY"
+
 
 image: maven:3.9.6-eclipse-temurin-17
 
@@ -38,15 +29,15 @@ integration-test-job:
   stage: test
   script:
     - echo "Running integration tests..."
-    - echo RSA_PUBLIC_KEY before export $RSA_PUBLIC_KEY
-    - export RSA_PUBLIC_KEY="$RSA_PUBLIC_KEY"
-    - echo RSA_PUBLIC_KEY after export $RSA_PUBLIC_KEY
-    - echo RSA_PRIVATE_KEY before export $RSA_PRIVATE_KEY
-    - export RSA_PRIVATE_KEY="$RSA_PRIVATE_KEY"
-    - echo "RSA_PRIVATE_KEY after export $RSA_PRIVATE_KEY"
-    - echo "ENCRYPTION_KEY before export $ENCRYPTION_KEY"
-    - export ENCRYPTION_KEY="$ENCRYPTION_KEY"
-    - echo "ENCRYPTION_KEY after export $ENCRYPTION_KEY"
+    - echo "RSA_PUBLIC_KEY before export '${RSA_PUBLIC_KEY}'"
+    - export RSA_PUBLIC_KEY="${RSA_PUBLIC_KEY}"
+    - echo "RSA_PUBLIC_KEY after export '${RSA_PUBLIC_KEY}'"
+    - echo "RSA_PRIVATE_KEY before export '${RSA_PRIVATE_KEY}'"
+    - export RSA_PRIVATE_KEY="${RSA_PRIVATE_KEY}"
+    - echo "RSA_PRIVATE_KEY after export ${RSA_PRIVATE_KEY}"
+    - echo "ENCRYPTION_KEY before export ${ENCRYPTION_KEY}"
+    - export ENCRYPTION_KEY="${ENCRYPTION_KEY}"
+    - echo "ENCRYPTION_KEY after export ${ENCRYPTION_KEY}"
     - mvn test
 
 deploy-job:
@@ -58,7 +49,7 @@ deploy-job:
     - echo "Deploying the application..."
     - apt-get update && apt-get install -y curl
     - curl -fsSL https://railway.app/install.sh | sh
-    - railway up --service=$RAILWAY_SERVICE_NAME -d
+    - railway up --service=${RAILWAY_SERVICE_NAME} -d
   only:
     - main
 
