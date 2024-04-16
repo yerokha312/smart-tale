@@ -1,0 +1,49 @@
+# Set up GitLab environment variables
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  DB_NAME: "railway"
+  DB_PORT: "59906"
+  REDIS_PORT: "31511"
+  REDIS_USER: "default"
+
+
+image: maven:3.9.6-eclipse-temurin-17
+
+stages:
+  - package
+  - test
+  - deploy
+
+cache:
+  paths:
+    - .m2/repository/
+    - target/
+
+package-job:
+  stage: package
+  script:
+    - echo "Packaging the application..."
+    - mvn clean package -DskipTests
+
+integration-test-job:
+  stage: test
+  script:
+    - echo "Running integration tests..."
+#    - export RSA_PUBLIC_KEY="${RSA_PUBLIC_KEY}"
+#    - export RSA_PRIVATE_KEY="${RSA_PRIVATE_KEY}"
+#    - export ENCRYPTION_KEY="${ENCRYPTION_KEY}"
+    - mvn test
+
+deploy-job:
+  stage: deploy
+  image: ubuntu
+  environment:
+    name: prod
+  script:
+    - echo "Deploying the application..."
+    - apt-get update && apt-get install -y curl
+    - curl -fsSL https://railway.app/install.sh | sh
+    - railway up --service=${RAILWAY_SERVICE_NAME} -d
+  only:
+    - main
+

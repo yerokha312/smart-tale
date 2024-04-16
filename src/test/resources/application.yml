@@ -1,0 +1,22 @@
+rsa:
+  private-key: ${RSA_PRIVATE_KEY}
+  public-key: ${RSA_PUBLIC_KEY}
+
+spring:
+  main:
+    banner-mode: off
+  jpa:
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      schema-locations: classpath:schema.sql
+  data:
+    redis:
+      password: ${REDIS_PASSWORD}
+      username: ${REDIS_USER}
+      port: ${REDIS_PORT}
+      host: ${REDIS_HOST}
+logging:
+  level:
+    root: warn
