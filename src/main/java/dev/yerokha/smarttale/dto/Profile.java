@@ -2,7 +2,7 @@ package dev.yerokha.smarttale.dto;
 
 import java.time.LocalDate;
 
-public record User(
+public record Profile(
         String firstName,
         String lastName,
         String fatherName,

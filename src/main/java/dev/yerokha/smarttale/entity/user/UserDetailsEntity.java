@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.EquipmentEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,7 +30,7 @@ public class UserDetailsEntity {
     private Long userId;
 
     @JsonIgnore
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @MapsId
     @JoinColumn(name = "details_id")
     private UserEntity user;

@@ -4,7 +4,7 @@ import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.dto.RegistrationRequest;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
-import dev.yerokha.smarttale.exception.EmailAlreadyTakenException;
+import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
@@ -47,7 +47,7 @@ public class AuthenticationService {
     public String register(RegistrationRequest request) {
         String email = request.email().toLowerCase();
         if (!isEmailAvailable(email)) {
-            throw new EmailAlreadyTakenException(String.format("Email %s already taken", email));
+            throw new AlreadyTakenException(String.format("Email %s already taken", email));
         }
 
         UserEntity entity = new UserEntity(
@@ -70,7 +70,7 @@ public class AuthenticationService {
         UserEntity user = (UserEntity) getValue(email);
 
         if (user == null) {
-            throw new NotFoundException(String.format("User with email %s not found", email));
+            throw new NotFoundException(String.format("Profile with email %s not found", email));
         }
 
         user.setVerificationCode(generateVerificationCode());
@@ -84,7 +84,7 @@ public class AuthenticationService {
         UserEntity user = (UserEntity) getValue(email);
 
         if (user == null) {
-            throw new NotFoundException(String.format("User with email %s not found", email));
+            throw new NotFoundException(String.format("Profile with email %s not found", email));
         }
 
         if (!user.getVerificationCode().equals(code)) {
@@ -99,7 +99,7 @@ public class AuthenticationService {
                 userDetails.setRegisteredAt(LocalDateTime.now());
                 user.setDetails(userDetails);
             }
-            userRepository.save(user); // Save the updated UserEntity
+            userRepository.save(user);
         }
         deleteKey(email);
         return new LoginResponse(
@@ -133,10 +133,10 @@ public class AuthenticationService {
 
     public String login(String email) {
         UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException(String.format("User with email %s not found", email)));
+                .orElseThrow(() -> new NotFoundException(String.format("Profile with email %s not found", email)));
 
         if (!user.isEnabled()) {
-            throw new DisabledException("User is not enabled");
+            throw new DisabledException("Profile is not enabled");
         }
 
         user.setVerificationCode(generateVerificationCode());

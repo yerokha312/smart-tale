@@ -40,10 +40,11 @@ public class AuthenticationController {
     )
     @PostMapping("/registration")
     public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
+
         if (!request.isValid()) {
-            return new ResponseEntity<>("Name fields should be either all Latin or all Cyrillic",
-                    HttpStatus.BAD_REQUEST);
+            throw new IllegalArgumentException("Name fields should be either all Latin or all Cyrillic");
         }
+
         String email = authenticationService.register(request);
         return new ResponseEntity<>(String.format(
                 "Code generated, email sent to %s", email), HttpStatus.CREATED);
@@ -69,7 +70,7 @@ public class AuthenticationController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email confirmed successfully"),
                     @ApiResponse(responseCode = "400", description = "Invalid code", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
             }
 
     )
@@ -83,7 +84,7 @@ public class AuthenticationController {
             tags = {"authentication", "post"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email sent"),
-                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
             }
     )
     @PostMapping("/resend-verification")

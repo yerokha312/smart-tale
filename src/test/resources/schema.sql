@@ -54,7 +54,8 @@ create table users
     unique (phone_number)
 );
 
-INSERT INTO users (user_id, email, first_name, last_name, father_name, is_enabled) VALUES ( 100000, 'existing@example.com', 'Existing', 'User', 'Example', true );
+INSERT INTO users (user_id, email, first_name, last_name, father_name, is_enabled, phone_number) VALUES ( 100000, 'existing@example.com', 'Existing', 'Profile', 'Example', true, '+7999999999' );
+INSERT INTO users (user_id, email, first_name, last_name, father_name, is_enabled, phone_number) VALUES ( 100001, 'existing2@example.com', 'Second', 'Existing', 'Profile', true, '+77771234567' );
 
 create table refresh_token
 (
