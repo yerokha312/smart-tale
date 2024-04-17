@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.entity.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,10 +16,9 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Data;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -47,16 +47,18 @@ public class UserEntity implements UserDetails {
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private UserDetailsEntity details;
 
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
             name = "user_role_junction",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> authorities;
+    private Set<Role> authorities = new HashSet<>();
 
     @Column(name = "is_enabled")
     private boolean isEnabled;
@@ -79,11 +81,6 @@ public class UserEntity implements UserDetails {
         this.authorities = authorities;
     }
 
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
 
     @Override
     public String getPassword() {

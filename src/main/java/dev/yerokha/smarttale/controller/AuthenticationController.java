@@ -46,7 +46,7 @@ public class AuthenticationController {
         }
         String email = authenticationService.register(request);
         return new ResponseEntity<>(String.format(
-                "Confirmation link generated, email sent to %s", email), HttpStatus.CREATED);
+                "Code generated, email sent to %s", email), HttpStatus.CREATED);
     }
 
     @Operation(
@@ -64,7 +64,7 @@ public class AuthenticationController {
     }
 
     @Operation(
-            summary = "Verification", description = "Verify email or login by entering verification code",
+            summary = "Verification", description = "Verify email by entering verification code",
             tags = {"authentication", "post"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email confirmed successfully"),
@@ -89,8 +89,14 @@ public class AuthenticationController {
     @PostMapping("/resend-verification")
     public ResponseEntity<String> resend(@RequestBody @Valid @Email String email) {
         authenticationService.sendVerificationEmail(email);
-        return ResponseEntity.ok(String.format("Confirmation link generated, email sent to %s", email));
+        return ResponseEntity.ok(String.format("Code generated, email sent to %s", email));
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody @Valid @Email String email) {
+        return ResponseEntity.ok(authenticationService.login(email));
+    }
+
 
     @Operation(
             summary = "Refresh", description = "Obtain a new access token using refresh token",

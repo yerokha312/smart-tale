@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.entity.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.EquipmentEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
@@ -27,6 +28,7 @@ public class UserDetailsEntity {
     @Id
     private Long userId;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "details_id")

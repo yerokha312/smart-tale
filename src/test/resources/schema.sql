@@ -54,7 +54,7 @@ create table users
     unique (phone_number)
 );
 
-INSERT INTO users (user_id, email, first_name, last_name, father_name) VALUES ( 100000, 'existing@example.com', 'Existing', 'User', 'Example' );
+INSERT INTO users (user_id, email, first_name, last_name, father_name, is_enabled) VALUES ( 100000, 'existing@example.com', 'Existing', 'User', 'Example', true );
 
 create table refresh_token
 (
@@ -72,7 +72,7 @@ create table refresh_token
 
 create table user_details
 (
-    is_subscribed           boolean,
+    is_subscribed           boolean default false,
     subscription_end_date   date,
     subscription_start_date date,
     details_id              bigint not null,
@@ -88,6 +88,8 @@ create table user_details
     constraint fkee49wu3twsclnm2pbvd3pq6n8
         foreign key (details_id) references users
 );
+
+insert into user_details (details_id) values (100000);
 
 create table equipments
 (
