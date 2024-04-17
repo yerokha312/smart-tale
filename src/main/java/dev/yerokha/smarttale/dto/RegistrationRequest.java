@@ -15,7 +15,7 @@ public record RegistrationRequest(
         @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
                 message = "Last name must be either Latin or Cyrillic, not a mix")
         String lastName,
-        @Length(max = 20, message = "Name must be between 2 and 20 characters")
+        @NotNull @Length(max = 20, message = "Name must be between 2 and 20 characters")
         @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
                 message = "Father name must be either Latin or Cyrillic, not a mix")
         String fatherName,
