@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({EmailAlreadyTakenException.class})
-    public ResponseEntity<String> handleEmailAlreadyTakenException(EmailAlreadyTakenException exception) {
+    @ExceptionHandler({AlreadyTakenException.class})
+    public ResponseEntity<String> handleEmailAlreadyTakenException(AlreadyTakenException exception) {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.CONFLICT);
     }
 

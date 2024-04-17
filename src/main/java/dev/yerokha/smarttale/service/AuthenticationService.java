@@ -2,16 +2,19 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.dto.RegistrationRequest;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
-import dev.yerokha.smarttale.exception.EmailAlreadyTakenException;
+import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -28,7 +31,7 @@ public class AuthenticationService {
     private final MailService mailService;
     private final TokenService tokenService;
 
-    public static final int CODE_LENGTH = 6;
+    public static final int CODE_LENGTH = 4;
     private static final String CHARACTERS = "0123456789";
     private static final SecureRandom random = new SecureRandom();
 
@@ -44,7 +47,7 @@ public class AuthenticationService {
     public String register(RegistrationRequest request) {
         String email = request.email().toLowerCase();
         if (!isEmailAvailable(email)) {
-            throw new EmailAlreadyTakenException(String.format("Email %s already taken", email));
+            throw new AlreadyTakenException(String.format("Email %s already taken", email));
         }
 
         UserEntity entity = new UserEntity(
@@ -67,7 +70,7 @@ public class AuthenticationService {
         UserEntity user = (UserEntity) getValue(email);
 
         if (user == null) {
-            throw new NotFoundException(String.format("User with email %s not found", email));
+            throw new NotFoundException(String.format("Profile with email %s not found", email));
         }
 
         user.setVerificationCode(generateVerificationCode());
@@ -81,7 +84,7 @@ public class AuthenticationService {
         UserEntity user = (UserEntity) getValue(email);
 
         if (user == null) {
-            throw new NotFoundException(String.format("User with email %s not found", email));
+            throw new NotFoundException(String.format("Profile with email %s not found", email));
         }
 
         if (!user.getVerificationCode().equals(code)) {
@@ -90,6 +93,12 @@ public class AuthenticationService {
 
         if (!user.isEnabled()) {
             user.setEnabled(true);
+            if (user.getDetails() == null) {
+                UserDetailsEntity userDetails = new UserDetailsEntity();
+                userDetails.setUser(user);
+                userDetails.setRegisteredAt(LocalDateTime.now());
+                user.setDetails(userDetails);
+            }
             userRepository.save(user);
         }
         deleteKey(email);
@@ -120,5 +129,22 @@ public class AuthenticationService {
                 .mapToObj(CHARACTERS::charAt)
                 .map(Object::toString)
                 .collect(Collectors.joining());
+    }
+
+    public String login(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException(String.format("Profile with email %s not found", email)));
+
+        if (!user.isEnabled()) {
+            throw new DisabledException("Profile is not enabled");
+        }
+
+        user.setVerificationCode(generateVerificationCode());
+
+        setValue(email, user, 15, TimeUnit.MINUTES);
+
+        sendVerificationEmail(email);
+
+        return String.format("Code generated, email sent to %s", email);
     }
 }

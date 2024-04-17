@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.Length;
 
-public record RegistrationRequest(
+public record UpdateProfileRequest(
         @NotNull @Length(min = 2, max = 20, message = "Name must be between 2 and 20 characters")
         @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
                 message = "First name must be either Latin or Cyrillic, not a mix")
@@ -20,7 +20,8 @@ public record RegistrationRequest(
                 message = "Father name must be either Latin or Cyrillic, not a mix")
         String fatherName,
         @NotNull @Email @NotEmpty
-        String email
+        String email,
+        String phoneNumber
 ) {
     public boolean isValid() {
         boolean isFirstLatin = firstName.matches("^[a-zA-Z\\s-]+$");

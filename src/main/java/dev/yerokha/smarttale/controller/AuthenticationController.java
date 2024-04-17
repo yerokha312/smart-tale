@@ -40,13 +40,14 @@ public class AuthenticationController {
     )
     @PostMapping("/registration")
     public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
+
         if (!request.isValid()) {
-            return new ResponseEntity<>("Name fields should be either all Latin or all Cyrillic",
-                    HttpStatus.BAD_REQUEST);
+            throw new IllegalArgumentException("Name fields should be either all Latin or all Cyrillic");
         }
+
         String email = authenticationService.register(request);
         return new ResponseEntity<>(String.format(
-                "Confirmation link generated, email sent to %s", email), HttpStatus.CREATED);
+                "Code generated, email sent to %s", email), HttpStatus.CREATED);
     }
 
     @Operation(
@@ -64,12 +65,12 @@ public class AuthenticationController {
     }
 
     @Operation(
-            summary = "Verification", description = "Verify email or login by entering verification code",
+            summary = "Verification", description = "Verify email by entering verification code",
             tags = {"authentication", "post"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email confirmed successfully"),
                     @ApiResponse(responseCode = "400", description = "Invalid code", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
             }
 
     )
@@ -83,14 +84,20 @@ public class AuthenticationController {
             tags = {"authentication", "post"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email sent"),
-                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
             }
     )
     @PostMapping("/resend-verification")
     public ResponseEntity<String> resend(@RequestBody @Valid @Email String email) {
         authenticationService.sendVerificationEmail(email);
-        return ResponseEntity.ok(String.format("Confirmation link generated, email sent to %s", email));
+        return ResponseEntity.ok(String.format("Code generated, email sent to %s", email));
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody @Valid @Email String email) {
+        return ResponseEntity.ok(authenticationService.login(email));
+    }
+
 
     @Operation(
             summary = "Refresh", description = "Obtain a new access token using refresh token",

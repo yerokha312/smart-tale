@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Order(1)
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -55,7 +56,7 @@ class AuthenticationControllerTest {
         RegistrationRequest request = new RegistrationRequest(
                 "John",
                 "Doe",
-                null,
+                "Father",
                 "johndoe@example.com"
         );
 
@@ -71,7 +72,7 @@ class AuthenticationControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 eq("johndoe@example.com"),
-                eq("John"),
+                eq("John Father"),
                 confirmationUrlCaptor.capture()
         );
 
@@ -211,7 +212,7 @@ class AuthenticationControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 eq("johndoe@example.com"),
-                eq("John"),
+                eq("John Father"),
                 confirmationUrlCaptor.capture()
         );
 
@@ -249,7 +250,7 @@ class AuthenticationControllerTest {
                         .contentType(APP_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("John Doe"))
+                .andExpect(jsonPath("$.name").value("John Father Doe"))
                 .andReturn();
 
         String responseContent = result.getResponse().getContentAsString();
@@ -320,6 +321,48 @@ class AuthenticationControllerTest {
                         .content("Bearer " + refreshToken))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("Token is revoked"));
+    }
+
+    @Test
+    @Order(9)
+    void login() throws Exception {
+        mockMvc.perform(post("/v1/auth/login")
+                        .contentType(APP_JSON)
+                        .content("johndoe@example.com"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(mailService).sendEmailVerification(
+                eq("johndoe@example.com"),
+                eq("John Father"),
+                confirmationUrlCaptor.capture()
+        );
+
+        verificationCode = confirmationUrlCaptor.getValue();
+    }
+
+    @Test
+    @Order(10)
+    void verify_Login() throws Exception {
+        VerificationRequest request = new VerificationRequest(
+                "johndoe@example.com",
+                verificationCode
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+
+        MvcResult result = mockMvc.perform(post("/v1/auth/verification")
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("John Father Doe"))
+                .andReturn();
+
+        String responseContent = result.getResponse().getContentAsString();
+        accessToken = extractToken(responseContent, "accessToken");
+        initialAccessToken = accessToken;
+        refreshToken = extractToken(responseContent, "refreshToken");
+
     }
 
 
