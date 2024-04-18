@@ -4,15 +4,24 @@ import dev.yerokha.smarttale.dto.Profile;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
 import dev.yerokha.smarttale.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
@@ -61,5 +70,49 @@ public class ProfileController {
         }
 
         return ResponseEntity.ok(userService.updateProfile(getUserIdFromAuthToken(authentication), request));
+    }
+
+    @Operation(
+            summary = "Upload avatar", description = "Upload an image using param \"avatar\" to set an avatar",
+            tags = {"post", "user", "profile", "account"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Invalid file", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+            },
+            parameters = @Parameter(name = "avatar", required = true, description = "content type \"image/\"")
+    )
+    @PostMapping("/avatar")
+    public ResponseEntity<String> updateAvatar(@RequestParam("avatar") MultipartFile avatar,
+                                               Authentication authentication) {
+
+        validateAvatar(avatar);
+
+        userService.uploadAvatar(avatar, getUserIdFromAuthToken(authentication));
+
+        return ResponseEntity.ok("Avatar updated successfully!");
+    }
+
+    private static void validateAvatar(MultipartFile avatar) {
+        if (avatar == null || avatar.isEmpty()) {
+            throw new IllegalArgumentException("File is not provided");
+        }
+
+        if (!Objects.requireNonNull(avatar.getContentType()).startsWith("image/")) {
+            throw new IllegalArgumentException("Uploaded file is not an image");
+        }
+
+        String originalFilename = avatar.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isEmpty()) {
+            throw new IllegalArgumentException("Uploaded file has no name");
+        }
+
+        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+        List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png");
+
+        if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
+            throw new IllegalArgumentException("Uploaded file is not a supported image (JPG, JPEG, PNG)");
+        }
     }
 }
