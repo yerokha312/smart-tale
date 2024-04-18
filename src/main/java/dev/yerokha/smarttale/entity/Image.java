@@ -25,6 +25,6 @@ public class Image {
     @Column(name = "image_name")
     private String imageName;
 
-    @Column(name = "hash")
+    @Column(name = "hash", unique = true)
     private String hash;
 }
