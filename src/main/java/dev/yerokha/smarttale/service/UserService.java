@@ -7,18 +7,24 @@ import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
+import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final UserDetailsRepository userDetailsRepository;
+    private final ImageService imageService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService) {
         this.userRepository = userRepository;
+        this.userDetailsRepository = userDetailsRepository;
+        this.imageService = imageService;
     }
 
     @Override
@@ -28,12 +34,12 @@ public class UserService implements UserDetailsService {
     }
 
     public Profile getProfileByUserId(Long userIdFromAuthToken) {
-        UserEntity userEntity = getUserById(userIdFromAuthToken);
+        UserEntity userEntity = getUserEntity(userIdFromAuthToken);
         return mapProfile(userEntity);
     }
 
     public Profile updateProfile(Long userIdFromAuthToken, UpdateProfileRequest request) {
-        UserEntity userEntity = getUserById(userIdFromAuthToken);
+        UserEntity userEntity = getUserEntity(userIdFromAuthToken);
 
         String newEmail = request.email();
         String newPhoneNumber = request.phoneNumber();
@@ -80,8 +86,22 @@ public class UserService implements UserDetailsService {
         );
     }
 
-    private UserEntity getUserById(Long userIdFromAuthToken) {
+    public void uploadAvatar(MultipartFile avatar, Long userIdFromAuthToken) {
+        UserDetailsEntity details = getUserDetailsEntity(userIdFromAuthToken);
+
+        details.setImage(imageService.processImage(avatar));
+
+        userDetailsRepository.save(details);
+
+    }
+
+    private UserEntity getUserEntity(Long userIdFromAuthToken) {
         return userRepository.findById(userIdFromAuthToken)
-                .orElseThrow(() -> new NotFoundException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    private UserDetailsEntity getUserDetailsEntity(Long userIdFromAuthToken) {
+        return userDetailsRepository.findById(userIdFromAuthToken)
+                .orElseThrow(() -> new NotFoundException("User details not found"));
     }
 }
