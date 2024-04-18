@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.entity.user;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.EquipmentEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
@@ -16,6 +16,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,7 +31,9 @@ public class UserDetailsEntity {
     @Id
     private Long userId;
 
-    @JsonIgnore
+    @JsonManagedReference
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @MapsId
     @JoinColumn(name = "details_id")

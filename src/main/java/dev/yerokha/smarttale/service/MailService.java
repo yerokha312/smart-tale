@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.service.interfaces.NotificationService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -21,7 +22,9 @@ public class MailService implements NotificationService {
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine engine;
     @Value("${GMAIL_USERNAME}")
-    private String from;
+    private String FROM;
+    @Value("${ADMIN_EMAIL}")
+    private String ADMIN_EMAIL;
 
     @Autowired
     public MailService(JavaMailSender mailSender, SpringTemplateEngine engine) {
@@ -34,7 +37,7 @@ public class MailService implements NotificationService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom(from);
+            helper.setFrom(FROM);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(body, true);
@@ -50,7 +53,21 @@ public class MailService implements NotificationService {
 
         String emailBody = engine.process("confirmation_email", context);
 
-        send(to, "Email confirmation", emailBody);
+        send(to, "Подтверждение почты", emailBody);
+    }
+
+    public void sendSubscriptionRequest(UserEntity user) {
+        Context context = new Context();
+        String fatherName = user.getFatherName() == null ? "" : " " + user.getFatherName();
+        String name = user.getLastName() + " " + user.getFirstName() + fatherName;
+        context.setVariables(Map.of(
+                "name", name,
+                "email", user.getEmail(),
+                "phoneNumber", user.getPhoneNumber()));
+
+        String emailBody = engine.process("subscription_request_email", context);
+
+        send(ADMIN_EMAIL, "Запрос на подписку", emailBody);
     }
 }
 

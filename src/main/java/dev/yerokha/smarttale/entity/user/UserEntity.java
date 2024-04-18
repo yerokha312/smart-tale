@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.entity.user;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.CascadeType;
@@ -16,6 +17,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.HashSet;
@@ -47,12 +49,13 @@ public class UserEntity implements UserDetails {
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
-    @JsonIgnore
+    @JsonBackReference
+    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private UserDetailsEntity details;
 
     @JsonIgnore
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role_junction",
             joinColumns = @JoinColumn(name = "user_id"),
