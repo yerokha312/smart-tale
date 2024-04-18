@@ -13,6 +13,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -23,6 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static dev.yerokha.smarttale.controller.AuthenticationControllerTest.extractToken;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -36,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ProfileControllerTest {
+class AccountControllerTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -49,6 +51,8 @@ class ProfileControllerTest {
     @Autowired
     UserRepository userRepository;
     final String APP_JSON = "application/json";
+    @Value("${ADMIN_EMAIL}")
+    private String ADMIN_EMAIL;
 
     public static String accessToken;
 
@@ -273,6 +277,19 @@ class ProfileControllerTest {
                 .andExpect(content().string("Uploaded file has no name"));
     }
 
+    @Test
+    @Order(6)
+    void subscribe() throws Exception {
+        mockMvc.perform(post("/v1/account/subscription")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        content().string("The subscription is on the way, our administrator will contact you")
+                );
+
+        // TODO improve this test to verify either send method or UserEntity that sent
+        Mockito.verify(mailService).sendSubscriptionRequest(any());
+    }
 
 }
 

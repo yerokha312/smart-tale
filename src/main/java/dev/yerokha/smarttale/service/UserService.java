@@ -20,11 +20,13 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserDetailsRepository userDetailsRepository;
     private final ImageService imageService;
+    private final MailService mailService;
 
-    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService) {
+    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService, MailService mailService) {
         this.userRepository = userRepository;
         this.userDetailsRepository = userDetailsRepository;
         this.imageService = imageService;
+        this.mailService = mailService;
     }
 
     @Override
@@ -103,5 +105,11 @@ public class UserService implements UserDetailsService {
     private UserDetailsEntity getUserDetailsEntity(Long userIdFromAuthToken) {
         return userDetailsRepository.findById(userIdFromAuthToken)
                 .orElseThrow(() -> new NotFoundException("User details not found"));
+    }
+
+    public void subscribe(Long userIdFromAuthToken) {
+        UserEntity user = getUserEntity(userIdFromAuthToken);
+        mailService.sendSubscriptionRequest(user);
+
     }
 }
