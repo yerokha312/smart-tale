@@ -3,14 +3,17 @@ package dev.yerokha.smarttale.entity.advertisement;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -19,8 +22,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@MappedSuperclass
-public abstract class Advertisement {
+@Entity
+@Table(name = "abstract_advertisements")
+@Inheritance(strategy = InheritanceType.JOINED)
+public class Advertisement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,8 +36,8 @@ public abstract class Advertisement {
     private LocalDateTime publishedAt;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private UserDetailsEntity postedUser;
+    @JoinColumn(name = "published_by")
+    private UserDetailsEntity publishedBy;
 
     @Column(name = "title", nullable = false, length = 250)
     private String title;
@@ -53,12 +58,12 @@ public abstract class Advertisement {
     @Size(max = 5)
     private List<Image> images;
 
-    @Column(name = "views")
-    private Long views;
+    @Column(name = "views", columnDefinition = "bigint default 0")
+    private long views;
 
-    @Column(name = "is_deleted")
-    private boolean isDeleted;
+    @Column(name = "is_deleted", columnDefinition = "boolean default false")
+    private boolean isDeleted = false;
 
-    @Column(name = "is_hidden")
-    private boolean isHidden;
+    @Column(name = "is_closed", columnDefinition = "boolean default false")
+    private boolean isClosed = false;
 }

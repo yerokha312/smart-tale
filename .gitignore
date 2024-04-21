@@ -33,3 +33,5 @@ build/
 .vscode/
 /src/main/resources/certs/private.pem
 /src/main/resources/certs/public.pem
+
+.DS_Store

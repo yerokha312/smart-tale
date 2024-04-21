@@ -27,12 +27,12 @@ import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Account", description = "Controller for personal account")
 @RestController
-@RequestMapping("/v1/account")
-public class ProfileController {
+@RequestMapping("/v1/accounts")
+public class AccountController {
 
     private final UserService userService;
 
-    public ProfileController(UserService userService) {
+    public AccountController(UserService userService) {
         this.userService = userService;
     }
 
@@ -115,4 +115,23 @@ public class ProfileController {
             throw new IllegalArgumentException("Uploaded file is not a supported image (JPG, JPEG, PNG)");
         }
     }
+
+    @Operation(
+            summary = "Subscription", description = "Send subscription request to admin",
+            tags = {"post", "user", "profile", "account"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Request success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "404", description = "User not found")
+            }
+
+    )
+    @PostMapping("/subscription")
+    public ResponseEntity<String> subscribe(Authentication authentication) {
+        userService.subscribe(getUserIdFromAuthToken(authentication));
+
+        return ResponseEntity.ok("The subscription is on the way, our administrator will contact you");
+    }
+
+
 }
