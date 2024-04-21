@@ -27,7 +27,7 @@ import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Account", description = "Controller for personal account")
 @RestController
-@RequestMapping("/v1/account")
+@RequestMapping("/v1/accounts")
 public class AccountController {
 
     private final UserService userService;
@@ -132,4 +132,6 @@ public class AccountController {
 
         return ResponseEntity.ok("The subscription is on the way, our administrator will contact you");
     }
+
+
 }

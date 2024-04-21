@@ -14,12 +14,12 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
-@Table(name = "equipments")
-public class EquipmentEntity extends Advertisement {
+@Table(name = "products")
+public class ProductEntity extends Advertisement {
 
     @ManyToOne
     @JoinColumn(name = "purchased_by")
-    private UserDetailsEntity purchasedUser;
+    private UserDetailsEntity purchasedBy;
 
     @Column(name = "purchased_at")
     private LocalDateTime purchasedAt;
