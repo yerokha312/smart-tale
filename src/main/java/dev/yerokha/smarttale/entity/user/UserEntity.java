@@ -63,11 +63,11 @@ public class UserEntity implements UserDetails {
     )
     private Set<Role> authorities = new HashSet<>();
 
-    @Column(name = "is_enabled")
-    private boolean isEnabled;
+    @Column(name = "is_enabled", columnDefinition = "boolean default false")
+    private boolean isEnabled = false;
 
-    @Column(name = "is_deleted")
-    private boolean isDeleted;
+    @Column(name = "is_deleted", columnDefinition = "boolean default false")
+    private boolean isDeleted = false;
 
     @Transient
     private String verificationCode;
