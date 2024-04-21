@@ -2,8 +2,8 @@ package dev.yerokha.smarttale.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.yerokha.smarttale.entity.Image;
-import dev.yerokha.smarttale.entity.advertisement.EquipmentEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
+import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,18 +39,21 @@ public class UserDetailsEntity {
     @JoinColumn(name = "details_id")
     private UserEntity user;
 
-    @OneToMany(mappedBy = "postedUser")
+    @OneToMany(mappedBy = "publishedBy")
     private List<OrderEntity> orders;
 
-    @OneToMany(mappedBy = "postedUser")
-    private List<EquipmentEntity> equipments;
+    @OneToMany(mappedBy = "publishedBy")
+    private List<ProductEntity> products;
 
-    @OneToMany(mappedBy = "purchasedUser")
-    private List<EquipmentEntity> purchases;
+    @OneToMany(mappedBy = "purchasedBy")
+    private List<ProductEntity> purchases;
 
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
+
+    @OneToMany(mappedBy = "acceptedBy")
+    private List<OrderEntity> acceptedOrders;
 
     @ManyToOne
     @JoinColumn(name = "image_id")
@@ -62,8 +65,8 @@ public class UserDetailsEntity {
     @Column(name = "last_seen_at")
     private LocalDateTime lastSeenAt;
 
-    @Column(name = "is_subscribed")
-    private boolean isSubscribed;
+    @Column(name = "is_subscribed", columnDefinition = "boolean default false")
+    private boolean isSubscribed = false;
 
     @Column(name = "subscription_start_date")
     private LocalDate subscriptionStartDate;
