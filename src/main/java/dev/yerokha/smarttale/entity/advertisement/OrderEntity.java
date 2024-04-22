@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
@@ -22,7 +23,7 @@ public class OrderEntity extends Advertisement {
     private String size;
 
     @Column(name = "deadline_at")
-    private LocalDateTime deadlineAt;
+    private LocalDate deadlineAt;
 
     @Column(name = "status")
     private OrderStatus status;

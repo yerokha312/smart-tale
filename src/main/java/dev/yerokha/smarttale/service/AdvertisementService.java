@@ -1,6 +1,9 @@
 package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.EditImage;
+import dev.yerokha.smarttale.dto.UpdateAdRequest;
+import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.exception.NotFoundException;
@@ -14,7 +17,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,16 +34,18 @@ public class AdvertisementService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final AdvertisementRepository advertisementRepository;
+    private final ImageService imageService;
 
     private static final byte CLOSE = 1;
     private static final byte DISCLOSE = 2;
     private static final byte DELETE = 3;
     private static final byte RESTORE = 4;
 
-    public AdvertisementService(ProductRepository productRepository, OrderRepository orderRepository, AdvertisementRepository advertisementRepository) {
+    public AdvertisementService(ProductRepository productRepository, OrderRepository orderRepository, AdvertisementRepository advertisementRepository, ImageService imageService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
+        this.imageService = imageService;
     }
 
 
@@ -130,5 +137,41 @@ public class AdvertisementService {
     private Advertisement getAdEntity(Long userId, Long advertisementId) {
         return advertisementRepository.findByPublishedByUserIdAndAdvertisementId(userId, advertisementId)
                 .orElseThrow(() -> new NotFoundException("Ad not found"));
+    }
+
+    public void updateAd(Long userId, UpdateAdRequest request, List<MultipartFile> files) {
+        Advertisement advertisement = getAdEntity(userId, request.advertisementId());
+        advertisement.setTitle(request.title());
+        advertisement.setDescription(request.description());
+        advertisement.setPrice(request.price());
+        if (advertisement instanceof OrderEntity order) {
+            order.setDeadlineAt(request.deadlineAt());
+            order.setSize(request.size());
+        }
+
+        if (request.editImages() != null && !request.editImages().isEmpty()) {
+            List<Image> images = advertisement.getImages();
+            updateImages(images, files, request.editImages());
+        }
+
+        advertisementRepository.save(advertisement);
+    }
+
+    private void updateImages(List<Image> existingImages, List<MultipartFile> files, List<EditImage> editImageList) {
+        for (EditImage editImage : editImageList) {
+            switch (editImage.action()) {
+                case ADD -> {
+                    if (existingImages.size() >= 5) {
+                        throw new IllegalArgumentException("You can not upload more than 5 images");
+                    }
+
+                    existingImages.add(editImage.targetPosition(), imageService.processImage(files.get(editImage.filePosition())));
+                }
+                case MOVE -> Collections.swap(existingImages, editImage.arrayPosition(), editImage.targetPosition());
+                case REMOVE -> existingImages.remove(editImage.arrayPosition());
+                case REPLACE -> existingImages.set(editImage.arrayPosition(), imageService.processImage(files.get(editImage.filePosition())));
+            }
+
+        }
     }
 }

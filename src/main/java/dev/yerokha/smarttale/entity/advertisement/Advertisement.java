@@ -66,4 +66,5 @@ public class Advertisement {
 
     @Column(name = "is_closed", columnDefinition = "boolean default false")
     private boolean isClosed = false;
+
 }
