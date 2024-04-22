@@ -2,6 +2,9 @@ package dev.yerokha.smarttale.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import dev.yerokha.smarttale.dto.Action;
+import dev.yerokha.smarttale.dto.EditImage;
+import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
@@ -17,15 +20,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.AuthenticationControllerTest.extractToken;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.springframework.http.HttpMethod.PUT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -166,6 +175,47 @@ class AdvertisementControllerTest {
                 );
 
         // TODO assert that deleted status is true
+
+    }
+
+    @Test
+    @Order(5)
+    void updateAd() throws Exception {
+        List<EditImage> editImageList = new ArrayList<>();
+        editImageList.add(new EditImage(0, 0, Action.ADD, 0));
+        editImageList.add(new EditImage(0, 1, Action.ADD, 1));
+        editImageList.add(new EditImage(0, 2, Action.ADD, 2));
+        editImageList.add(new EditImage(0, 3, Action.ADD, 3));
+        UpdateAdRequest request = new UpdateAdRequest(
+                100010L,
+                "Updated Title",
+                "Updated Description",
+                BigDecimal.valueOf(100_000),
+                "10x10",
+                LocalDate.of(2025, 12, 31),
+                editImageList
+        );
+
+        MockMultipartFile part = new MockMultipartFile(
+                "dto", null, APP_JSON, objectMapper.writeValueAsBytes(request)
+        );
+
+        MockMultipartFile image1 = new MockMultipartFile("images", "image1.jpg", "image/jpeg", "image data 1".getBytes());
+        MockMultipartFile image2 = new MockMultipartFile("images", "image2.jpg", "image/jpeg", "image data 2".getBytes());
+        MockMultipartFile image3 = new MockMultipartFile("images", "image3.jpg", "image/jpeg", "image data 3".getBytes());
+        MockMultipartFile image4 = new MockMultipartFile("images", "image4.jpg", "image/jpeg", "image data 4".getBytes());
+
+        mockMvc.perform(multipart(PUT, "/v1/advertisements")
+                        .file(part)
+                        .file(image1)
+                        .file(image2)
+                        .file(image3)
+                        .file(image4)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        content().string("Advertisement updated successfully!")
+                );
 
     }
 

@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,6 +14,8 @@ public record FullOrder(
         String title,
         String description,
         BigDecimal price,
+        String size,
+        LocalDate deadlineAt,
         List<String> imageUrls,
         long views,
         boolean isDeleted,

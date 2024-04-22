@@ -46,6 +46,7 @@ public class AdMapper {
                 .map(Image::getImageUrl)
                 .toList();
 
+
         if (advertisement instanceof OrderEntity order) {
             return mapToFullOrder(order, imageUrls);
         }
@@ -65,6 +66,8 @@ public class AdMapper {
                 order.getTitle(),
                 order.getDescription(),
                 order.getPrice(),
+                order.getSize(),
+                order.getDeadlineAt(),
                 imageUrls,
                 order.getViews(),
                 order.isDeleted(),

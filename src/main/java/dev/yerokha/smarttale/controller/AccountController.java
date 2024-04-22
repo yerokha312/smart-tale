@@ -87,23 +87,23 @@ public class AccountController {
     public ResponseEntity<String> updateAvatar(@RequestParam("avatar") MultipartFile avatar,
                                                Authentication authentication) {
 
-        validateAvatar(avatar);
+        validateImage(avatar);
 
         userService.uploadAvatar(avatar, getUserIdFromAuthToken(authentication));
 
         return ResponseEntity.ok("Avatar updated successfully!");
     }
 
-    private static void validateAvatar(MultipartFile avatar) {
-        if (avatar == null || avatar.isEmpty()) {
+    static void validateImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is not provided");
         }
 
-        if (!Objects.requireNonNull(avatar.getContentType()).startsWith("image/")) {
+        if (!Objects.requireNonNull(file.getContentType()).startsWith("image/")) {
             throw new IllegalArgumentException("Uploaded file is not an image");
         }
 
-        String originalFilename = avatar.getOriginalFilename();
+        String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || originalFilename.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file has no name");
         }
