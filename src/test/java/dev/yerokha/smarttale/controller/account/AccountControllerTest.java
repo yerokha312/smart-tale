@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.controller;
+package dev.yerokha.smarttale.controller.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
@@ -21,7 +21,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static dev.yerokha.smarttale.controller.AuthenticationControllerTest.extractToken;
+import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
@@ -89,7 +89,7 @@ class AccountControllerTest {
     @Order(1)
     void getProfile() throws Exception {
         login("existing@example.com");
-        mockMvc.perform(get("/v1/accounts")
+        mockMvc.perform(get("/v1/account/profile")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -102,7 +102,7 @@ class AccountControllerTest {
     @Test
     @Order(1)
     void getProfile_NotAuthorized() throws Exception {
-        mockMvc.perform(get("/v1/accounts"))
+        mockMvc.perform(get("/v1/account/profile"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -118,7 +118,7 @@ class AccountControllerTest {
         );
 
         String json = objectMapper.writeValueAsString(request);
-        mockMvc.perform(put("/v1/accounts")
+        mockMvc.perform(put("/v1/account/profile")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(APP_JSON)
                         .content(json))
@@ -137,7 +137,7 @@ class AccountControllerTest {
         );
 
         String json = objectMapper.writeValueAsString(request);
-        mockMvc.perform(put("/v1/accounts")
+        mockMvc.perform(put("/v1/account/profile")
                         .contentType(APP_JSON)
                         .content(json))
                 .andExpect(status().isUnauthorized());
@@ -155,7 +155,7 @@ class AccountControllerTest {
         );
 
         String json = objectMapper.writeValueAsString(request);
-        mockMvc.perform(put("/v1/accounts")
+        mockMvc.perform(put("/v1/account/profile")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(APP_JSON)
                         .content(json))
@@ -174,7 +174,7 @@ class AccountControllerTest {
         );
 
         String json = objectMapper.writeValueAsString(request);
-        mockMvc.perform(put("/v1/accounts")
+        mockMvc.perform(put("/v1/account/profile")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(APP_JSON)
                         .content(json))
@@ -193,7 +193,7 @@ class AccountControllerTest {
         );
 
         String json = objectMapper.writeValueAsString(request);
-        mockMvc.perform(put("/v1/accounts")
+        mockMvc.perform(put("/v1/account/profile")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(APP_JSON)
                         .content(json))
@@ -201,7 +201,7 @@ class AccountControllerTest {
                         status().isOk(),
                         jsonPath("$.firstName").value("Test"),
                         jsonPath("$.lastName").value("Update"),
-                        jsonPath("$.fatherName").value("Profile"),
+                        jsonPath("$.middleName").value("Profile"),
                         jsonPath("$.email").value("updatetest@example.com"),
                         jsonPath("$.phoneNumber").value("+7999999999"),
                         jsonPath("$.avatarUrl").value(nullValue()),
@@ -217,7 +217,7 @@ class AccountControllerTest {
         MockMultipartFile image = new MockMultipartFile(
                 "avatar", "image.jpg", "image/jpeg", "image data".getBytes());
 
-        mockMvc.perform(multipart("/v1/accounts/avatar")
+        mockMvc.perform(multipart("/v1/account/profile/avatar")
                         .file(image)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
@@ -232,7 +232,7 @@ class AccountControllerTest {
         MockMultipartFile image = new MockMultipartFile(
                 "avatar", "image.jpg", "image/jpeg", "image data".getBytes());
 
-        mockMvc.perform(multipart("/v1/accounts/avatar")
+        mockMvc.perform(multipart("/v1/account/profile/avatar")
                         .file(image))
                 .andExpect(status().isUnauthorized());
     }
@@ -243,7 +243,7 @@ class AccountControllerTest {
         MockMultipartFile image = new MockMultipartFile(
                 "avatar", "image.exe", "image/jpeg", "image data".getBytes());
 
-        mockMvc.perform(multipart("/v1/accounts/avatar")
+        mockMvc.perform(multipart("/v1/account/profile/avatar")
                         .file(image)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
@@ -256,7 +256,7 @@ class AccountControllerTest {
         MockMultipartFile image = new MockMultipartFile(
                 "avatar", "image.png", "multipart/form-data", "image data".getBytes());
 
-        mockMvc.perform(multipart("/v1/accounts/avatar")
+        mockMvc.perform(multipart("/v1/account/profile/avatar")
                         .file(image)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
@@ -269,7 +269,7 @@ class AccountControllerTest {
         MockMultipartFile image = new MockMultipartFile(
                 "avatar", "", "image/png", "image data".getBytes());
 
-        mockMvc.perform(multipart("/v1/accounts/avatar")
+        mockMvc.perform(multipart("/v1/account/profile/avatar")
                         .file(image)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
@@ -279,7 +279,7 @@ class AccountControllerTest {
     @Test
     @Order(6)
     void subscribe() throws Exception {
-        mockMvc.perform(post("/v1/accounts/subscription")
+        mockMvc.perform(post("/v1/account/profile/subscription")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),

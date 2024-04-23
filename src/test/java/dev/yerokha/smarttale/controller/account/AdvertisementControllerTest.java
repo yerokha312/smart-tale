@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.controller;
+package dev.yerokha.smarttale.controller.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -28,7 +28,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.yerokha.smarttale.controller.AuthenticationControllerTest.extractToken;
+import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.http.HttpMethod.PUT;
@@ -94,7 +94,7 @@ class AdvertisementControllerTest {
     @Order(1)
     void getAllAds() throws Exception {
         login("existing2@example.com");
-        MvcResult result = mockMvc.perform(get("/v1/advertisements")
+        MvcResult result = mockMvc.perform(get("/v1/account/advertisements")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -113,7 +113,7 @@ class AdvertisementControllerTest {
     @Test
     @Order(2)
     void getOrders() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/advertisements?q=orders")
+        MvcResult result = mockMvc.perform(get("/v1/account/advertisements?q=orders")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -134,7 +134,7 @@ class AdvertisementControllerTest {
     @Test
     @Order(2)
     void getProducts() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/advertisements?q=products")
+        MvcResult result = mockMvc.perform(get("/v1/account/advertisements?q=products")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -147,7 +147,7 @@ class AdvertisementControllerTest {
         // assert that all ads are sorted by publishedAt in descending order
         String content = result.getResponse().getContentAsString();
         List<String> publishedDates = JsonPath.read(content, "$.content[*].publishedAt");
-        for (int i = 1; i < 10; i++) {
+        for (int i = 1; i < publishedDates.size(); i++) {
             assert publishedDates.get(i - 1).compareTo(publishedDates.get(i)) > 0;
         }
     }
@@ -155,7 +155,7 @@ class AdvertisementControllerTest {
     @Test
     @Order(3)
     void getOneAd() throws Exception {
-        mockMvc.perform(get("/v1/advertisements/100019")
+        mockMvc.perform(get("/v1/account/advertisements/100019")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -167,7 +167,7 @@ class AdvertisementControllerTest {
     @Test
     @Order(4)
     void deleteAd() throws Exception {
-        mockMvc.perform(delete("/v1/advertisements/100012/3")
+        mockMvc.perform(delete("/v1/account/advertisements/100012/3")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -205,7 +205,7 @@ class AdvertisementControllerTest {
         MockMultipartFile image3 = new MockMultipartFile("images", "image3.jpg", "image/jpeg", "image data 3".getBytes());
         MockMultipartFile image4 = new MockMultipartFile("images", "image4.jpg", "image/jpeg", "image data 4".getBytes());
 
-        mockMvc.perform(multipart(PUT, "/v1/advertisements")
+        mockMvc.perform(multipart(PUT, "/v1/account/advertisements")
                         .file(part)
                         .file(image1)
                         .file(image2)

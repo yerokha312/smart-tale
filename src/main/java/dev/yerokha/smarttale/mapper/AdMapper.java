@@ -5,8 +5,10 @@ import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullPurchase;
 import dev.yerokha.smarttale.dto.Order;
+import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Product;
 import dev.yerokha.smarttale.dto.Purchase;
+import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
@@ -47,13 +49,7 @@ public class AdMapper {
     }
 
     public static AdvertisementInterface toFullDto(Advertisement advertisement) {
-        List<Image> images = advertisement.getImages();
-        List<String> imageUrls = new ArrayList<>();
-        if (images != null && !images.isEmpty()) {
-            imageUrls = images.stream()
-                    .map(Image::getImageUrl)
-                    .toList();
-        }
+        List<String> imageUrls = getImageUrls(advertisement.getImages());
 
 
         if (advertisement instanceof OrderEntity order) {
@@ -122,30 +118,19 @@ public class AdMapper {
     }
 
     public static FullPurchase mapToFullPurchase(ProductEntity entity) {
-        List<Image> images = entity.getImages();
-        List<String> imageUrls = new ArrayList<>();
-        if (images != null && !images.isEmpty()) {
-            imageUrls = images.stream()
-                    .map(Image::getImageUrl)
-                    .toList();
-        }
-
-        UserDetailsEntity publishedBy = entity.getPublishedBy();
-        Image avatar = publishedBy.getImage();
-        UserEntity user = publishedBy.getUser();
-        String publisherName = user.getLastName() + " " + user.getFirstName() + " " + user.getFatherName();
+        Result result = getResult(entity);
         return new FullPurchase(
                 entity.getAdvertisementId(),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getPrice(),
-                imageUrls,
+                result.imageUrls(),
                 entity.getPurchasedAt(),
-                publishedBy.getUserId(),
-                publisherName,
-                avatar == null ? null : avatar.getImageUrl(),
-                user.getPhoneNumber(),
-                user.getEmail()
+                result.user().getUserId(),
+                result.publisherName(),
+                result.avatar() == null ? null : result.avatar().getImageUrl(),
+                result.user().getPhoneNumber(),
+                result.user().getEmail()
         );
     }
 
@@ -153,4 +138,54 @@ public class AdMapper {
         return user != null ? user.getUserId() : null;
     }
 
+    public static SmallOrder toSmallOrder(OrderEntity order) {
+        return new SmallOrder(
+                order.getAdvertisementId(),
+                order.getTitle(),
+                order.getPrice(),
+                order.getAcceptedAt()
+        );
+    }
+
+    public static OrderDto toOrderDto(OrderEntity entity) {
+        Result result = getResult(entity);
+        return new OrderDto(
+                entity.getAdvertisementId(),
+                entity.getTitle(),
+                entity.getDescription(),
+                entity.getPrice(),
+                entity.getSize(),
+                entity.getDeadlineAt(),
+                result.imageUrls(),
+                result.user().getUserId(),
+                result.avatar() == null ? null : result.avatar().getImageUrl(),
+                result.publisherName(),
+                result.user().getPhoneNumber(),
+                result.user().getEmail(),
+                entity.getCompletedAt() == null ? entity.getAcceptedAt() : entity.getCompletedAt()
+        );
+    }
+
+    private static Result getResult(Advertisement entity) {
+        List<String> imageUrls = getImageUrls(entity.getImages());
+
+        UserDetailsEntity publishedBy = entity.getPublishedBy();
+        Image avatar = publishedBy.getImage();
+        UserEntity user = publishedBy.getUser();
+        String publisherName = user.getLastName() + " " + user.getFirstName() + " " + user.getMiddleName();
+        return new Result(imageUrls, avatar, user, publisherName);
+    }
+
+    private record Result(List<String> imageUrls, Image avatar, UserEntity user, String publisherName) {
+    }
+
+    private static List<String> getImageUrls(List<Image> order) {
+        List<String> imageUrls = new ArrayList<>();
+        if (order != null && !order.isEmpty()) {
+            imageUrls = order.stream()
+                    .map(Image::getImageUrl)
+                    .toList();
+        }
+        return imageUrls;
+    }
 }

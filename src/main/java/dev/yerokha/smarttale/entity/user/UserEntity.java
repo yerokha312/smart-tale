@@ -40,8 +40,8 @@ public class UserEntity implements UserDetails {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "father_name")
-    private String fatherName;
+    @Column(name = "middle_name")
+    private String middleName;
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
@@ -76,10 +76,10 @@ public class UserEntity implements UserDetails {
     public UserEntity() {
     }
 
-    public UserEntity(String firstName, String lastName, String fatherName, String email, Set<Role> authorities) {
+    public UserEntity(String firstName, String lastName, String middleName, String email, Set<Role> authorities) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.fatherName = fatherName;
+        this.middleName = middleName;
         this.email = email;
         this.authorities = authorities;
     }
@@ -116,6 +116,6 @@ public class UserEntity implements UserDetails {
     }
 
     public String getName() {
-        return firstName + " " + (fatherName == null ? "" : fatherName + " ") + lastName;
+        return firstName + " " + (middleName == null ? "" : middleName + " ") + lastName;
     }
 }

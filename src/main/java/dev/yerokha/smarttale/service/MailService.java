@@ -58,8 +58,8 @@ public class MailService implements NotificationService {
 
     public void sendSubscriptionRequest(UserEntity user) {
         Context context = new Context();
-        String fatherName = user.getFatherName() == null ? "" : " " + user.getFatherName();
-        String name = user.getLastName() + " " + user.getFirstName() + fatherName;
+        String middleName = user.getMiddleName() == null ? "" : " " + user.getMiddleName();
+        String name = user.getLastName() + " " + user.getFirstName() + middleName;
         context.setVariables(Map.of(
                 "name", name,
                 "email", user.getEmail(),

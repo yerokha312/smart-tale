@@ -3,7 +3,9 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.EditImage;
 import dev.yerokha.smarttale.dto.FullPurchase;
+import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Purchase;
+import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
@@ -21,11 +23,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static dev.yerokha.smarttale.enums.OrderStatus.ARRIVED;
+import static dev.yerokha.smarttale.enums.OrderStatus.CANCELED;
+import static dev.yerokha.smarttale.enums.OrderStatus.CHECKING;
+import static dev.yerokha.smarttale.enums.OrderStatus.DISPATCHED;
+import static dev.yerokha.smarttale.enums.OrderStatus.IN_PROGRESS;
+import static dev.yerokha.smarttale.enums.OrderStatus.NEW;
 import static dev.yerokha.smarttale.mapper.AdMapper.toDto;
 import static dev.yerokha.smarttale.mapper.AdMapper.toFullDto;
 import static java.lang.Integer.parseInt;
@@ -171,7 +180,8 @@ public class AdvertisementService {
                 }
                 case MOVE -> Collections.swap(existingImages, editImage.arrayPosition(), editImage.targetPosition());
                 case REMOVE -> existingImages.remove(editImage.arrayPosition());
-                case REPLACE -> existingImages.set(editImage.arrayPosition(), imageService.processImage(files.get(editImage.filePosition())));
+                case REPLACE ->
+                        existingImages.set(editImage.arrayPosition(), imageService.processImage(files.get(editImage.filePosition())));
             }
 
         }
@@ -190,5 +200,37 @@ public class AdvertisementService {
         return AdMapper.mapToFullPurchase(productRepository
                 .findByPurchasedByUserIdAndAdvertisementId(userId, productId)
                 .orElseThrow(() -> new NotFoundException("Purchase not found")));
+    }
+
+    public Page<SmallOrder> getOrders(Long userId, Map<String, String> params) {
+        if (params.get("q").equals("active")) {
+            Pageable pageable = PageRequest.of(
+                    Integer.parseInt(params.getOrDefault("page", "0")),
+                    Integer.parseInt(params.getOrDefault("size", "12")),
+                    Sort.by(Sort.Direction.DESC, "acceptedAt"));
+            return orderRepository.findAllByAcceptedByUserIdAndStatusNotIn(userId,
+                            Arrays.asList(
+                                    ARRIVED,
+                                    CANCELED), pageable)
+                    .map(AdMapper::toSmallOrder);
+        }
+
+        Pageable pageable = PageRequest.of(
+                Integer.parseInt(params.getOrDefault("page", "0")),
+                Integer.parseInt(params.getOrDefault("size", "12")),
+                Sort.by(Sort.Direction.DESC, "completedAt"));
+        return orderRepository.findAllByAcceptedByUserIdAndStatusNotIn(userId,
+                        Arrays.asList(
+                                NEW,
+                                IN_PROGRESS,
+                                CHECKING,
+                                DISPATCHED), pageable)
+                .map(AdMapper::toSmallOrder);
+
+    }
+
+    public OrderDto getOrder(Long userId, Long orderId) {
+        return AdMapper.toOrderDto(orderRepository.findByAcceptedByUserIdAndAdvertisementId(userId, orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found")));
     }
 }

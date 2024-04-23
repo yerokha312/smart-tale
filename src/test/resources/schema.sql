@@ -42,7 +42,7 @@ create table users
     is_enabled   boolean default true,
     user_id      identity,
     email        varchar(255) not null,
-    father_name  varchar(255),
+    middle_name  varchar(255),
     first_name   varchar(255) not null,
     last_name    varchar(255) not null,
     phone_number varchar(255),
@@ -113,10 +113,11 @@ create table advertisement_image_junction
 create table orders
 (
     status           smallint,
-    accepted_at      timestamp(6),
+    accepted_at      date,
     accepted_by      bigint,
     advertisement_id bigint not null,
-    deadline_at      timestamp(6),
+    completed_at     date,
+    deadline_at      date,
     size             varchar(255),
     primary key (advertisement_id),
     constraint fkfc4g9w56mvotr4du2iitbvc17
