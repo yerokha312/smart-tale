@@ -11,7 +11,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -32,8 +31,10 @@ public class OrderEntity extends Advertisement {
     @JoinColumn(name = "accepted_by")
     private UserDetailsEntity acceptedBy;
 
-
     @Column(name = "accepted_at")
-    private LocalDateTime acceptedAt;
+    private LocalDate acceptedAt;
+
+    @Column(name = "completed_at")
+    private LocalDate completedAt;
 
 }

@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.controller;
+package dev.yerokha.smarttale.controller.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.yerokha.smarttale.dto.RegistrationRequest;

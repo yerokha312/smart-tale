@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.controller;
+package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.FullPurchase;
 import dev.yerokha.smarttale.dto.Purchase;
@@ -23,7 +23,7 @@ import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Purchase", description = "EPs for My purchases")
 @RestController
-@RequestMapping("/v1/purchases")
+@RequestMapping("/v1/account/purchases")
 public class PurchaseController {
 
     private final AdvertisementService advertisementService;

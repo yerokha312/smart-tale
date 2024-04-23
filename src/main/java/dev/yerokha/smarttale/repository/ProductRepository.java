@@ -12,7 +12,9 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     Page<ProductEntity> findAllByPublishedByUserId(Long userId, Pageable pageable);
+
     Page<ProductEntity> findAllByPurchasedByUserId(Long userId, Pageable pageable);
+
     Optional<ProductEntity> findByPurchasedByUserIdAndAdvertisementId(Long userId, Long advId);
 
 }

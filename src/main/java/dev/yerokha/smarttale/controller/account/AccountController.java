@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.controller;
+package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.Profile;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
@@ -27,7 +27,7 @@ import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Account", description = "Controller for personal account")
 @RestController
-@RequestMapping("/v1/accounts")
+@RequestMapping("/v1/account/profile")
 public class AccountController {
 
     private final UserService userService;
