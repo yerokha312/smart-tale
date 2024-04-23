@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.controller;
+package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.dto.RegistrationRequest;

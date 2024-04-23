@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public record Profile(
         String firstName,
         String lastName,
-        String fatherName,
+        String middleName,
         String email,
         String phoneNumber,
         String avatarUrl,

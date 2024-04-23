@@ -58,7 +58,7 @@ public class UserService implements UserDetailsService {
 
         userEntity.setFirstName(request.firstName());
         userEntity.setLastName(request.lastName());
-        userEntity.setFatherName(request.fatherName());
+        userEntity.setMiddleName(request.middleName());
         userEntity.setEmail(request.email());
         userEntity.setPhoneNumber(request.phoneNumber());
         userRepository.save(userEntity);
@@ -80,7 +80,7 @@ public class UserService implements UserDetailsService {
         return new Profile(
                 userEntity.getFirstName(),
                 userEntity.getLastName(),
-                userEntity.getFatherName(),
+                userEntity.getMiddleName(),
                 userEntity.getEmail(),
                 userEntity.getPhoneNumber(),
                 avatar == null ? null : avatar.getImageUrl(),

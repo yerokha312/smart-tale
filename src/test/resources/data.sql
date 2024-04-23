@@ -1,14 +1,15 @@
 
 INSERT INTO roles (role_id, authority)
-values (1, 'USER'),
+VALUES (1, 'USER'),
        (2, 'ADMIN');
 
-INSERT INTO users (user_id, email, first_name, last_name, father_name, is_enabled, phone_number) VALUES ( 100000, 'existing@example.com', 'Existing', 'Profile', 'Example', true, '+7999999999' );
-INSERT INTO users (user_id, email, first_name, last_name, father_name, is_enabled, phone_number) VALUES ( 100001, 'existing2@example.com', 'Second', 'Existing', 'Profile', true, '+77771234567' );
+INSERT INTO users (user_id, email, first_name, last_name, middle_name, is_enabled, phone_number) VALUES ( 100000, 'existing@example.com', 'Existing', 'Profile', 'Example', true, '+7999999999' );
+INSERT INTO users (user_id, email, first_name, last_name, middle_name, is_enabled, phone_number) VALUES ( 100001, 'existing2@example.com', 'Second', 'Existing', 'Profile', true, '+77771234567' );
+INSERT INTO users (user_id, email, first_name, last_name, middle_name, is_enabled, phone_number) VALUES ( 100002, 'existing3@example.com', 'Third', 'Existing', 'Profile', true, '+777712345690' );
 
-
-insert into user_details (details_id) values (100000);
-insert into user_details (details_id) values (100001);
+INSERT INTO user_details (details_id) VALUES (100000);
+INSERT INTO user_details (details_id) VALUES (100001);
+INSERT INTO user_details (details_id) VALUES (100002);
 
 INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
 SELECT
@@ -20,11 +21,16 @@ SELECT
 FROM
     generate_series(0, 9) AS t(n);
 
-insert into products (advertisement_id)
+INSERT INTO products (advertisement_id)
 SELECT
     100000 + n,
 FROM
     generate_series(0, 9) AS t(n);
+
+UPDATE products
+SET purchased_by = 100002,
+    purchased_at = CURRENT_TIMESTAMP
+WHERE advertisement_id IN (SELECT advertisement_id FROM products LIMIT 5);
 
 INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
 SELECT
@@ -36,9 +42,19 @@ SELECT
 FROM
     generate_series(0, 9) AS t(n);
 
-insert into orders (advertisement_id)
-select
+INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status)
+SELECT
     100010 + n,
-from
+    100002,
+    DATEADD('DAY', -n, CURRENT_TIMESTAMP),
+    '1'
+FROM
     generate_series(0, 9) as t(n);
+
+
+UPDATE orders
+SET completed_at = CURRENT_TIMESTAMP,
+    status = '5'
+WHERE advertisement_id IN (SELECT advertisement_id FROM orders LIMIT 4);
+
 

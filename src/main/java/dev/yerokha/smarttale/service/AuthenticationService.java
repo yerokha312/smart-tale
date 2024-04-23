@@ -53,7 +53,7 @@ public class AuthenticationService {
         UserEntity entity = new UserEntity(
                 request.firstName(),
                 request.lastName(),
-                request.fatherName(),
+                request.middleName(),
                 email,
                 Set.of(roleRepository.findByAuthority("USER")
                         .orElseThrow(() -> new NotFoundException("Role USER not found")))
@@ -77,7 +77,7 @@ public class AuthenticationService {
         setValue(email, user, 15, TimeUnit.MINUTES);
 
         mailService.sendEmailVerification(email, user.getFirstName() +
-                (user.getFatherName() == null ? "" : " " + user.getFatherName()), user.getVerificationCode());
+                (user.getMiddleName() == null ? "" : " " + user.getMiddleName()), user.getVerificationCode());
     }
 
     public LoginResponse verifyEmail(String email, String code) {

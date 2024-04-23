@@ -18,16 +18,16 @@ public record RegistrationRequest(
         @NotNull @Length(max = 20, message = "Name must be between 2 and 20 characters")
         @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
                 message = "Father name must be either Latin or Cyrillic, not a mix")
-        String fatherName,
+        String middleName,
         @NotNull @Email @NotEmpty
         String email
 ) {
     public boolean isValid() {
         boolean isFirstLatin = firstName.matches("^[a-zA-Z\\s-]+$");
         boolean isLastLatin = lastName.matches("^[a-zA-Z\\s-]+$");
-        boolean isFatherLatin = fatherName == null || fatherName.matches("^[a-zA-Z\\s-]*$");
+        boolean isFatherLatin = middleName == null || middleName.matches("^[a-zA-Z\\s-]*$");
 
         // All fields are consistent (either all Latin or all Cyrillic)
-        return isFirstLatin == isLastLatin && (fatherName == null || isFatherLatin == isFirstLatin);
+        return isFirstLatin == isLastLatin && (middleName == null || isFatherLatin == isFirstLatin);
     }
 }

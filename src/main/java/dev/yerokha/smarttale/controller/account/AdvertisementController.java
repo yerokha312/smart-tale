@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.controller;
+package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Order;
@@ -32,7 +32,7 @@ import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "My Advertisements", description = "Controller for ads in Private Account")
 @RestController
-@RequestMapping("/v1/advertisements")
+@RequestMapping("/v1/account/advertisements")
 public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
@@ -52,10 +52,10 @@ public class AdvertisementController {
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
             },
             parameters = {
-                    @Parameter(name = "page", description = "Page number"),
-                    @Parameter(name = "size", description = "Page size"),
+                    @Parameter(name = "page", description = "Page number, default 0"),
+                    @Parameter(name = "size", description = "Page size, default 10"),
                     @Parameter(name = "q", description = "Query orders or products", examples = {
-                            @ExampleObject(name = "q", value = "products"),
+                            @ExampleObject(name = "q", value = "\"products\" or \"orders\""),
                             @ExampleObject(name = "q", value = "orders")
                     })
             }
@@ -117,9 +117,9 @@ public class AdvertisementController {
     )
     @PutMapping
     public ResponseEntity<String> updateAd(Authentication authentication,
-                                                           @RequestPart("dto") UpdateAdRequest request,
-                                                           @RequestPart(value = "images",
-                                                                   required = false) List<MultipartFile> files) {
+                                           @RequestPart("dto") UpdateAdRequest request,
+                                           @RequestPart(value = "images",
+                                                   required = false) List<MultipartFile> files) {
 
         if (files != null && !files.isEmpty()) {
             if (files.size() > 5) {
