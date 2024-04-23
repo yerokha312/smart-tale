@@ -9,7 +9,6 @@ import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
-import org.hamcrest.collection.IsCollectionWithSize;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.AuthenticationControllerTest.extractToken;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.http.HttpMethod.PUT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -99,7 +99,7 @@ class AdvertisementControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", IsCollectionWithSize.hasSize(10))
+                        jsonPath("$.content", hasSize(10))
                 ).andReturn();
 
         // assert that all ads are sorted by publishedAt in descending order
@@ -118,7 +118,7 @@ class AdvertisementControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", IsCollectionWithSize.hasSize(10)),
+                        jsonPath("$.content", hasSize(10)),
                         jsonPath("$.content[*].orderId").exists(),
                         jsonPath("$.content[*].productId").doesNotExist()
                 ).andReturn();
@@ -139,7 +139,7 @@ class AdvertisementControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", IsCollectionWithSize.hasSize(10)),
+                        jsonPath("$.content", hasSize(10)),
                         jsonPath("$.content[*].productId").exists(),
                         jsonPath("$.content[*].orderId").doesNotExist()
                 ).andReturn();

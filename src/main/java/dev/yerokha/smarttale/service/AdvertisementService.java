@@ -2,6 +2,8 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.EditImage;
+import dev.yerokha.smarttale.dto.FullPurchase;
+import dev.yerokha.smarttale.dto.Purchase;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
@@ -173,5 +175,20 @@ public class AdvertisementService {
             }
 
         }
+    }
+
+    public Page<Purchase> getPurchases(Long userId, Map<String, String> params) {
+        Pageable pageable = PageRequest.of(
+                Integer.parseInt(params.getOrDefault("page", "0")),
+                Integer.parseInt(params.getOrDefault("size", "8")),
+                Sort.by(Sort.Direction.DESC, "purchasedAt"));
+        return productRepository.findAllByPurchasedByUserId(userId, pageable)
+                .map(AdMapper::mapToPurchaseDto);
+    }
+
+    public FullPurchase getPurchase(Long userId, Long productId) {
+        return AdMapper.mapToFullPurchase(productRepository
+                .findByPurchasedByUserIdAndAdvertisementId(userId, productId)
+                .orElseThrow(() -> new NotFoundException("Purchase not found")));
     }
 }
