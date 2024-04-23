@@ -52,8 +52,8 @@ public class AdvertisementController {
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
             },
             parameters = {
-                    @Parameter(name = "page", description = "Page number"),
-                    @Parameter(name = "size", description = "Page size"),
+                    @Parameter(name = "page", description = "Page number, default 0"),
+                    @Parameter(name = "size", description = "Page size, default 10"),
                     @Parameter(name = "q", description = "Query orders or products", examples = {
                             @ExampleObject(name = "q", value = "products"),
                             @ExampleObject(name = "q", value = "orders")
