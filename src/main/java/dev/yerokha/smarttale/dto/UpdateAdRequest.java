@@ -24,6 +24,6 @@ public record UpdateAdRequest(
         String size,
         @Future
         LocalDate deadlineAt,
-        List<EditImage> editImages
+        List<ImageOperation> imageOperations
 ) {
 }

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-public record EditImage(
+public record ImageOperation(
         @Min(0) @Max(4)
         int arrayPosition,
         @Min(0) @Max(4)

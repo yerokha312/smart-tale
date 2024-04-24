@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -55,7 +55,7 @@ public class AuthenticationService {
                 request.lastName(),
                 request.middleName(),
                 email,
-                Set.of(roleRepository.findByAuthority("USER")
+                List.of(roleRepository.findByAuthority("USER")
                         .orElseThrow(() -> new NotFoundException("Role USER not found")))
         );
 

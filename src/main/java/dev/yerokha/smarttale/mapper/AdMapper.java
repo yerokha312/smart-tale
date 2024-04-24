@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.mapper;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullPurchase;
@@ -187,5 +188,16 @@ public class AdMapper {
                     .toList();
         }
         return imageUrls;
+    }
+
+    public static CurrentOrder toCurrentOrder(OrderEntity order) {
+        List<Image> images = order.getImages();
+        return new CurrentOrder(
+                order.getAdvertisementId(),
+                order.getTitle(),
+                order.getDescription(),
+                order.getPrice(),
+                images == null ? null : images.isEmpty() ? null : images.get(0).getImageUrl(),
+                order.getStatus());
     }
 }

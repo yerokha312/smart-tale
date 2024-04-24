@@ -20,8 +20,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -61,7 +61,7 @@ public class UserEntity implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> authorities = new HashSet<>();
+    private List<Role> authorities = new ArrayList<>();
 
     @Column(name = "is_enabled", columnDefinition = "boolean default false")
     private boolean isEnabled = false;
@@ -76,7 +76,7 @@ public class UserEntity implements UserDetails {
     public UserEntity() {
     }
 
-    public UserEntity(String firstName, String lastName, String middleName, String email, Set<Role> authorities) {
+    public UserEntity(String firstName, String lastName, String middleName, String email, List<Role> authorities) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.middleName = middleName;

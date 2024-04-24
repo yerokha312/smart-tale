@@ -1,7 +1,7 @@
 package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.EditImage;
+import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.FullPurchase;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Purchase;
@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static dev.yerokha.smarttale.enums.OrderStatus.ARRIVED;
 import static dev.yerokha.smarttale.enums.OrderStatus.CANCELED;
@@ -85,11 +84,10 @@ public class AdvertisementService {
                 .map(ad -> {
                     if (ad instanceof OrderEntity order) {
                         return toDto(order);
-                    } else {
-                        return toDto(ad);
                     }
+                    return toDto(ad);
                 })
-                .collect(Collectors.toList());
+                .toList();
         return new PageImpl<>(modifiedAds, pageable, ads.getTotalElements());
     }
 
@@ -160,28 +158,28 @@ public class AdvertisementService {
             order.setSize(request.size());
         }
 
-        if (request.editImages() != null && !request.editImages().isEmpty()) {
+        if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
             List<Image> images = advertisement.getImages();
-            updateImages(images, files, request.editImages());
+            updateImages(images, files, request.imageOperations());
         }
 
         advertisementRepository.save(advertisement);
     }
 
-    private void updateImages(List<Image> existingImages, List<MultipartFile> files, List<EditImage> editImageList) {
-        for (EditImage editImage : editImageList) {
-            switch (editImage.action()) {
+    private void updateImages(List<Image> existingImages, List<MultipartFile> files, List<ImageOperation> imageOperationList) {
+        for (ImageOperation imageOperation : imageOperationList) {
+            switch (imageOperation.action()) {
                 case ADD -> {
                     if (existingImages.size() >= 5) {
                         throw new IllegalArgumentException("You can not upload more than 5 images");
                     }
 
-                    existingImages.add(editImage.targetPosition(), imageService.processImage(files.get(editImage.filePosition())));
+                    existingImages.add(imageOperation.targetPosition(), imageService.processImage(files.get(imageOperation.filePosition())));
                 }
-                case MOVE -> Collections.swap(existingImages, editImage.arrayPosition(), editImage.targetPosition());
-                case REMOVE -> existingImages.remove(editImage.arrayPosition());
+                case MOVE -> Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
+                case REMOVE -> existingImages.remove(imageOperation.arrayPosition());
                 case REPLACE ->
-                        existingImages.set(editImage.arrayPosition(), imageService.processImage(files.get(editImage.filePosition())));
+                        existingImages.set(imageOperation.arrayPosition(), imageService.processImage(files.get(imageOperation.filePosition())));
             }
 
         }
