@@ -68,7 +68,6 @@ class AdvertisementControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 anyString(),
-                anyString(),
                 confirmationUrlCaptor.capture()
         );
 

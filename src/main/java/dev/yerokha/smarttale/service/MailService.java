@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.entity.user.UserEntity;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.service.interfaces.NotificationService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -47,16 +47,16 @@ public class MailService implements NotificationService {
         }
     }
 
-    public void sendEmailVerification(String to, String name, String verificationCode) {
+    public void sendEmailVerification(String to, String verificationCode) {
         Context context = new Context();
-        context.setVariables(Map.of("verificationCode", verificationCode, "name", name));
+        context.setVariables(Map.of("verificationCode", verificationCode));
 
         String emailBody = engine.process("confirmation_email", context);
 
         send(to, "Подтверждение почты", emailBody);
     }
 
-    public void sendSubscriptionRequest(UserEntity user) {
+    public void sendSubscriptionRequest(UserDetailsEntity user) {
         Context context = new Context();
         String middleName = user.getMiddleName() == null ? "" : " " + user.getMiddleName();
         String name = user.getLastName() + " " + user.getFirstName() + middleName;

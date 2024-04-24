@@ -38,17 +38,12 @@ create table roles
 
 create table users
 (
-    is_deleted   boolean default false,
-    is_enabled   boolean default true,
-    user_id      identity,
-    email        varchar(255) not null,
-    middle_name  varchar(255),
-    first_name   varchar(255) not null,
-    last_name    varchar(255) not null,
-    phone_number varchar(255),
+    is_deleted boolean default false,
+    is_enabled boolean default true,
+    user_id    identity,
+    email      varchar(255) not null,
     primary key (user_id),
-    unique (email),
-    unique (phone_number)
+    unique (email)
 );
 
 create table refresh_token
@@ -65,23 +60,40 @@ create table refresh_token
         foreign key (user_id) references users
 );
 
+create table positions
+(
+    position_id identity,
+    title       varchar(255),
+    authorities int
+);
+
 create table user_details
 (
+    email                   varchar(255) not null,
+    middle_name             varchar(255) not null,
+    first_name              varchar(255) not null,
+    last_name               varchar(255) not null,
+    phone_number            varchar(255),
     is_subscribed           boolean default true,
     subscription_end_date   date,
     subscription_start_date date,
-    details_id              bigint not null,
+    details_id              bigint       not null,
     image_id                bigint,
     last_seen_at            timestamp(6),
     organization_id         bigint,
+    position_id             bigint,
     registered_at           timestamp(6),
     primary key (details_id),
+    unique (phone_number),
+    unique (email),
     constraint fkkctijsa16thqtpecv5e7njug4
         foreign key (image_id) references image,
     constraint fkeijluvxgeb1mqhskvwflne7fu
         foreign key (organization_id) references organizations,
     constraint fkee49wu3twsclnm2pbvd3pq6n8
-        foreign key (details_id) references users
+        foreign key (details_id) references users,
+    constraint fkee49wu3twsclnm2pb3498q6n0
+        foreign key (position_id) references positions
 );
 
 create table abstract_advertisements

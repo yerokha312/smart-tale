@@ -42,11 +42,16 @@ public class SmartTaleApplication {
             Role userRole = roleRepository.save(new Role("USER"));
             roleRepository.save(new Role("ADMIN"));
 
-            UserEntity user = new UserEntity("Test", "User", "Father",
+            UserEntity user = new UserEntity(
                     "erbolatt@live.com",
                     Set.of(userRole));
 
-            UserDetailsEntity details = new UserDetailsEntity();
+            UserDetailsEntity details = new UserDetailsEntity(
+                    "FirstName",
+                    "LastName",
+                    "Father",
+                    "erbolatt@live.com"
+            );
             user.setDetails(details);
             user.setEnabled(true);
             details.setUser(user);

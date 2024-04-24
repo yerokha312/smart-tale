@@ -3,13 +3,13 @@ INSERT INTO roles (role_id, authority)
 VALUES (1, 'USER'),
        (2, 'ADMIN');
 
-INSERT INTO users (user_id, email, first_name, last_name, middle_name, is_enabled, phone_number) VALUES ( 100000, 'existing@example.com', 'Existing', 'Profile', 'Example', true, '+7999999999' );
-INSERT INTO users (user_id, email, first_name, last_name, middle_name, is_enabled, phone_number) VALUES ( 100001, 'existing2@example.com', 'Second', 'Existing', 'Profile', true, '+77771234567' );
-INSERT INTO users (user_id, email, first_name, last_name, middle_name, is_enabled, phone_number) VALUES ( 100002, 'existing3@example.com', 'Third', 'Existing', 'Profile', true, '+777712345690' );
+INSERT INTO users (user_id, email, is_enabled) VALUES ( 100000, 'existing@example.com', true );
+INSERT INTO users (user_id, email, is_enabled) VALUES ( 100001, 'existing2@example.com', true);
+INSERT INTO users (user_id, email, is_enabled) VALUES ( 100002, 'existing3@example.com', true);
 
-INSERT INTO user_details (details_id) VALUES (100000);
-INSERT INTO user_details (details_id) VALUES (100001);
-INSERT INTO user_details (details_id) VALUES (100002);
+INSERT INTO user_details (details_id, first_name, last_name, middle_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'Example', 'existing@example.com', '+7999999999');
+INSERT INTO user_details (details_id, first_name, last_name, middle_name, email, phone_number) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567');
+INSERT INTO user_details (details_id, first_name, last_name, middle_name, email, phone_number) VALUES (100002, 'Third', 'Existing', 'Profile', 'existing3@example.com', '+777712345690');
 
 INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
 SELECT

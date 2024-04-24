@@ -18,5 +18,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     Page<OrderEntity> findAllByAcceptedByUserIdAndStatusNotIn(Long userId, List<OrderStatus> orderStatuses, Pageable pageable);
 
     Optional<OrderEntity> findByAcceptedByUserIdAndAdvertisementId(Long userId, Long orderId);
+
     Page<OrderEntity> findAllByAcceptedByOrganizationOwnerUserIdAndStatusNotIn(Long ownerId, List<OrderStatus> orderStatuses, Pageable pageable);
 }

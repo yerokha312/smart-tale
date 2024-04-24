@@ -3,7 +3,6 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
-import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
@@ -80,17 +79,16 @@ public class OrganizationService {
 
         List<Employee> employees = organization.getEmployees().stream()
                 .map(employee -> {
-                    UserEntity user = employee.getUser();
-                    String name = user.getLastName() + " " + user.getFirstName() + " " + user.getMiddleName();
+                    String name = employee.getLastName() + " " + employee.getFirstName() + " " + employee.getMiddleName();
                     return new Employee(
                             employee.getUserId(),
                             name,
-                            user.getEmail(),
+                            employee.getEmail(),
                             employee.getAcceptedOrders().stream()
                                     .filter(order -> !inactiveStatuses.contains(order.getStatus()))
                                     .map(AdMapper::toCurrentOrder)
                                     .toList(),
-                            user.getAuthorities().get(0).toString(),
+                            employee.getPosition().getTitle(),
                             null
                     );
                 })
