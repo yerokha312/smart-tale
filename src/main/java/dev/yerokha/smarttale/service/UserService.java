@@ -35,34 +35,37 @@ public class UserService implements UserDetailsService {
                 new NotFoundException("Profile not found"));
     }
 
-    public Profile getProfileByUserId(Long userIdFromAuthToken) {
-        UserEntity userEntity = getUserEntity(userIdFromAuthToken);
-        return mapProfile(userEntity);
+    public Profile getProfileByUserId(Long userId) {
+        UserDetailsEntity userDetails = getUserDetailsEntity(userId);
+        return mapProfile(userDetails);
     }
 
-    public Profile updateProfile(Long userIdFromAuthToken, UpdateProfileRequest request) {
-        UserEntity userEntity = getUserEntity(userIdFromAuthToken);
+    public Profile updateProfile(Long userId, UpdateProfileRequest request) {
+        UserDetailsEntity userDetails = getUserDetailsEntity(userId);
 
         String newEmail = request.email();
         String newPhoneNumber = request.phoneNumber();
 
-        if (!userEntity.getEmail().equals(newEmail) && !isEmailAvailable(newEmail)) {
+        if (!userDetails.getEmail().equals(newEmail) && !isEmailAvailable(newEmail)) {
             throw new AlreadyTakenException(String.format("Email %s already taken", newEmail));
         }
 
-        if (userEntity.getPhoneNumber() == null || !userEntity.getPhoneNumber().equals(newPhoneNumber)) {
+        if (userDetails.getPhoneNumber() == null || !userDetails.getPhoneNumber().equals(newPhoneNumber)) {
             if (!isPhoneAvailable(newPhoneNumber)) {
                 throw new AlreadyTakenException(String.format("Phone number %s already taken", newPhoneNumber));
             }
         }
 
-        userEntity.setFirstName(request.firstName());
-        userEntity.setLastName(request.lastName());
-        userEntity.setMiddleName(request.middleName());
-        userEntity.setEmail(request.email());
-        userEntity.setPhoneNumber(request.phoneNumber());
-        userRepository.save(userEntity);
-        return mapProfile(userEntity);
+        UserEntity userEntity = getUserEntity(userId);
+
+        userEntity.setEmail(newEmail);
+        userDetails.setEmail(newEmail);
+        userDetails.setFirstName(request.firstName());
+        userDetails.setLastName(request.lastName());
+        userDetails.setMiddleName(request.middleName());
+        userDetails.setPhoneNumber(newPhoneNumber);
+        userDetailsRepository.save(userDetails);
+        return mapProfile(userDetails);
     }
 
     private boolean isEmailAvailable(String email) {
@@ -70,19 +73,18 @@ public class UserService implements UserDetailsService {
     }
 
     private boolean isPhoneAvailable(String phoneNumber) {
-        return userRepository.findByPhoneNumber(phoneNumber).isEmpty();
+        return userDetailsRepository.findByPhoneNumber(phoneNumber).isEmpty();
     }
 
 
-    private Profile mapProfile(UserEntity userEntity) {
-        UserDetailsEntity userDetails = userEntity.getDetails();
+    private Profile mapProfile(UserDetailsEntity userDetails) {
         Image avatar = userDetails.getImage();
         return new Profile(
-                userEntity.getFirstName(),
-                userEntity.getLastName(),
-                userEntity.getMiddleName(),
-                userEntity.getEmail(),
-                userEntity.getPhoneNumber(),
+                userDetails.getFirstName(),
+                userDetails.getLastName(),
+                userDetails.getMiddleName(),
+                userDetails.getEmail(),
+                userDetails.getPhoneNumber(),
                 avatar == null ? null : avatar.getImageUrl(),
                 userDetails.isSubscribed() ? userDetails.getSubscriptionEndDate() : null
         );
@@ -108,7 +110,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void subscribe(Long userIdFromAuthToken) {
-        UserEntity user = getUserEntity(userIdFromAuthToken);
+        UserDetailsEntity user = getUserDetailsEntity(userIdFromAuthToken);
         mailService.sendSubscriptionRequest(user);
 
     }

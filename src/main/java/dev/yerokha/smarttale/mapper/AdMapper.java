@@ -15,7 +15,6 @@ import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
-import dev.yerokha.smarttale.entity.user.UserEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -170,14 +169,13 @@ public class AdMapper {
     private static Result getResult(Advertisement entity) {
         List<String> imageUrls = getImageUrls(entity.getImages());
 
-        UserDetailsEntity publishedBy = entity.getPublishedBy();
-        Image avatar = publishedBy.getImage();
-        UserEntity user = publishedBy.getUser();
+        UserDetailsEntity user = entity.getPublishedBy();
+        Image avatar = user.getImage();
         String publisherName = user.getLastName() + " " + user.getFirstName() + " " + user.getMiddleName();
         return new Result(imageUrls, avatar, user, publisherName);
     }
 
-    private record Result(List<String> imageUrls, Image avatar, UserEntity user, String publisherName) {
+    private record Result(List<String> imageUrls, Image avatar, UserDetailsEntity user, String publisherName) {
     }
 
     private static List<String> getImageUrls(List<Image> order) {

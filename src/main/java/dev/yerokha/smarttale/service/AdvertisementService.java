@@ -1,8 +1,8 @@
 package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.FullPurchase;
+import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Purchase;
 import dev.yerokha.smarttale.dto.SmallOrder;
@@ -176,7 +176,8 @@ public class AdvertisementService {
 
                     existingImages.add(imageOperation.targetPosition(), imageService.processImage(files.get(imageOperation.filePosition())));
                 }
-                case MOVE -> Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
+                case MOVE ->
+                        Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
                 case REMOVE -> existingImages.remove(imageOperation.arrayPosition());
                 case REPLACE ->
                         existingImages.set(imageOperation.arrayPosition(), imageService.processImage(files.get(imageOperation.filePosition())));

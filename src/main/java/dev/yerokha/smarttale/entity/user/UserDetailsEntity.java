@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.entity.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
@@ -26,10 +27,30 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "user_details")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserDetailsEntity {
 
     @Id
     private Long userId;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "middle_name", nullable = false)
+    private String middleName;
+
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
+
+    @Column(name = "phone_number", unique = true)
+    private String phoneNumber;
+
+    @ManyToOne
+    @JoinColumn(name = "position_id")
+    private Position position;
 
     @JsonManagedReference
     @ToString.Exclude
@@ -73,4 +94,18 @@ public class UserDetailsEntity {
 
     @Column(name = "subscription_end_date")
     private LocalDate subscriptionEndDate;
+
+    public UserDetailsEntity() {
+    }
+
+    public UserDetailsEntity(String firstName, String lastName, String middleName, String email) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.middleName = middleName;
+        this.email = email;
+    }
+
+    public String getName() {
+        return this.lastName + " " + this.firstName + " " + this.middleName;
+    }
 }

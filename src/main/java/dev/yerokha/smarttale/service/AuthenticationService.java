@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -51,15 +51,19 @@ public class AuthenticationService {
         }
 
         UserEntity entity = new UserEntity(
-                request.firstName(),
-                request.lastName(),
-                request.middleName(),
                 email,
-                List.of(roleRepository.findByAuthority("USER")
+                Set.of(roleRepository.findByAuthority("USER")
                         .orElseThrow(() -> new NotFoundException("Role USER not found")))
         );
 
+        UserDetailsEntity details = new UserDetailsEntity(
+                request.firstName(),
+                request.lastName(),
+                request.middleName(),
+                email
+        );
         setValue(email, entity, 5, TimeUnit.MINUTES);
+        setValue("details:" + email, details, 15, TimeUnit.MINUTES);
 
         sendVerificationEmail(email);
 
@@ -76,12 +80,12 @@ public class AuthenticationService {
         user.setVerificationCode(generateVerificationCode());
         setValue(email, user, 15, TimeUnit.MINUTES);
 
-        mailService.sendEmailVerification(email, user.getFirstName() +
-                (user.getMiddleName() == null ? "" : " " + user.getMiddleName()), user.getVerificationCode());
+        mailService.sendEmailVerification(email, user.getVerificationCode());
     }
 
     public LoginResponse verifyEmail(String email, String code) {
         UserEntity user = (UserEntity) getValue(email);
+        UserDetailsEntity details = (UserDetailsEntity) getValue("details:" + email);
 
         if (user == null) {
             throw new NotFoundException(String.format("Profile with email %s not found", email));
@@ -94,10 +98,9 @@ public class AuthenticationService {
         if (!user.isEnabled()) {
             user.setEnabled(true);
             if (user.getDetails() == null) {
-                UserDetailsEntity userDetails = new UserDetailsEntity();
-                userDetails.setUser(user);
-                userDetails.setRegisteredAt(LocalDateTime.now());
-                user.setDetails(userDetails);
+                details.setUser(user);
+                details.setRegisteredAt(LocalDateTime.now());
+                user.setDetails(details);
             }
             userRepository.save(user);
         }
@@ -105,8 +108,7 @@ public class AuthenticationService {
         return new LoginResponse(
                 tokenService.generateAccessToken(user),
                 tokenService.generateRefreshToken(user),
-                user.getUserId(),
-                user.getName()
+                user.getUserId()
         );
     }
 

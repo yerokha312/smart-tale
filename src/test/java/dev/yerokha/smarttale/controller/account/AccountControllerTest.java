@@ -51,8 +51,7 @@ class AccountControllerTest {
     @Autowired
     UserRepository userRepository;
     final String APP_JSON = "application/json";
-    @Value("${ADMIN_EMAIL}")
-    private String ADMIN_EMAIL;
+
     public static String accessToken;
 
     private void login(String email) throws Exception {
@@ -62,7 +61,6 @@ class AccountControllerTest {
 
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
-                anyString(),
                 anyString(),
                 confirmationUrlCaptor.capture()
         );
