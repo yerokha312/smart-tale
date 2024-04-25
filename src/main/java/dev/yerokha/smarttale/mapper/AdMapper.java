@@ -196,6 +196,7 @@ public class AdMapper {
                 order.getDescription(),
                 order.getPrice(),
                 images == null ? null : images.isEmpty() ? null : images.get(0).getImageUrl(),
-                order.getStatus());
+                order.getStatus(),
+                order.getAcceptedAt());
     }
 }

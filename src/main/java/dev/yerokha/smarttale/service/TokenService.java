@@ -54,16 +54,16 @@ public class TokenService {
     }
 
     public String generateRefreshToken(UserEntity entity) {
-        String token = generateToken(entity, REFRESH_TOKEN_EXPIRATION, TokenType.REFRESH);
-        String encryptedToken = encryptToken("Bearer " + token);
-        RefreshToken refreshToken = new RefreshToken(
+        String refreshToken = generateToken(entity, REFRESH_TOKEN_EXPIRATION, TokenType.REFRESH);
+        String encryptedToken = encryptToken("Bearer " + refreshToken);
+        RefreshToken refreshTokenEntity = new RefreshToken(
                 encryptedToken,
                 entity,
                 Instant.now(),
                 Instant.now().plus(REFRESH_TOKEN_EXPIRATION, ChronoUnit.MINUTES)
         );
-        tokenRepository.save(refreshToken);
-        return token;
+        tokenRepository.save(refreshTokenEntity);
+        return refreshToken;
     }
 
     private String generateToken(UserEntity entity, int expirationTime, TokenType tokenType) {

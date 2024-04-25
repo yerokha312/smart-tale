@@ -16,15 +16,17 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "user_details")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -33,13 +35,13 @@ public class UserDetailsEntity {
     @Id
     private Long userId;
 
-    @Column(name = "first_name", nullable = false)
+    @Column(name = "first_name")
     private String firstName;
 
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "middle_name", nullable = false)
+    @Column(name = "middle_name")
     private String middleName;
 
     @Column(name = "email", nullable = false, unique = true)
@@ -52,10 +54,13 @@ public class UserDetailsEntity {
     @JoinColumn(name = "position_id")
     private Position position;
 
+    @OneToMany(mappedBy = "invitee")
+    private List<InvitationEntity> invitations;
+
     @JsonManagedReference
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @MapsId
     @JoinColumn(name = "details_id")
     private UserEntity user;

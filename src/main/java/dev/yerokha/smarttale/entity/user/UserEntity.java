@@ -57,6 +57,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "is_deleted", columnDefinition = "boolean default false")
     private boolean isDeleted = false;
 
+    @Column(name = "is_invited", columnDefinition = "boolean default false")
+    private boolean isInvited = false;
+
     @Transient
     private String verificationCode;
 

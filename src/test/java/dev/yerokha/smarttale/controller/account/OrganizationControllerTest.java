@@ -29,11 +29,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Order(5)
+@Order(6)
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class OrderControllerTest {
+class OrganizationControllerTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -47,7 +47,6 @@ class OrderControllerTest {
     UserRepository userRepository;
     final String APP_JSON = "application/json";
     public static String accessToken;
-
 
     private void login(String email) throws Exception {
         mockMvc.perform(post("/v1/auth/login")
@@ -80,56 +79,92 @@ class OrderControllerTest {
 
     @Test
     @Order(1)
-    void getOrders_Active() throws Exception {
-        Thread.sleep(1000);
-        login("existing3@example.com");
-        MvcResult result = mockMvc.perform(get("/v1/account/orders")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .param("q", "active"))
-                .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(6))
-                )
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        List<String> acceptedDates = JsonPath.read(content, "$.content[*].date");
-        for (int i = 1; i < acceptedDates.size(); i++) {
-            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) > 0;
-        }
-
-    }
-
-    @Test
-    @Order(1)
-    void getOrders_Completed() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/account/orders")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .param("q", "not_active"))
-                .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(4))
-                )
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        List<String> acceptedDates = JsonPath.read(content, "$.content[*].date");
-        for (int i = 1; i < acceptedDates.size(); i++) {
-            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) >= 0;
-        }
-
-    }
-
-    @Test
-    void getOrder() throws Exception {
-        mockMvc.perform(get("/v1/account/orders/100011")
+    void getOrders() throws Exception {
+        login("existing4@example.com");
+        MvcResult result = mockMvc.perform(get("/v1/account/organization/orders")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.title").value("Order 2")
-                );
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(8)
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> acceptedDates = JsonPath.read(content, "$.content[*].acceptedAt");
+        for (int i = 1; i < acceptedDates.size(); i++) {
+            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) >= 0;
+        }
+    }
+
+    @Test
+    @Order(2)
+    void getOrders_SortedByTitleAsc() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/account/organization/orders?title=asc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(8)
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> titles = JsonPath.read(content, "$.content[*].title");
+        for (int i = 1; i < titles.size(); i++) {
+            assert titles.get(i - 1).compareTo(titles.get(i)) <= 0;
+        }
+    }
+
+    @Test
+    @Order(2)
+    void getOrders_SortedByTitleDesc() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/account/organization/orders?title=desc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(8)
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> titles = JsonPath.read(content, "$.content[*].title");
+        for (int i = 1; i < titles.size(); i++) {
+            assert titles.get(i - 1).compareTo(titles.get(i)) >= 0;
+        }
+    }
+
+    @Test
+    @Order(2)
+    void getOrders_SortedByTitleDescAndByAcceptedDateAsc() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/account/organization/orders?title=desc&acceptedAt=Asc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(8)
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> titles = JsonPath.read(content, "$.content[*].title");
+        List<String> acceptedDates = JsonPath.read(content, "$.content[*].acceptedAt");
+        for (int i = 1; i < titles.size(); i++) {
+            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) <= 0;
+        }
+    }
+
+    @Test
+    @Order(3)
+    void getEmployees() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/account/organization/employees")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.content", hasSize(3)))
+                .andReturn();
 
     }
 }

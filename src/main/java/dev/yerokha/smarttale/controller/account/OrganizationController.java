@@ -2,11 +2,15 @@ package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.Employee;
+import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.service.OrganizationService;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,5 +39,12 @@ public class OrganizationController {
     public ResponseEntity<Page<Employee>> getEmployees(Authentication authentication,
                                                        @RequestParam Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getEmployees(getUserIdFromAuthToken(authentication), params));
+    }
+
+    @PostMapping("/employees")
+    public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody InviteRequest request) {
+        String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
+
+        return new ResponseEntity<>(String.format("Invite sent to %s", email), HttpStatus.CREATED);
     }
 }

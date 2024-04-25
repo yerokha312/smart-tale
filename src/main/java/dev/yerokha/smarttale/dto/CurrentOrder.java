@@ -3,6 +3,7 @@ package dev.yerokha.smarttale.dto;
 import dev.yerokha.smarttale.enums.OrderStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record CurrentOrder(
         Long orderId,
@@ -10,6 +11,7 @@ public record CurrentOrder(
         String description,
         BigDecimal price,
         String imageUrl,
-        OrderStatus orderStatus
+        OrderStatus orderStatus,
+        LocalDate acceptedAt
 ) {
 }

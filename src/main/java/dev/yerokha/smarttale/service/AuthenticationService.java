@@ -6,6 +6,8 @@ import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
+import dev.yerokha.smarttale.repository.OrganizationRepository;
+import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +32,6 @@ public class AuthenticationService {
     private final RoleRepository roleRepository;
     private final MailService mailService;
     private final TokenService tokenService;
-
     public static final int CODE_LENGTH = 4;
     private static final String CHARACTERS = "0123456789";
     private static final SecureRandom random = new SecureRandom();
@@ -138,7 +139,12 @@ public class AuthenticationService {
                 .orElseThrow(() -> new NotFoundException(String.format("Profile with email %s not found", email)));
 
         if (!user.isEnabled()) {
-            throw new DisabledException("Profile is not enabled");
+            if (!user.isInvited()) {
+                throw new DisabledException("Profile is not enabled");
+            }
+
+            user.setEnabled(true);
+            userRepository.save(user);
         }
 
         user.setVerificationCode(generateVerificationCode());

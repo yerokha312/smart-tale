@@ -99,13 +99,13 @@ public class UserService implements UserDetailsService {
 
     }
 
-    private UserEntity getUserEntity(Long userIdFromAuthToken) {
-        return userRepository.findById(userIdFromAuthToken)
+    UserEntity getUserEntity(Long userId) {
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
-    private UserDetailsEntity getUserDetailsEntity(Long userIdFromAuthToken) {
-        return userDetailsRepository.findById(userIdFromAuthToken)
+    UserDetailsEntity getUserDetailsEntity(Long userId) {
+        return userDetailsRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User details not found"));
     }
 

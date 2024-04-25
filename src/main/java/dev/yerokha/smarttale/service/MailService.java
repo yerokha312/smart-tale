@@ -51,23 +51,35 @@ public class MailService implements NotificationService {
         Context context = new Context();
         context.setVariables(Map.of("verificationCode", verificationCode));
 
-        String emailBody = engine.process("confirmation_email", context);
+        String emailBody = engine.process("confirmation_letter", context);
 
         send(to, "Подтверждение почты", emailBody);
     }
 
     public void sendSubscriptionRequest(UserDetailsEntity user) {
         Context context = new Context();
-        String middleName = user.getMiddleName() == null ? "" : " " + user.getMiddleName();
-        String name = user.getLastName() + " " + user.getFirstName() + middleName;
+        String name = user.getName();
         context.setVariables(Map.of(
                 "name", name,
                 "email", user.getEmail(),
                 "phoneNumber", user.getPhoneNumber()));
 
-        String emailBody = engine.process("subscription_request_email", context);
+        String emailBody = engine.process("subscription_request_letter", context);
 
         send(ADMIN_EMAIL, "Запрос на подписку", emailBody);
+    }
+
+    public void sendInvitation(String to, String name, String organization, String position) {
+        Context context = new Context();
+        context.setVariables(Map.of(
+                "name", name,
+                "email", to,
+                "organization", organization,
+                "position", position));
+
+        String emailBody = engine.process("invitation_letter", context);
+
+        send(ADMIN_EMAIL, "Приглашение в организацию", emailBody);
     }
 }
 

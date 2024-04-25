@@ -40,13 +40,13 @@ public class Advertisement {
     private UserDetailsEntity publishedBy;
 
     @Column(name = "title", nullable = false, length = 250)
-    private String title;
+    private String title; //sort
 
     @Column(name = "description", nullable = false, length = 1000)
     private String description;
 
     @Column(name = "price")
-    private BigDecimal price;
+    private BigDecimal price; //sort
 
     @ManyToMany
     @JoinTable(

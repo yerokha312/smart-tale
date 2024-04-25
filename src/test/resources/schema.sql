@@ -13,7 +13,7 @@ create index image_hash_idx
 
 create table organizations
 (
-    is_deleted      boolean,
+    is_deleted      boolean default false,
     founded_at      timestamp(6),
     image_id        bigint,
     organization_id identity,
@@ -39,7 +39,8 @@ create table roles
 create table users
 (
     is_deleted boolean default false,
-    is_enabled boolean default true,
+    is_enabled boolean default false,
+    is_invited boolean default false,
     user_id    identity,
     email      varchar(255) not null,
     primary key (user_id),
@@ -64,15 +65,20 @@ create table positions
 (
     position_id identity,
     title       varchar(255),
-    authorities int
+    authorities int default 0,
+    organization_id bigint,
+    primary key (position_id),
+    constraint fkjtx87i0j3498f2svedphegvdwcuy
+        foreign key (organization_id) references organizations
 );
+
 
 create table user_details
 (
     email                   varchar(255) not null,
-    middle_name             varchar(255) not null,
-    first_name              varchar(255) not null,
-    last_name               varchar(255) not null,
+    middle_name             varchar(255),
+    first_name              varchar(255),
+    last_name               varchar(255),
     phone_number            varchar(255),
     is_subscribed           boolean default true,
     subscription_end_date   date,
@@ -110,6 +116,26 @@ create table abstract_advertisements
     primary key (advertisement_id),
     constraint fk5pdy89af9tqcyu4f6iklwxg4m
         foreign key (published_by) references user_details
+);
+
+create table invitations
+(
+    invitation_id identity,
+    organization_id bigint,
+    position_id bigint,
+    inviter_id bigint,
+    invitee_id bigint,
+    invited_at date,
+    accepted_at date,
+    primary key (invitation_id),
+    constraint fkq3984umcwfh4p3w9fj32
+        foreign key (organization_id) references organizations,
+    constraint fkaksjdcmxwr943q29x2m1
+        foreign key (position_id) references positions,
+    constraint fkaksjdcmxwr943q29x2m2
+        foreign key (inviter_id) references user_details,
+    constraint fkaksjdcmxwr943q29x2m3
+        foreign key (invitee_id) references user_details
 );
 
 create table advertisement_image_junction
