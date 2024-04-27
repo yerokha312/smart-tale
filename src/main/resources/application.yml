@@ -12,3 +12,8 @@ spring:
           auth: true
           starttls:
             enable: true
+  jpa:
+    properties:
+      hibernate:
+        order_by:
+          default_null_ordering: last

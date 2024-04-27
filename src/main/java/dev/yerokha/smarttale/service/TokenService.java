@@ -54,23 +54,28 @@ public class TokenService {
     }
 
     public String generateRefreshToken(UserEntity entity) {
-        String token = generateToken(entity, REFRESH_TOKEN_EXPIRATION, TokenType.REFRESH);
-        String encryptedToken = encryptToken("Bearer " + token);
-        RefreshToken refreshToken = new RefreshToken(
+        String refreshToken = generateToken(entity, REFRESH_TOKEN_EXPIRATION, TokenType.REFRESH);
+        String encryptedToken = encryptToken("Bearer " + refreshToken);
+        RefreshToken refreshTokenEntity = new RefreshToken(
                 encryptedToken,
                 entity,
                 Instant.now(),
                 Instant.now().plus(REFRESH_TOKEN_EXPIRATION, ChronoUnit.MINUTES)
         );
-        tokenRepository.save(refreshToken);
-        return token;
+        tokenRepository.save(refreshTokenEntity);
+        return refreshToken;
     }
 
     private String generateToken(UserEntity entity, int expirationTime, TokenType tokenType) {
         Instant now = Instant.now();
         String scopes = getScopes(entity);
 
-        JwtClaimsSet claims = getClaims(now, expirationTime, entity.getUsername(), entity.getUserId(), scopes, tokenType, entity.getName());
+        JwtClaimsSet claims = getClaims(now,
+                expirationTime,
+                entity.getUsername(),
+                entity.getUserId(),
+                scopes,
+                tokenType);
         return encodeToken(claims);
     }
 
@@ -80,7 +85,7 @@ public class TokenService {
                 .collect(Collectors.joining(" "));
     }
 
-    private JwtClaimsSet getClaims(Instant now, long expirationTime, String subject, Long userId, String scopes, TokenType tokenType, String name) {
+    private JwtClaimsSet getClaims(Instant now, long expirationTime, String subject, Long userId, String scopes, TokenType tokenType) {
         return JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
@@ -89,7 +94,6 @@ public class TokenService {
                 .claim("scopes", scopes)
                 .claim("tokenType", tokenType)
                 .claim("userId", userId)
-                .claim("name", name)
                 .build();
     }
 
@@ -143,16 +147,19 @@ public class TokenService {
         String subject = decodedToken.getSubject();
         Long userId = decodedToken.getClaim("userId");
         String scopes = decodedToken.getClaim("scopes");
-        String name = decodedToken.getClaim("name");
-        JwtClaimsSet claims = getClaims(now, ACCESS_TOKEN_EXPIRATION, subject, userId, scopes, TokenType.ACCESS, name);
+        JwtClaimsSet claims = getClaims(now,
+                ACCESS_TOKEN_EXPIRATION,
+                subject,
+                userId,
+                scopes,
+                TokenType.ACCESS);
         String token = encodeToken(claims);
         String key = "access_token:" + email;
         setValue(key, encryptToken(token), ACCESS_TOKEN_EXPIRATION, TimeUnit.MINUTES);
         return new LoginResponse(
                 token,
                 refreshToken.substring(7),
-                userId,
-                name
+                userId
 
         );
 

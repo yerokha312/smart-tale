@@ -6,6 +6,7 @@ import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
+import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,17 +31,18 @@ public class AuthenticationService {
     private final RoleRepository roleRepository;
     private final MailService mailService;
     private final TokenService tokenService;
-
+    private final InvitationRepository invitationRepository;
     public static final int CODE_LENGTH = 4;
     private static final String CHARACTERS = "0123456789";
     private static final SecureRandom random = new SecureRandom();
 
     public AuthenticationService(UserRepository userRepository,
-                                 RoleRepository roleRepository, MailService mailService, TokenService tokenService) {
+                                 RoleRepository roleRepository, MailService mailService, TokenService tokenService, InvitationRepository invitationRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.mailService = mailService;
         this.tokenService = tokenService;
+        this.invitationRepository = invitationRepository;
     }
 
     @Transactional
@@ -51,15 +53,19 @@ public class AuthenticationService {
         }
 
         UserEntity entity = new UserEntity(
-                request.firstName(),
-                request.lastName(),
-                request.middleName(),
                 email,
                 Set.of(roleRepository.findByAuthority("USER")
                         .orElseThrow(() -> new NotFoundException("Role USER not found")))
         );
 
+        UserDetailsEntity details = new UserDetailsEntity(
+                request.firstName(),
+                request.lastName(),
+                request.middleName(),
+                email
+        );
         setValue(email, entity, 5, TimeUnit.MINUTES);
+        setValue("details:" + email, details, 15, TimeUnit.MINUTES);
 
         sendVerificationEmail(email);
 
@@ -76,12 +82,12 @@ public class AuthenticationService {
         user.setVerificationCode(generateVerificationCode());
         setValue(email, user, 15, TimeUnit.MINUTES);
 
-        mailService.sendEmailVerification(email, user.getFirstName() +
-                (user.getMiddleName() == null ? "" : " " + user.getMiddleName()), user.getVerificationCode());
+        mailService.sendEmailVerification(email, user.getVerificationCode());
     }
 
     public LoginResponse verifyEmail(String email, String code) {
         UserEntity user = (UserEntity) getValue(email);
+        UserDetailsEntity details = (UserDetailsEntity) getValue("details:" + email);
 
         if (user == null) {
             throw new NotFoundException(String.format("Profile with email %s not found", email));
@@ -94,10 +100,9 @@ public class AuthenticationService {
         if (!user.isEnabled()) {
             user.setEnabled(true);
             if (user.getDetails() == null) {
-                UserDetailsEntity userDetails = new UserDetailsEntity();
-                userDetails.setUser(user);
-                userDetails.setRegisteredAt(LocalDateTime.now());
-                user.setDetails(userDetails);
+                details.setUser(user);
+                details.setRegisteredAt(LocalDateTime.now());
+                user.setDetails(details);
             }
             userRepository.save(user);
         }
@@ -105,8 +110,7 @@ public class AuthenticationService {
         return new LoginResponse(
                 tokenService.generateAccessToken(user),
                 tokenService.generateRefreshToken(user),
-                user.getUserId(),
-                user.getName()
+                user.getUserId()
         );
     }
 
@@ -136,7 +140,13 @@ public class AuthenticationService {
                 .orElseThrow(() -> new NotFoundException(String.format("Profile with email %s not found", email)));
 
         if (!user.isEnabled()) {
-            throw new DisabledException("Profile is not enabled");
+            if (!user.isInvited()) {
+                throw new DisabledException("Profile is not enabled");
+            }
+
+            user.setEnabled(true);
+            invitationRepository.deleteAll(user.getDetails().getInvitations());
+            userRepository.save(user);
         }
 
         user.setVerificationCode(generateVerificationCode());

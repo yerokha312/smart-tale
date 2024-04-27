@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
@@ -18,4 +19,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     Page<OrderEntity> findAllByAcceptedByUserIdAndStatusNotIn(Long userId, List<OrderStatus> orderStatuses, Pageable pageable);
 
     Optional<OrderEntity> findByAcceptedByUserIdAndAdvertisementId(Long userId, Long orderId);
+
+    Page<OrderEntity> findAllByAcceptedByUserIdInAndStatusNotIn(Set<Long> employeeIds, List<OrderStatus> orderStatuses, Pageable pageable);
+
 }

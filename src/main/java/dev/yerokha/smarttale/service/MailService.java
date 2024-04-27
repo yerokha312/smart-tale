@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.entity.user.UserEntity;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.service.interfaces.NotificationService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -47,27 +47,39 @@ public class MailService implements NotificationService {
         }
     }
 
-    public void sendEmailVerification(String to, String name, String verificationCode) {
+    public void sendEmailVerification(String to, String verificationCode) {
         Context context = new Context();
-        context.setVariables(Map.of("verificationCode", verificationCode, "name", name));
+        context.setVariables(Map.of("verificationCode", verificationCode));
 
-        String emailBody = engine.process("confirmation_email", context);
+        String emailBody = engine.process("confirmation_letter", context);
 
         send(to, "Подтверждение почты", emailBody);
     }
 
-    public void sendSubscriptionRequest(UserEntity user) {
+    public void sendSubscriptionRequest(UserDetailsEntity user) {
         Context context = new Context();
-        String middleName = user.getMiddleName() == null ? "" : " " + user.getMiddleName();
-        String name = user.getLastName() + " " + user.getFirstName() + middleName;
+        String name = user.getName();
         context.setVariables(Map.of(
                 "name", name,
                 "email", user.getEmail(),
                 "phoneNumber", user.getPhoneNumber()));
 
-        String emailBody = engine.process("subscription_request_email", context);
+        String emailBody = engine.process("subscription_request_letter", context);
 
         send(ADMIN_EMAIL, "Запрос на подписку", emailBody);
+    }
+
+    public void sendInvitation(String to, String name, String organization, String position) {
+        Context context = new Context();
+        context.setVariables(Map.of(
+                "name", name,
+                "email", to,
+                "organization", organization,
+                "position", position));
+
+        String emailBody = engine.process("invitation_letter", context);
+
+        send(ADMIN_EMAIL, "Приглашение в организацию", emailBody);
     }
 }
 
