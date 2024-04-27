@@ -101,7 +101,7 @@ class AdvertisementControllerTest {
                         jsonPath("$.content", hasSize(10))
                 ).andReturn();
 
-        // assert that all ads are sorted by publishedAt in descending order
+        // assert that all ads are sorted by publishedAt in descending status
         String content = result.getResponse().getContentAsString();
         List<String> publishedDates = JsonPath.read(content, "$.content[*].publishedAt");
         for (int i = 1; i < 10; i++) {
@@ -122,7 +122,7 @@ class AdvertisementControllerTest {
                         jsonPath("$.content[*].productId").doesNotExist()
                 ).andReturn();
 
-        // assert that all ads are sorted by publishedAt in descending order
+        // assert that all ads are sorted by publishedAt in descending status
         String content = result.getResponse().getContentAsString();
         List<String> publishedDates = JsonPath.read(content, "$.content[*].publishedAt");
         for (int i = 1; i < 10; i++) {
@@ -143,7 +143,7 @@ class AdvertisementControllerTest {
                         jsonPath("$.content[*].orderId").doesNotExist()
                 ).andReturn();
 
-        // assert that all ads are sorted by publishedAt in descending order
+        // assert that all ads are sorted by publishedAt in descending status
         String content = result.getResponse().getContentAsString();
         List<String> publishedDates = JsonPath.read(content, "$.content[*].publishedAt");
         for (int i = 1; i < publishedDates.size(); i++) {

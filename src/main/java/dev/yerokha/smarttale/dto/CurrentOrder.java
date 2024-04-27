@@ -11,7 +11,8 @@ public record CurrentOrder(
         String description,
         BigDecimal price,
         String imageUrl,
-        OrderStatus orderStatus,
-        LocalDate acceptedAt
+        OrderStatus status,
+        LocalDate acceptedAt,
+        LocalDate deadlineAt
 ) {
 }

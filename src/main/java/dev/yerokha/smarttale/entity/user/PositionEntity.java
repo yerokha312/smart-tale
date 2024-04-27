@@ -11,12 +11,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Data
 @Entity
 @Table(name = "positions")
-public class Position {
+public class PositionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,4 +36,18 @@ public class Position {
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PositionEntity position = (PositionEntity) o;
+        return authorities == position.authorities && Objects.equals(
+                positionId, position.positionId) && Objects.equals(title, position.title);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(positionId, title, authorities);
+    }
 }

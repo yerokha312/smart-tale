@@ -41,7 +41,7 @@ public class InvitationEntity {
 
     @OneToOne
     @JoinColumn(name = "position_id")
-    private Position position;
+    private PositionEntity position;
 
     @Column(name = "accepted_at")
     private LocalDate acceptedAt;
@@ -49,7 +49,7 @@ public class InvitationEntity {
     public InvitationEntity() {
     }
 
-    public InvitationEntity(LocalDate invitedAt, UserDetailsEntity inviter, UserDetailsEntity invitee, OrganizationEntity organization, Position position) {
+    public InvitationEntity(LocalDate invitedAt, UserDetailsEntity inviter, UserDetailsEntity invitee, OrganizationEntity organization, PositionEntity position) {
         this.invitedAt = invitedAt;
         this.inviter = inviter;
         this.invitee = invitee;

@@ -6,8 +6,7 @@ import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
-import dev.yerokha.smarttale.repository.OrganizationRepository;
-import dev.yerokha.smarttale.repository.PositionRepository;
+import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,16 +31,18 @@ public class AuthenticationService {
     private final RoleRepository roleRepository;
     private final MailService mailService;
     private final TokenService tokenService;
+    private final InvitationRepository invitationRepository;
     public static final int CODE_LENGTH = 4;
     private static final String CHARACTERS = "0123456789";
     private static final SecureRandom random = new SecureRandom();
 
     public AuthenticationService(UserRepository userRepository,
-                                 RoleRepository roleRepository, MailService mailService, TokenService tokenService) {
+                                 RoleRepository roleRepository, MailService mailService, TokenService tokenService, InvitationRepository invitationRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.mailService = mailService;
         this.tokenService = tokenService;
+        this.invitationRepository = invitationRepository;
     }
 
     @Transactional
@@ -144,6 +145,7 @@ public class AuthenticationService {
             }
 
             user.setEnabled(true);
+            invitationRepository.deleteAll(user.getDetails().getInvitations());
             userRepository.save(user);
         }
 

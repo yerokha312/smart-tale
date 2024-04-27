@@ -27,11 +27,13 @@ public class AdMapper {
         if (images != null && !images.isEmpty()) {
             imageUrl = images.get(0).getImageUrl();
         }
+        String description = advertisement.getDescription();
+        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         if (advertisement instanceof OrderEntity) {
             return new Order(
                     advertisement.getAdvertisementId(),
                     advertisement.getTitle(),
-                    advertisement.getDescription(),
+                    truncatedDescription,
                     advertisement.getPrice(),
                     imageUrl,
                     advertisement.getPublishedAt()
@@ -41,7 +43,7 @@ public class AdMapper {
         return new Product(
                 advertisement.getAdvertisementId(),
                 advertisement.getTitle(),
-                advertisement.getDescription(),
+                truncatedDescription,
                 advertisement.getPrice(),
                 imageUrl,
                 advertisement.getPublishedAt()
@@ -105,10 +107,12 @@ public class AdMapper {
         }
         UserDetailsEntity publishedBy = entity.getPublishedBy();
         Image avatar = publishedBy.getImage();
+        String description = entity.getDescription();
+        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         return new Purchase(
                 entity.getAdvertisementId(),
                 entity.getTitle(),
-                entity.getDescription(),
+                truncatedDescription,
                 entity.getPrice(),
                 imageUrl,
                 entity.getPurchasedAt(),
@@ -190,13 +194,16 @@ public class AdMapper {
 
     public static CurrentOrder toCurrentOrder(OrderEntity order) {
         List<Image> images = order.getImages();
+        String description = order.getDescription();
+        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         return new CurrentOrder(
                 order.getAdvertisementId(),
                 order.getTitle(),
-                order.getDescription(),
+                truncatedDescription,
                 order.getPrice(),
                 images == null ? null : images.isEmpty() ? null : images.get(0).getImageUrl(),
                 order.getStatus(),
-                order.getAcceptedAt());
+                order.getAcceptedAt(),
+                order.getDeadlineAt());
     }
 }

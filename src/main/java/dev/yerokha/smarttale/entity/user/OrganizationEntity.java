@@ -52,7 +52,7 @@ public class OrganizationEntity {
     private Set<UserDetailsEntity> employees;
 
     @OneToMany(mappedBy = "organization")
-    private List<Position> positions;
+    private List<PositionEntity> positions;
 
     @OneToMany(mappedBy = "organization")
     private Set<InvitationEntity> invitations;

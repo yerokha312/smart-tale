@@ -27,6 +27,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@ToString
 @Entity
 @Table(name = "user_details")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,7 +53,7 @@ public class UserDetailsEntity {
 
     @ManyToOne
     @JoinColumn(name = "position_id")
-    private Position position;
+    private PositionEntity position;
 
     @OneToMany(mappedBy = "invitee")
     private List<InvitationEntity> invitations;
@@ -80,6 +81,9 @@ public class UserDetailsEntity {
 
     @OneToMany(mappedBy = "acceptedBy")
     private List<OrderEntity> acceptedOrders;
+
+    @Column(name = "active_orders_count", columnDefinition = "int default 0")
+    private int activeOrdersCount;
 
     @ManyToOne
     @JoinColumn(name = "image_id")
@@ -111,6 +115,6 @@ public class UserDetailsEntity {
     }
 
     public String getName() {
-        return this.lastName + " " + this.firstName + " " + this.middleName;
+        return this.lastName == null ? null : this.lastName + " " + this.firstName + " " + this.middleName;
     }
 }

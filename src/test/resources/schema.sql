@@ -75,10 +75,11 @@ create table positions
 
 create table user_details
 (
+    active_orders_count     int default 0 ,
     email                   varchar(255) not null,
-    middle_name             varchar(255),
-    first_name              varchar(255),
     last_name               varchar(255),
+    first_name              varchar(255),
+    middle_name             varchar(255),
     phone_number            varchar(255),
     is_subscribed           boolean default true,
     subscription_end_date   date,

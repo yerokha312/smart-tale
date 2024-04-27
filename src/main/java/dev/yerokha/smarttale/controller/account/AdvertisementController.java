@@ -68,7 +68,7 @@ public class AdvertisementController {
     }
 
     @Operation(
-            summary = "Get one ad", description = "Returns order or product that belongs to user, distinguish by " +
+            summary = "Get one ad", description = "Returns status or product that belongs to user, distinguish by " +
             "\"orderId\" and \"productId\" field of object",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
