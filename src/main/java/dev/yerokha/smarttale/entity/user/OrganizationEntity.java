@@ -10,12 +10,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "organizations")
 public class OrganizationEntity {
@@ -48,7 +51,13 @@ public class OrganizationEntity {
     @OneToMany(mappedBy = "organization")
     private Set<UserDetailsEntity> employees;
 
+    @OneToMany(mappedBy = "organization")
+    private List<PositionEntity> positions;
+
+    @OneToMany(mappedBy = "organization")
+    private Set<InvitationEntity> invitations;
+
     @Column(name = "is_deleted", columnDefinition = "boolean default false")
-    private boolean isDeleted;
+    private boolean isDeleted = false;
 
 }

@@ -6,6 +6,10 @@ spring:
   main:
     banner-mode: off
   jpa:
+    properties:
+      hibernate:
+        order_by:
+          default_null_ordering: last
     hibernate:
       ddl-auto: none
   sql:

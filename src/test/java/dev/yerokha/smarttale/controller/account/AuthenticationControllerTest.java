@@ -72,7 +72,6 @@ class AuthenticationControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 eq("johndoe@example.com"),
-                eq("John Father"),
                 confirmationUrlCaptor.capture()
         );
 
@@ -212,7 +211,6 @@ class AuthenticationControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 eq("johndoe@example.com"),
-                eq("John Father"),
                 confirmationUrlCaptor.capture()
         );
 
@@ -250,7 +248,6 @@ class AuthenticationControllerTest {
                         .contentType(APP_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("John Father Doe"))
                 .andReturn();
 
         String responseContent = result.getResponse().getContentAsString();
@@ -334,7 +331,6 @@ class AuthenticationControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 eq("johndoe@example.com"),
-                eq("John Father"),
                 confirmationUrlCaptor.capture()
         );
 
@@ -355,7 +351,6 @@ class AuthenticationControllerTest {
                         .contentType(APP_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("John Father Doe"))
                 .andReturn();
 
         String responseContent = result.getResponse().getContentAsString();

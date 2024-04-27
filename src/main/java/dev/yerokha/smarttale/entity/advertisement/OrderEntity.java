@@ -22,17 +22,17 @@ public class OrderEntity extends Advertisement {
     private String size;
 
     @Column(name = "deadline_at")
-    private LocalDate deadlineAt;
+    private LocalDate deadlineAt; //sort
 
     @Column(name = "status")
-    private OrderStatus status;
+    private OrderStatus status; //sort
 
     @ManyToOne
     @JoinColumn(name = "accepted_by")
     private UserDetailsEntity acceptedBy;
 
     @Column(name = "accepted_at")
-    private LocalDate acceptedAt;
+    private LocalDate acceptedAt; //sort
 
     @Column(name = "completed_at")
     private LocalDate completedAt;

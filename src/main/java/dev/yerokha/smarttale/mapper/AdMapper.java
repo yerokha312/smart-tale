@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.mapper;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullPurchase;
@@ -14,7 +15,6 @@ import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
-import dev.yerokha.smarttale.entity.user.UserEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +27,13 @@ public class AdMapper {
         if (images != null && !images.isEmpty()) {
             imageUrl = images.get(0).getImageUrl();
         }
+        String description = advertisement.getDescription();
+        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         if (advertisement instanceof OrderEntity) {
             return new Order(
                     advertisement.getAdvertisementId(),
                     advertisement.getTitle(),
-                    advertisement.getDescription(),
+                    truncatedDescription,
                     advertisement.getPrice(),
                     imageUrl,
                     advertisement.getPublishedAt()
@@ -41,7 +43,7 @@ public class AdMapper {
         return new Product(
                 advertisement.getAdvertisementId(),
                 advertisement.getTitle(),
-                advertisement.getDescription(),
+                truncatedDescription,
                 advertisement.getPrice(),
                 imageUrl,
                 advertisement.getPublishedAt()
@@ -105,10 +107,12 @@ public class AdMapper {
         }
         UserDetailsEntity publishedBy = entity.getPublishedBy();
         Image avatar = publishedBy.getImage();
+        String description = entity.getDescription();
+        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         return new Purchase(
                 entity.getAdvertisementId(),
                 entity.getTitle(),
-                entity.getDescription(),
+                truncatedDescription,
                 entity.getPrice(),
                 imageUrl,
                 entity.getPurchasedAt(),
@@ -169,14 +173,13 @@ public class AdMapper {
     private static Result getResult(Advertisement entity) {
         List<String> imageUrls = getImageUrls(entity.getImages());
 
-        UserDetailsEntity publishedBy = entity.getPublishedBy();
-        Image avatar = publishedBy.getImage();
-        UserEntity user = publishedBy.getUser();
+        UserDetailsEntity user = entity.getPublishedBy();
+        Image avatar = user.getImage();
         String publisherName = user.getLastName() + " " + user.getFirstName() + " " + user.getMiddleName();
         return new Result(imageUrls, avatar, user, publisherName);
     }
 
-    private record Result(List<String> imageUrls, Image avatar, UserEntity user, String publisherName) {
+    private record Result(List<String> imageUrls, Image avatar, UserDetailsEntity user, String publisherName) {
     }
 
     private static List<String> getImageUrls(List<Image> order) {
@@ -187,5 +190,20 @@ public class AdMapper {
                     .toList();
         }
         return imageUrls;
+    }
+
+    public static CurrentOrder toCurrentOrder(OrderEntity order) {
+        List<Image> images = order.getImages();
+        String description = order.getDescription();
+        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
+        return new CurrentOrder(
+                order.getAdvertisementId(),
+                order.getTitle(),
+                truncatedDescription,
+                order.getPrice(),
+                images == null ? null : images.isEmpty() ? null : images.get(0).getImageUrl(),
+                order.getStatus(),
+                order.getAcceptedAt(),
+                order.getDeadlineAt());
     }
 }

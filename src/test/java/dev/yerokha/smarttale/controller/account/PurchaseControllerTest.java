@@ -53,7 +53,6 @@ class PurchaseControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 anyString(),
-                anyString(),
                 confirmationUrlCaptor.capture()
         );
 
@@ -96,7 +95,7 @@ class PurchaseControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.title").value("Product 5"),
-                        jsonPath("$.publisherName").value("Existing Second Profile")
+                        jsonPath("$.publisherName").value("Second Existing Profile")
                 );
     }
 

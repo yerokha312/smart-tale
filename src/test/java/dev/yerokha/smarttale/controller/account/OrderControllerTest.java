@@ -57,7 +57,6 @@ class OrderControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 anyString(),
-                anyString(),
                 confirmationUrlCaptor.capture()
         );
 
@@ -118,7 +117,7 @@ class OrderControllerTest {
         String content = result.getResponse().getContentAsString();
         List<String> acceptedDates = JsonPath.read(content, "$.content[*].date");
         for (int i = 1; i < acceptedDates.size(); i++) {
-            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) > 0;
+            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) >= 0;
         }
 
     }

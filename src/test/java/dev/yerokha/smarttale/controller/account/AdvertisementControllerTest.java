@@ -3,7 +3,7 @@ package dev.yerokha.smarttale.controller.account;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.Action;
-import dev.yerokha.smarttale.dto.EditImage;
+import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserRepository;
@@ -68,7 +68,6 @@ class AdvertisementControllerTest {
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerification(
                 anyString(),
-                anyString(),
                 confirmationUrlCaptor.capture()
         );
 
@@ -102,7 +101,7 @@ class AdvertisementControllerTest {
                         jsonPath("$.content", hasSize(10))
                 ).andReturn();
 
-        // assert that all ads are sorted by publishedAt in descending order
+        // assert that all ads are sorted by publishedAt in descending status
         String content = result.getResponse().getContentAsString();
         List<String> publishedDates = JsonPath.read(content, "$.content[*].publishedAt");
         for (int i = 1; i < 10; i++) {
@@ -123,7 +122,7 @@ class AdvertisementControllerTest {
                         jsonPath("$.content[*].productId").doesNotExist()
                 ).andReturn();
 
-        // assert that all ads are sorted by publishedAt in descending order
+        // assert that all ads are sorted by publishedAt in descending status
         String content = result.getResponse().getContentAsString();
         List<String> publishedDates = JsonPath.read(content, "$.content[*].publishedAt");
         for (int i = 1; i < 10; i++) {
@@ -144,7 +143,7 @@ class AdvertisementControllerTest {
                         jsonPath("$.content[*].orderId").doesNotExist()
                 ).andReturn();
 
-        // assert that all ads are sorted by publishedAt in descending order
+        // assert that all ads are sorted by publishedAt in descending status
         String content = result.getResponse().getContentAsString();
         List<String> publishedDates = JsonPath.read(content, "$.content[*].publishedAt");
         for (int i = 1; i < publishedDates.size(); i++) {
@@ -181,11 +180,11 @@ class AdvertisementControllerTest {
     @Test
     @Order(5)
     void updateAd() throws Exception {
-        List<EditImage> editImageList = new ArrayList<>();
-        editImageList.add(new EditImage(0, 0, Action.ADD, 0));
-        editImageList.add(new EditImage(0, 1, Action.ADD, 1));
-        editImageList.add(new EditImage(0, 2, Action.ADD, 2));
-        editImageList.add(new EditImage(0, 3, Action.ADD, 3));
+        List<ImageOperation> imageOperationList = new ArrayList<>();
+        imageOperationList.add(new ImageOperation(0, 0, Action.ADD, 0));
+        imageOperationList.add(new ImageOperation(0, 1, Action.ADD, 1));
+        imageOperationList.add(new ImageOperation(0, 2, Action.ADD, 2));
+        imageOperationList.add(new ImageOperation(0, 3, Action.ADD, 3));
         UpdateAdRequest request = new UpdateAdRequest(
                 100010L,
                 "Updated Title",
@@ -193,10 +192,10 @@ class AdvertisementControllerTest {
                 BigDecimal.valueOf(100_000),
                 "10x10",
                 LocalDate.of(2025, 12, 31),
-                editImageList
+                imageOperationList
         );
 
-        MockMultipartFile part = new MockMultipartFile(
+        MockMultipartFile textPart = new MockMultipartFile(
                 "dto", null, APP_JSON, objectMapper.writeValueAsBytes(request)
         );
 
@@ -206,7 +205,7 @@ class AdvertisementControllerTest {
         MockMultipartFile image4 = new MockMultipartFile("images", "image4.jpg", "image/jpeg", "image data 4".getBytes());
 
         mockMvc.perform(multipart(PUT, "/v1/account/advertisements")
-                        .file(part)
+                        .file(textPart)
                         .file(image1)
                         .file(image2)
                         .file(image3)

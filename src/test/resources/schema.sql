@@ -13,7 +13,7 @@ create index image_hash_idx
 
 create table organizations
 (
-    is_deleted      boolean,
+    is_deleted      boolean default false,
     founded_at      timestamp(6),
     image_id        bigint,
     organization_id identity,
@@ -38,17 +38,13 @@ create table roles
 
 create table users
 (
-    is_deleted   boolean default false,
-    is_enabled   boolean default true,
-    user_id      identity,
-    email        varchar(255) not null,
-    middle_name  varchar(255),
-    first_name   varchar(255) not null,
-    last_name    varchar(255) not null,
-    phone_number varchar(255),
+    is_deleted boolean default false,
+    is_enabled boolean default false,
+    is_invited boolean default false,
+    user_id    identity,
+    email      varchar(255) not null,
     primary key (user_id),
-    unique (email),
-    unique (phone_number)
+    unique (email)
 );
 
 create table refresh_token
@@ -65,23 +61,46 @@ create table refresh_token
         foreign key (user_id) references users
 );
 
+create table positions
+(
+    position_id identity,
+    title       varchar(255),
+    authorities int default 0,
+    organization_id bigint,
+    primary key (position_id),
+    constraint fkjtx87i0j3498f2svedphegvdwcuy
+        foreign key (organization_id) references organizations
+);
+
+
 create table user_details
 (
+    active_orders_count     int default 0 ,
+    email                   varchar(255) not null,
+    last_name               varchar(255),
+    first_name              varchar(255),
+    middle_name             varchar(255),
+    phone_number            varchar(255),
     is_subscribed           boolean default true,
     subscription_end_date   date,
     subscription_start_date date,
-    details_id              bigint not null,
+    details_id              bigint       not null,
     image_id                bigint,
     last_seen_at            timestamp(6),
     organization_id         bigint,
+    position_id             bigint,
     registered_at           timestamp(6),
     primary key (details_id),
+    unique (phone_number),
+    unique (email),
     constraint fkkctijsa16thqtpecv5e7njug4
         foreign key (image_id) references image,
     constraint fkeijluvxgeb1mqhskvwflne7fu
         foreign key (organization_id) references organizations,
     constraint fkee49wu3twsclnm2pbvd3pq6n8
-        foreign key (details_id) references users
+        foreign key (details_id) references users,
+    constraint fkee49wu3twsclnm2pb3498q6n0
+        foreign key (position_id) references positions
 );
 
 create table abstract_advertisements
@@ -98,6 +117,26 @@ create table abstract_advertisements
     primary key (advertisement_id),
     constraint fk5pdy89af9tqcyu4f6iklwxg4m
         foreign key (published_by) references user_details
+);
+
+create table invitations
+(
+    invitation_id identity,
+    organization_id bigint,
+    position_id bigint,
+    inviter_id bigint,
+    invitee_id bigint,
+    invited_at date,
+    accepted_at date,
+    primary key (invitation_id),
+    constraint fkq3984umcwfh4p3w9fj32
+        foreign key (organization_id) references organizations,
+    constraint fkaksjdcmxwr943q29x2m1
+        foreign key (position_id) references positions,
+    constraint fkaksjdcmxwr943q29x2m2
+        foreign key (inviter_id) references user_details,
+    constraint fkaksjdcmxwr943q29x2m3
+        foreign key (invitee_id) references user_details
 );
 
 create table advertisement_image_junction

@@ -33,7 +33,7 @@ public class OrderController {
 
     @Operation(
             summary = "Get orders", description = "Retrieve all active or completed orders",
-            tags = {"get", "account", "order"},
+            tags = {"get", "account", "status"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad param"),
@@ -53,7 +53,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "Get order", description = "Retrieve one order by id", tags = {"get", "order", "account"},
+            summary = "Get status", description = "Retrieve one status by id", tags = {"get", "status", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
