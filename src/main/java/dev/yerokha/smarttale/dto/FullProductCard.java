@@ -4,17 +4,19 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record FullPurchase(
-        Long productId,
+public record FullProductCard(
+        Long advertisementId,
         String title,
         String description,
         BigDecimal price,
-        List<String> imageUrl,
+        List<String> imageUrls,
+        LocalDateTime publishedAt,
         LocalDateTime purchasedAt,
         Long publishedBy,
         String publisherName,
         String publisherAvatarUrl,
         String publisherPhoneNumber,
-        String publisherEmail
-) {
+        String publisherEmail,
+        long views
+) implements AdvertisementInterface {
 }
