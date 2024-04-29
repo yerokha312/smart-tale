@@ -17,13 +17,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-import static dev.yerokha.smarttale.service.TokenService.*;
+import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Marketplace", description = "EPs for marketplace")
 @RestController
@@ -72,7 +73,7 @@ public class MarketplaceController {
     }
 
     @Operation(
-            summary = "Purchase", description = "But a product by ad id", tags = {"post", "market"},
+            summary = "Purchase product", description = "Buy a product by ad id", tags = {"post", "market", "product"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -84,8 +85,26 @@ public class MarketplaceController {
     public ResponseEntity<String> purchase(@PathVariable Long advertisementId,
                                            Authentication authentication) {
 
-        advertisementService.purchase(advertisementId, getUserIdFromAuthToken(authentication));
+        advertisementService.purchaseProduct(advertisementId, getUserIdFromAuthToken(authentication));
 
         return ResponseEntity.ok("Purchase success");
+    }
+
+    @Operation(
+            summary = "Accept order", description = "Accept order by it's id", tags = {"put", "market", "order"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "410", description = "Already accepted"),
+            }
+    )
+    @PutMapping("/{advertisementId}")
+    public ResponseEntity<String> accept(@PathVariable Long advertisementId,
+                                         Authentication authentication) {
+
+        advertisementService.acceptOrder(advertisementId, getUserIdFromAuthToken(authentication));
+
+        return ResponseEntity.ok("Order accepted");
     }
 }

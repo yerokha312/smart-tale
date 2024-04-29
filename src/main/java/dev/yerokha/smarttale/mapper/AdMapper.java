@@ -4,8 +4,8 @@ import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.FullOrder;
-import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullOrderCard;
+import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.dto.Order;
 import dev.yerokha.smarttale.dto.OrderDto;
@@ -209,7 +209,8 @@ public class AdMapper {
         return new Result(imageUrls, avatar, user, publisherName);
     }
 
-    private record Result(List<String> imageUrls, Image avatar, UserDetailsEntity user, String publisherName) {}
+    private record Result(List<String> imageUrls, Image avatar, UserDetailsEntity user, String publisherName) {
+    }
 
     private static List<String> getImageUrls(List<Image> order) {
         List<String> imageUrls = new ArrayList<>();

@@ -18,6 +18,7 @@ import dev.yerokha.smarttale.mapper.AdMapper;
 import dev.yerokha.smarttale.repository.AdvertisementRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.ProductRepository;
+import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,19 +55,21 @@ public class AdvertisementService {
     private final ImageService imageService;
     private final UserService userService;
     private final MailService mailService;
+    private final UserDetailsRepository userDetailsRepository;
 
     private static final byte CLOSE = 1;
     private static final byte DISCLOSE = 2;
     private static final byte DELETE = 3;
     private static final byte RESTORE = 4;
 
-    public AdvertisementService(ProductRepository productRepository, OrderRepository orderRepository, AdvertisementRepository advertisementRepository, UserService userService, ImageService imageService, MailService mailService) {
+    public AdvertisementService(ProductRepository productRepository, OrderRepository orderRepository, AdvertisementRepository advertisementRepository, UserService userService, ImageService imageService, MailService mailService, UserDetailsRepository userDetailsRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
         this.mailService = mailService;
         this.userService = userService;
         this.imageService = imageService;
+        this.userDetailsRepository = userDetailsRepository;
     }
 
 
@@ -263,7 +267,7 @@ public class AdvertisementService {
 
         return switch (query) {
             case "orders" -> orderRepository
-                    .findAllByAcceptedByIsNullAndClosedFalseAndDeletedFalse(pageable)
+                    .findAllByAcceptedByIsNullAndIsClosedFalseAndIsDeletedFalse(pageable)
                     .map(AdMapper::mapToCards);
             case "products" -> productRepository
                     .findAllByPurchasedByIsNullAndIsClosedFalseAndIsDeletedFalse(pageable)
@@ -284,7 +288,7 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public void purchase(Long advertisementId, Long userId) {
+    public void purchaseProduct(Long advertisementId, Long userId) {
         ProductEntity product = (ProductEntity) getAdById(advertisementId);
 
         if (product.isClosed() || product.isDeleted()) {
@@ -311,4 +315,26 @@ public class AdvertisementService {
         ));
     }
 
+    @Transactional
+    public void acceptOrder(Long advertisementId, Long userId) {
+        OrderEntity order = (OrderEntity) getAdById(advertisementId);
+
+        if (order.isClosed() || order.isDeleted()) {
+            throw new NotFoundException("Advertisement not found");
+        }
+
+        if (order.getAcceptedAt() != null) {
+            throw new MissedException("You are late!");
+        }
+
+        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+
+        order.setAcceptedAt(LocalDate.now());
+        order.setAcceptedBy(user);
+        order.setPurchasedAt(LocalDateTime.now());
+        order.setStatus(NEW);
+        orderRepository.save(order);
+
+        userDetailsRepository.updateActiveOrdersCount(1, userId);
+    }
 }

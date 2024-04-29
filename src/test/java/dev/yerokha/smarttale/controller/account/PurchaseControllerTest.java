@@ -94,7 +94,7 @@ class PurchaseControllerTest {
         List<String> dates = JsonPath.read(content, "$.content[*].date");
 
         for (int i = 1; i < dates.size(); i++) {
-            assert dates.get(i - 1).compareTo(dates.get(i))  >= 0;
+            assert dates.get(i - 1).compareTo(dates.get(i)) >= 0;
         }
     }
 

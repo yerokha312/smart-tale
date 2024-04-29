@@ -2,8 +2,12 @@ package dev.yerokha.smarttale.controller.market;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.exception.NotFoundException;
+import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
@@ -23,12 +27,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -48,6 +54,9 @@ class MarketplaceControllerTest {
     ImageService imageService;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    UserDetailsRepository userDetailsRepository;
+
     final String APP_JSON = "application/json";
     public static String accessToken;
 
@@ -191,14 +200,119 @@ class MarketplaceControllerTest {
 
     @Test
     @Order(5)
-    void getPurchases_AfterPurchase() throws  Exception {
+    void getPurchases_AfterPurchase() throws Exception {
         mockMvc.perform(get("/v1/account/purchases")
-                .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(6))
                 );
+    }
+
+    @Test
+    @Order(6)
+    void getOrders() throws Exception {
+        mockMvc.perform(get("/v1/market?type=orders"))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.content", hasSize(1))
+                );
+    }
+
+    @Test
+    @Order(7)
+    void accept_Unauthorized() throws Exception {
+        mockMvc.perform(put("/v1/market/100040"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @Order(8)
+    void accept() throws Exception {
+        login("existing4@example.com");
+        mockMvc.perform(put("/v1/market/100040")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(9)
+    void accept_Should410() throws Exception {
+        mockMvc.perform(put("/v1/market/100040")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isGone());
+    }
+
+    @Test
+    @Order(10)
+    void testActiveOrdersCount() {
+        UserDetailsEntity user = userDetailsRepository.findById(100003L)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        assertThat(user.getActiveOrdersCount()).isEqualTo(1);
+    }
+
+    @Test
+    @Order(10)
+    void getOrders_Active_AfterAccept() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/account/orders")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "active"))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.content", hasSize(1))
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> acceptedDates = JsonPath.read(content, "$.content[*].date");
+        for (int i = 1; i < acceptedDates.size(); i++) {
+            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) > 0;
+        }
+    }
+
+    @Test
+    @Order(10)
+    void getOrders_Organization_AfterAccept() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/account/organization/orders")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(13)
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> acceptedDates = JsonPath.read(content, "$.content[*].acceptedAt");
+        for (int i = 1; i < acceptedDates.size(); i++) {
+            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) >= 0;
+        }
+    }
+
+    @Test
+    @Order(11)
+    void getEmployees_SortByOrders_AfterAccept() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/account/organization/employees?orders=desc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<List<CurrentOrder>> orders = JsonPath.read(content, "$.content[*].orderList");
+
+        for (int i = 1; i < orders.size(); i++) {
+            if (orders.get(i - 1) == null || orders.get(i) == null) {
+                continue;
+            }
+            assert orders.get(i - 1).size() >= orders.get(i).size();
+        }
+
     }
 
 }
