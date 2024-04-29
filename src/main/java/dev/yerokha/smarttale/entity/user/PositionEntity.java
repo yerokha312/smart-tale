@@ -41,13 +41,12 @@ public class PositionEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PositionEntity position = (PositionEntity) o;
-        return authorities == position.authorities && Objects.equals(
-                positionId, position.positionId) && Objects.equals(title, position.title);
+        PositionEntity that = (PositionEntity) o;
+        return Objects.equals(positionId, that.positionId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(positionId, title, authorities);
+        return Objects.hash(positionId);
     }
 }

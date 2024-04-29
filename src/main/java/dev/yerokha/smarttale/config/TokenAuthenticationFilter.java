@@ -16,9 +16,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static dev.yerokha.smarttale.util.EncryptionUtil.decrypt;
 import static dev.yerokha.smarttale.util.RedisUtil.containsKey;
 import static dev.yerokha.smarttale.util.RedisUtil.getValue;
-import static dev.yerokha.smarttale.util.TokenEncryptionUtil.decryptToken;
 
 @Component
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
@@ -58,7 +58,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                 String key = "access_token:" + email;
 
                 if (containsKey(key)) {
-                    String cachedToken = decryptToken((String) getValue(key));
+                    String cachedToken = decrypt((String) getValue(key));
                     final String tokenValue = accessToken.substring(7);
 
                     if (tokenValue.equals(cachedToken)) {

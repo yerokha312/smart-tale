@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.controller.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
@@ -17,6 +18,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -78,13 +81,21 @@ class PurchaseControllerTest {
     @Order(1)
     void getPurchases() throws Exception {
         login("existing3@example.com");
-        mockMvc.perform(get("/v1/account/purchases")
+        MvcResult result = mockMvc.perform(get("/v1/account/purchases")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(5))
-                );
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> dates = JsonPath.read(content, "$.content[*].date");
+
+        for (int i = 1; i < dates.size(); i++) {
+            assert dates.get(i - 1).compareTo(dates.get(i)) >= 0;
+        }
     }
 
     @Test

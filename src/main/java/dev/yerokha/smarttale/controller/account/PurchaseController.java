@@ -1,11 +1,14 @@
 package dev.yerokha.smarttale.controller.account;
 
-import dev.yerokha.smarttale.dto.FullPurchase;
-import dev.yerokha.smarttale.dto.Purchase;
+import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.FullOrderCard;
+import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
@@ -21,7 +24,7 @@ import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
-@Tag(name = "Purchase", description = "EPs for My purchases")
+@Tag(name = "Card", description = "EPs for My purchases")
 @RestController
 @RequestMapping("/v1/account/purchases")
 public class PurchaseController {
@@ -33,8 +36,8 @@ public class PurchaseController {
     }
 
     @Operation(
-            summary = "All purchases", description = "It's not clear what PO wants, made for purchased products(equipments)",
-            tags = {"purchase", "user", "get", "account"},
+            summary = "All purchases", description = "Returns orders and products which user paid for",
+            tags = {"purchase", "user", "get", "account", "order", "product"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
@@ -46,22 +49,27 @@ public class PurchaseController {
 
     )
     @GetMapping
-    public ResponseEntity<Page<Purchase>> getPurchases(Authentication authentication,
-                                                       @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<Page<Card>> getPurchases(Authentication authentication,
+                                                   @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(advertisementService.getPurchases(getUserIdFromAuthToken(authentication), params));
     }
 
     @Operation(
-            summary = "One purchase", description = "Get one purchase by unique id", tags = {"purchase", "user", "get", "account"},
+            summary = "One purchase", description = "Get one purchase by unique id",
+            tags = {"purchase", "user", "get", "account", "order", "product"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
+
+                    @ApiResponse(responseCode = "200", description = "Success Order", content = @Content(
+                            schema = @Schema(implementation = FullOrderCard.class))),
+                    @ApiResponse(responseCode = "200", description = "Success Product", content = @Content(
+                            schema = @Schema(implementation = FullProductCard.class))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Purchase not found", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content),
             }
     )
     @GetMapping("/{productId}")
-    public ResponseEntity<FullPurchase> getPurchase(Authentication authentication,
-                                                    @PathVariable Long productId) {
+    public ResponseEntity<AdvertisementInterface> getPurchase(Authentication authentication,
+                                                              @PathVariable Long productId) {
         return ResponseEntity.ok(advertisementService.getPurchase(getUserIdFromAuthToken(authentication), productId));
     }
 }

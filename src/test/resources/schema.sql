@@ -109,6 +109,7 @@ create table abstract_advertisements
     is_closed        boolean default false,
     price            numeric(38, 2),
     advertisement_id identity,
+    purchased_at     timestamp(6),
     published_at     timestamp(6),
     published_by     bigint,
     views            bigint  default 0,
@@ -127,7 +128,6 @@ create table invitations
     inviter_id bigint,
     invitee_id bigint,
     invited_at date,
-    accepted_at date,
     primary key (invitation_id),
     constraint fkq3984umcwfh4p3w9fj32
         foreign key (organization_id) references organizations,
@@ -174,7 +174,6 @@ alter table organizations
 create table products
 (
     advertisement_id bigint not null,
-    purchased_at     timestamp(6),
     purchased_by     bigint,
     primary key (advertisement_id),
     constraint fk5g5vs5tt1b74vcp32t3e8hfx4

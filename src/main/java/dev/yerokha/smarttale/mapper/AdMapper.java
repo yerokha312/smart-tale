@@ -1,14 +1,15 @@
 package dev.yerokha.smarttale.mapper;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.FullOrder;
+import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProduct;
-import dev.yerokha.smarttale.dto.FullPurchase;
+import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.dto.Order;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Product;
-import dev.yerokha.smarttale.dto.Purchase;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
@@ -16,6 +17,7 @@ import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,7 +101,7 @@ public class AdMapper {
         );
     }
 
-    public static Purchase mapToPurchaseDto(ProductEntity entity) {
+    public static Card mapToCards(Advertisement entity) {
         String imageUrl = null;
         List<Image> images = entity.getImages();
         if (images != null && !images.isEmpty()) {
@@ -109,32 +111,60 @@ public class AdMapper {
         Image avatar = publishedBy.getImage();
         String description = entity.getDescription();
         String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
-        return new Purchase(
+        String publisherAvatarUrl = avatar == null ? null : avatar.getImageUrl();
+        LocalDateTime date = entity.getPurchasedAt();
+
+        return new Card(
                 entity.getAdvertisementId(),
+                entity.getPublishedAt(),
                 entity.getTitle(),
                 truncatedDescription,
                 entity.getPrice(),
                 imageUrl,
-                entity.getPurchasedAt(),
                 publishedBy.getUserId(),
-                avatar == null ? null : avatar.getImageUrl()
+                publisherAvatarUrl,
+                date
         );
     }
 
-    public static FullPurchase mapToFullPurchase(ProductEntity entity) {
+    public static AdvertisementInterface mapToFullCard(Advertisement entity) {
         Result result = getResult(entity);
-        return new FullPurchase(
+        if (entity instanceof OrderEntity) {
+            UserDetailsEntity acceptedBy = ((OrderEntity) entity).getAcceptedBy();
+            return new FullOrderCard(
+                    entity.getAdvertisementId(),
+                    entity.getTitle(),
+                    entity.getDescription(),
+                    entity.getPrice(),
+                    result.imageUrls(),
+                    ((OrderEntity) entity).getSize(),
+                    entity.getPublishedAt(),
+                    ((OrderEntity) entity).getDeadlineAt(),
+                    acceptedBy.getUserId(),
+                    acceptedBy.getName(),
+                    acceptedBy.getImage() == null ? null : acceptedBy.getImage().getImageUrl(),
+                    result.user().getUserId(),
+                    result.publisherName(),
+                    result.avatar() == null ? null : result.avatar().getImageUrl(),
+                    result.user().getPhoneNumber(),
+                    result.user().getEmail(),
+                    entity.getViews()
+            );
+        }
+        return new FullProductCard(
                 entity.getAdvertisementId(),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getPrice(),
                 result.imageUrls(),
+                entity.getPublishedAt(),
                 entity.getPurchasedAt(),
                 result.user().getUserId(),
                 result.publisherName(),
                 result.avatar() == null ? null : result.avatar().getImageUrl(),
                 result.user().getPhoneNumber(),
-                result.user().getEmail()
+                result.user().getEmail(),
+                entity.getViews()
         );
     }
 

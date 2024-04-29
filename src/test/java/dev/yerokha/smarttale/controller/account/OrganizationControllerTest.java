@@ -8,6 +8,7 @@ import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -216,13 +217,13 @@ class OrganizationControllerTest {
                         content().string("Invite sent to test@example.com")
                 );
 
-        ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendInvitation(
                 eq("test@example.com"),
                 eq(null),
                 eq("Test Org"),
-                eq("PositionEntity 2")
-        );
+                eq("Position 2"),
+                linkCaptor.capture());
     }
 
     @Test
@@ -244,13 +245,13 @@ class OrganizationControllerTest {
                         content().string("Invite sent to existing8@example.com")
                 );
 
-        ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendInvitation(
                 eq("existing8@example.com"),
                 eq("ZEighth Existing Profile"),
                 eq("Test Org"),
-                eq("PositionEntity 2")
-        );
+                eq("Position 2"),
+                linkCaptor.capture());
 
     }
 
@@ -279,9 +280,7 @@ class OrganizationControllerTest {
             }
         };
 
-        for (int i = 1; i < names.size(); i++) {
-            assert nameComparator.compare(names.get(i - 1), names.get(i)) <= 0;
-        }
+        Assertions.assertThat(names).isSortedAccordingTo(nameComparator);
 
         List<String> statuses = JsonPath.read(content, "$.content[*].status");
 
