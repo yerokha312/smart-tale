@@ -90,4 +90,9 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(MissedException.class)
+    public ResponseEntity<String> handleMissedException(MissedException exception) {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.GONE);
+    }
+
 }

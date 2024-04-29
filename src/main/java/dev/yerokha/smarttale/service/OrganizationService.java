@@ -16,6 +16,7 @@ import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
+import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,8 @@ import static java.lang.Integer.parseInt;
 @Service
 public class OrganizationService {
 
+    private static final String REG_PAGE = "";
+    private static final String LOGIN_PAGE = "";
     private final OrderRepository orderRepository;
     private final MailService mailService;
     private final InvitationRepository invitationRepository;
@@ -138,7 +142,16 @@ public class OrganizationService {
     }
 
     private static String getPosition(UserDetailsEntity employee, Long organizationId) {
-        if (!employee.getOrganization().getOrganizationId().equals(organizationId) || employee.getName() == null) {
+        if (employee.getOrganization() == null) {
+            return Objects.requireNonNull(employee.getInvitations().stream()
+                            .filter(inv -> inv.getOrganization().getOrganizationId().equals(organizationId))
+                            .findFirst()
+                            .orElse(null))
+                    .getPosition()
+                    .getTitle();
+        }
+
+        if (!employee.getOrganization().getOrganizationId().equals(organizationId)) {
             return employee.getInvitations().stream()
                     .filter(inv -> inv.getOrganization().getOrganizationId().equals(organizationId))
                     .map(invitationEntity -> invitationEntity.getPosition().getTitle())
@@ -153,7 +166,8 @@ public class OrganizationService {
                                                        List<OrderStatus> inactiveStatuses,
                                                        Long organizationId) {
 
-        if (!employee.getOrganization().getOrganizationId().equals(organizationId)) {
+        OrganizationEntity organization = employee.getOrganization();
+        if ((organization == null) || !organization.getOrganizationId().equals(organizationId)) {
             return null;
         }
 
@@ -166,21 +180,33 @@ public class OrganizationService {
     public String inviteEmployee(Long inviterId, InviteRequest request) {
         UserDetailsEntity inviter = userDetailsRepository.findById(inviterId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+
         OrganizationEntity organization = inviter.getOrganization();
         PositionEntity position = positionRepository.findById(request.positionId())
                 .orElseThrow(() -> new NotFoundException("Position not found"));
-        UserDetailsEntity invitee = getInvitee(request, organization, position);
+
+        UserDetailsEntity invitee = getInvitee(request);
         InvitationEntity invitation = new InvitationEntity(LocalDate.now(), inviter, invitee, organization, position);
         invitationRepository.save(invitation);
+
+        String name = invitee.getName();
+        String code = EncryptionUtil.encrypt(String.valueOf(invitation.getInvitationId()));
+        String link = REG_PAGE + "?code=" + code;
+        if (name != null) {
+            link = LOGIN_PAGE + "?code=" + code;
+        }
+
         mailService.sendInvitation(request.email(),
-                invitee.getName(),
+                name,
                 organization.getName(),
-                position.getTitle());
+                position.getTitle(),
+                link);
+
         return request.email();
 
     }
 
-    private UserDetailsEntity getInvitee(InviteRequest request, OrganizationEntity organization, PositionEntity position) {
+    private UserDetailsEntity getInvitee(InviteRequest request) {
         return userDetailsRepository.findByEmail(request.email())
                 .orElseGet(() -> {
                     UserEntity newUser = new UserEntity();
@@ -190,8 +216,6 @@ public class OrganizationService {
                     UserDetailsEntity userDetails = new UserDetailsEntity();
                     userDetails.setUser(newUser);
                     userDetails.setEmail(request.email());
-                    userDetails.setOrganization(organization);
-                    userDetails.setPosition(position);
 
                     return userDetailsRepository.save(userDetails);
                 });

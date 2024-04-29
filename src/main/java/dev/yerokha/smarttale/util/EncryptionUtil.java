@@ -10,13 +10,13 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-public class TokenEncryptionUtil {
+public class EncryptionUtil {
 
     private static final String ENCRYPTION_ALGORITHM = "AES";
     private static final String ENCRYPTION_KEY = System.getenv("ENCRYPTION_KEY");
 
 
-    public static String encryptToken(String token) {
+    public static String encrypt(String token) {
         try {
             SecretKey secretKey = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ENCRYPTION_ALGORITHM);
             Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
@@ -29,7 +29,7 @@ public class TokenEncryptionUtil {
         }
     }
 
-    public static String decryptToken(String encryptedToken) {
+    public static String decrypt(String encryptedToken) {
         try {
             SecretKey secretKey = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ENCRYPTION_ALGORITHM);
             Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);

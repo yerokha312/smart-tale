@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class AuthenticationControllerTest {
+public class AuthenticationControllerTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -361,7 +361,7 @@ class AuthenticationControllerTest {
     }
 
 
-    static String extractToken(String responseContent, String tokenName) throws JSONException {
+    public static String extractToken(String responseContent, String tokenName) throws JSONException {
         JSONObject jsonResponse = new JSONObject(responseContent);
         return jsonResponse.getString(tokenName);
     }

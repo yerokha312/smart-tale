@@ -39,6 +39,9 @@ public class Advertisement {
     @JoinColumn(name = "published_by")
     private UserDetailsEntity publishedBy;
 
+    @Column(name = "purchased_at")
+    private LocalDateTime purchasedAt;
+
     @Column(name = "title", nullable = false, length = 250)
     private String title; //sort
 

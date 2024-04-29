@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.service.interfaces.NotificationService;
 import jakarta.mail.MessagingException;
@@ -15,6 +16,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.Map;
+
 
 @Service
 public class MailService implements NotificationService {
@@ -69,17 +71,33 @@ public class MailService implements NotificationService {
         send(ADMIN_EMAIL, "Запрос на подписку", emailBody);
     }
 
-    public void sendInvitation(String to, String name, String organization, String position) {
+    public void sendInvitation(String to, String name, String organization, String position, String link) {
         Context context = new Context();
         context.setVariables(Map.of(
                 "name", name,
                 "email", to,
                 "organization", organization,
-                "position", position));
+                "position", position,
+                "link", link));
 
         String emailBody = engine.process("invitation_letter", context);
 
         send(ADMIN_EMAIL, "Приглашение в организацию", emailBody);
     }
-}
 
+    public void sendPurchaseRequest(String to, PurchaseRequest request) {
+        Context context = new Context();
+        context.setVariables(Map.of(
+                "title", request.title(),
+                "description", request.description(),
+                "price", request.price(),
+                "email", request.requesterEmail(),
+                "phone", request.requesterPhoneNumber()
+        ));
+
+        String emailBody = engine.process("purchase_request_letter", context);
+
+        send(to, "Запрос о покупке", emailBody);
+    }
+
+}

@@ -15,12 +15,12 @@ INSERT INTO users (user_id, email, is_enabled) VALUES ( 100007, 'existing8@examp
 INSERT INTO organizations(organization_id, name) VALUES ( 100000, 'Test Org' );
 INSERT INTO organizations(organization_id, name) VALUES ( 100001, 'Second Test Org' );
 
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100000, 'PositionEntity 1', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100001, 'PositionEntity 2', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100002, 'PositionEntity 3', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'PositionEntity 4', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'PositionEntity 5', 100001 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'PositionEntity 6', 100001 );
+INSERT INTO positions (position_id, title, organization_id) VALUES ( 100000, 'Position 1', 100000 );
+INSERT INTO positions (position_id, title, organization_id) VALUES ( 100001, 'Position 2', 100000 );
+INSERT INTO positions (position_id, title, organization_id) VALUES ( 100002, 'Position 3', 100000 );
+INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'Position 4', 100000 );
+INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'Position 5', 100001 );
+INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'Position 6', 100001 );
 
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'Example', 'existing@example.com', '+7999999999');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567');
@@ -53,9 +53,12 @@ FROM
     generate_series(0, 9) AS t(n);
 
 -- imitate purchases for 5 products --
+UPDATE abstract_advertisements
+SET    purchased_at = CURRENT_TIMESTAMP
+WHERE advertisement_id IN (SELECT advertisement_id FROM abstract_advertisements LIMIT 5);
+
 UPDATE products
-SET purchased_by = 100002,
-    purchased_at = CURRENT_TIMESTAMP
+SET purchased_by = 100002
 WHERE advertisement_id IN (SELECT advertisement_id FROM products LIMIT 5);
 
 -- create additional 10 abstract ads --
@@ -160,4 +163,10 @@ INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status) VALUES
     ( 100037, 100007, DATEADD('DAY', -3, CURRENT_TIMESTAMP), '2'),
     ( 100038, 100007, DATEADD('DAY', -4, CURRENT_TIMESTAMP), '3'),
     ( 100039, 100007, DATEADD('DAY', -5, CURRENT_TIMESTAMP), '4');
+
+-- create 1 order --
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description) VALUES
+   ( 100040, DATEADD('HOUR', -1, CURRENT_TIMESTAMP), 100001, 'Order 30', 'Example description' );
+INSERT INTO orders (advertisement_id) VALUES
+    ( 100040 )
 
