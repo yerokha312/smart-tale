@@ -2,13 +2,17 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.dto.RegistrationRequest;
+import dev.yerokha.smarttale.entity.user.InvitationEntity;
+import dev.yerokha.smarttale.entity.user.Role;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
+import dev.yerokha.smarttale.enums.OrderStatus;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
+import dev.yerokha.smarttale.util.EncryptionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.stereotype.Service;
@@ -37,7 +41,8 @@ public class AuthenticationService {
     private static final SecureRandom random = new SecureRandom();
 
     public AuthenticationService(UserRepository userRepository,
-                                 RoleRepository roleRepository, MailService mailService, TokenService tokenService, InvitationRepository invitationRepository) {
+                                 RoleRepository roleRepository, MailService mailService, TokenService tokenService,
+                                 InvitationRepository invitationRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.mailService = mailService;
@@ -45,17 +50,16 @@ public class AuthenticationService {
         this.invitationRepository = invitationRepository;
     }
 
-    @Transactional
-    public String register(RegistrationRequest request) {
+    private String register(RegistrationRequest request) {
         String email = request.email().toLowerCase();
-        if (!isEmailAvailable(email)) {
+        boolean userIsInvited = isUserInvited(email);
+        if (!isEmailAvailable(email) && !userIsInvited) {
             throw new AlreadyTakenException(String.format("Email %s already taken", email));
         }
 
-        UserEntity entity = new UserEntity(
+        UserEntity user = new UserEntity(
                 email,
-                Set.of(roleRepository.findByAuthority("USER")
-                        .orElseThrow(() -> new NotFoundException("Role USER not found")))
+                getUserRole()
         );
 
         UserDetailsEntity details = new UserDetailsEntity(
@@ -64,12 +68,29 @@ public class AuthenticationService {
                 request.middleName(),
                 email
         );
-        setValue(email, entity, 5, TimeUnit.MINUTES);
+
+        if (userIsInvited) {
+            user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+            user.setInvited(false);
+            user.setAuthorities(getUserRole());
+            details = user.getDetails();
+            details.setLastName(request.lastName());
+            details.setFirstName(request.firstName());
+            details.setMiddleName(request.middleName());
+        }
+
+        setValue(email, user, 5, TimeUnit.MINUTES);
         setValue("details:" + email, details, 15, TimeUnit.MINUTES);
 
         sendVerificationEmail(email);
 
         return email;
+    }
+
+    private Set<Role> getUserRole() {
+        return Set.of(roleRepository.findByAuthority("USER")
+                .orElseThrow(() -> new NotFoundException("Role USER not found")));
     }
 
     public void sendVerificationEmail(String email) {
@@ -118,6 +139,10 @@ public class AuthenticationService {
         return userRepository.findByEmail(email).isEmpty();
     }
 
+    private boolean isUserInvited(String email) {
+        return invitationRepository.existsByInviteeEmail(email);
+    }
+
     public LoginResponse refreshToken(String refreshToken) {
         return tokenService.refreshAccessToken(refreshToken);
     }
@@ -135,18 +160,78 @@ public class AuthenticationService {
                 .collect(Collectors.joining());
     }
 
-    public String login(String email) {
+    private String login(String email) {
         UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException(String.format("Profile with email %s not found", email)));
+                .orElseThrow(() ->
+                        new NotFoundException(String.format("User with email %s not found", email)));
 
         if (!user.isEnabled()) {
-            if (!user.isInvited()) {
-                throw new DisabledException("Profile is not enabled");
-            }
+            throw new DisabledException("User is not enabled");
+        }
 
-            user.setEnabled(true);
-            invitationRepository.deleteAll(user.getDetails().getInvitations());
-            userRepository.save(user);
+        user.setVerificationCode(generateVerificationCode());
+
+        setValue(email, user, 15, TimeUnit.MINUTES);
+
+        sendVerificationEmail(email);
+
+        return String.format("Code generated, email sent to %s", email);
+    }
+
+    @Transactional
+    public String register(RegistrationRequest request, String code) {
+        if (code == null) {
+            return register(request);
+        }
+
+        UserEntity user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        UserDetailsEntity details = user.getDetails();
+
+        InvitationEntity invitation = invitationRepository.findById(
+                        Long.valueOf(EncryptionUtil.decrypt(code)))
+                .orElseThrow(() -> new NotFoundException("Invitation not found"));
+
+        user.setAuthorities(getUserRole());
+        user.setEnabled(true);
+        user.setInvited(false);
+        details.setLastName(request.lastName());
+        details.setFirstName(request.firstName());
+        details.setMiddleName(request.middleName());
+        details.setOrganization(invitation.getOrganization());
+        details.setPosition(invitation.getPosition());
+        details.setRegisteredAt(LocalDateTime.now());
+
+        userRepository.save(user);
+        invitationRepository.deleteAll(details.getInvitations());
+
+        return "Registered successfully. Please log in";
+    }
+
+    @Transactional
+    public String login(String email, String code) {
+        if (code == null) {
+            return login(email);
+        }
+
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new NotFoundException(String.format("User with email %s not found", email)));
+
+        InvitationEntity invitation = invitationRepository.findById(
+                        Long.valueOf(EncryptionUtil.decrypt(code)))
+                .orElseThrow(() -> new NotFoundException("Invitation not found"));
+
+        UserDetailsEntity details = user.getDetails();
+        details.setOrganization(invitation.getOrganization());
+        details.setPosition(invitation.getPosition());
+        details.getAcceptedOrders().removeIf(order -> !order.getStatus().equals(OrderStatus.ARRIVED));
+
+        userRepository.save(user);
+        invitationRepository.deleteAll(details.getInvitations());
+
+        if (!user.isEnabled()) {
+            throw new DisabledException("User is not enabled");
         }
 
         user.setVerificationCode(generateVerificationCode());
@@ -158,3 +243,30 @@ public class AuthenticationService {
         return String.format("Code generated, email sent to %s", email);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

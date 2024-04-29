@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Data
 @Entity
@@ -43,9 +44,6 @@ public class InvitationEntity {
     @JoinColumn(name = "position_id")
     private PositionEntity position;
 
-    @Column(name = "accepted_at")
-    private LocalDate acceptedAt;
-
     public InvitationEntity() {
     }
 
@@ -55,5 +53,18 @@ public class InvitationEntity {
         this.invitee = invitee;
         this.organization = organization;
         this.position = position;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InvitationEntity that = (InvitationEntity) o;
+        return Objects.equals(invitee, that.invitee) && Objects.equals(position, that.position);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(invitee, position);
     }
 }

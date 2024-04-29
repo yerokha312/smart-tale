@@ -18,6 +18,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.HashSet;
@@ -44,6 +46,7 @@ public class UserEntity implements UserDetails {
 
     @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)
+    @Fetch(FetchMode.JOIN)
     @JoinTable(
             name = "user_role_junction",
             joinColumns = @JoinColumn(name = "user_id"),

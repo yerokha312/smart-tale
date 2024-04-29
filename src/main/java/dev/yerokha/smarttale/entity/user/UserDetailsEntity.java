@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.entity.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.yerokha.smarttale.entity.Image;
@@ -24,6 +25,7 @@ import lombok.ToString;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -55,8 +57,8 @@ public class UserDetailsEntity {
     @JoinColumn(name = "position_id")
     private PositionEntity position;
 
-    @OneToMany(mappedBy = "invitee")
-    private List<InvitationEntity> invitations;
+    @OneToMany(mappedBy = "invitee", cascade = CascadeType.ALL)
+    private Set<InvitationEntity> invitations;
 
     @JsonManagedReference
     @ToString.Exclude
@@ -72,9 +74,6 @@ public class UserDetailsEntity {
     @OneToMany(mappedBy = "publishedBy")
     private List<ProductEntity> products;
 
-    @OneToMany(mappedBy = "purchasedBy")
-    private List<ProductEntity> purchases;
-
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
@@ -89,8 +88,9 @@ public class UserDetailsEntity {
     @JoinColumn(name = "image_id")
     private Image image;
 
+    @JsonIgnore
     @Column(name = "registered_at")
-    private LocalDateTime registeredAt;
+    private LocalDateTime registeredAt = LocalDateTime.now();
 
     @Column(name = "last_seen_at")
     private LocalDateTime lastSeenAt;
