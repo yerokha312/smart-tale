@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface AdvertisementRepository extends JpaRepository<Advertisement, Long> {
 
     Page<Advertisement> findAllByPublishedByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
+
     Optional<Advertisement> findByPublishedByUserIdAndAdvertisementId(Long userId, Long advertisementId);
 
     @Query("SELECT a " +

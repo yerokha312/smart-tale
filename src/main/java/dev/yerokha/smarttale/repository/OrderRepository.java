@@ -22,6 +22,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     Page<OrderEntity> findAllByAcceptedByUserIdInAndStatusNotIn(Set<Long> employeeIds, List<OrderStatus> orderStatuses, Pageable pageable);
 
-    Page<OrderEntity> findAllByAcceptedByIsNullAndClosedFalseAndDeletedFalse(Pageable pageable);
+    Page<OrderEntity> findAllByAcceptedByIsNullAndIsClosedFalseAndIsDeletedFalse(Pageable pageable);
 
 }

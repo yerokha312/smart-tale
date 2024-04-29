@@ -16,9 +16,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static dev.yerokha.smarttale.util.EncryptionUtil.decrypt;
 import static dev.yerokha.smarttale.util.RedisUtil.containsKey;
 import static dev.yerokha.smarttale.util.RedisUtil.getValue;
-import static dev.yerokha.smarttale.util.EncryptionUtil.decrypt;
 
 @Component
 public class TokenAuthenticationFilter extends OncePerRequestFilter {

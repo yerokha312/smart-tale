@@ -22,11 +22,11 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static dev.yerokha.smarttale.util.EncryptionUtil.decrypt;
+import static dev.yerokha.smarttale.util.EncryptionUtil.encrypt;
 import static dev.yerokha.smarttale.util.RedisUtil.containsKey;
 import static dev.yerokha.smarttale.util.RedisUtil.deleteKey;
 import static dev.yerokha.smarttale.util.RedisUtil.setValue;
-import static dev.yerokha.smarttale.util.EncryptionUtil.decrypt;
-import static dev.yerokha.smarttale.util.EncryptionUtil.encrypt;
 
 @Service
 public class TokenService {

@@ -1,8 +1,8 @@
 package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;

@@ -6,4 +6,5 @@ public record PurchaseRequest(
         String price,
         String requesterEmail,
         String requesterPhoneNumber
-) {}
+) {
+}
