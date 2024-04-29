@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Подтверждение регистрации</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #FA9E31;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            background-color: #FA9E31;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header {
+            background-color: #FA9E31;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .content {
+            width: 60%;
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        a {
+            display: inline-block;
+            background-color: #FA9E31;
+            color: #fff;
+            padding: 10px;
+            text-decoration: none;
+            margin: 10px 0;
+        }
+
+        img {
+            width: 30%;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .content {
+                width: 100%;
+                text-align: center;
+                padding: 10px;
+            }
+
+            img {
+                width: 50%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <img src="https://imageup.ru/img208/4763490/cookscorner.png" alt="" />
+    <div class="content">
+        <div class="header">
+            <h1>Запрос о покупке</h1>
+        </div>
+        <p>Пришел запрос о покупке оборудования.</p>
+        <p>Название: <span th:text="${title}"></span> </p>
+        <p>Описание: <span th:text="${description}"></span> </p>
+        <p>Цена: <span th:text="${price}"></span> </p>
+        <p>Почтовый ящик: <span th:text="${email}"></span></p>
+        <p>Номер телефона: <span th:text="${phone}"></span></p>
+    </div>
+</div>
+</body>
+
+</html>

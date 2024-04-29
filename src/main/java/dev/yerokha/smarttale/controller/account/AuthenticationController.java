@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Authentication", description = "Controller for reg/login/verification etc")
@@ -39,15 +40,14 @@ public class AuthenticationController {
             }
     )
     @PostMapping("/registration")
-    public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
+    public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request,
+                                           @RequestParam(value = "code", required = false) String code) {
 
         if (!request.isValid()) {
             throw new IllegalArgumentException("Name fields should be either all Latin or all Cyrillic");
         }
 
-        String email = authenticationService.register(request);
-        return new ResponseEntity<>(String.format(
-                "Code generated, email sent to %s", email), HttpStatus.CREATED);
+        return new ResponseEntity<>(authenticationService.register(request, code), HttpStatus.CREATED);
     }
 
     @Operation(
@@ -70,7 +70,7 @@ public class AuthenticationController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email confirmed successfully"),
                     @ApiResponse(responseCode = "400", description = "Invalid code", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
             }
 
     )
@@ -84,7 +84,7 @@ public class AuthenticationController {
             tags = {"authentication", "post"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email sent"),
-                    @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
             }
     )
     @PostMapping("/resend-verification")
@@ -93,9 +93,20 @@ public class AuthenticationController {
         return ResponseEntity.ok(String.format("Code generated, email sent to %s", email));
     }
 
+    @Operation(
+            summary = "Login", description = "EP for sending verification code to email",
+            tags = {"post", "authentication"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Email sent"),
+                    @ApiResponse(responseCode = "400", description = "Bad email"),
+                    @ApiResponse(responseCode = "401", description = "User is not enabled (email not verified)"),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+            }
+    )
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid @Email String email) {
-        return ResponseEntity.ok(authenticationService.login(email));
+    public ResponseEntity<String> login(@RequestBody @Valid @Email String email,
+                                        @RequestParam(name = "code", required = false) String code) {
+        return ResponseEntity.ok(authenticationService.login(email, code));
     }
 
 
