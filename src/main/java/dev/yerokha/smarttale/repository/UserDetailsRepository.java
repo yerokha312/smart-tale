@@ -17,9 +17,6 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
 
     Optional<UserDetailsEntity> findByEmail(String email);
 
-//    Page<UserDetailsEntity> findAllByOrganizationOrganizationIdOrInvitationsOrganizationOrganizationId(
-//            Long orgId, Long organizationId, Pageable pageable);
-
     @Query("SELECT DISTINCT ud FROM UserDetailsEntity ud " +
             "LEFT JOIN ud.invitations inv " +
             "LEFT JOIN ud.organization org " +

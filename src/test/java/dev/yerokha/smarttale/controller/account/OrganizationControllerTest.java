@@ -216,13 +216,13 @@ class OrganizationControllerTest {
                         content().string("Invite sent to test@example.com")
                 );
 
-        ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendInvitation(
                 eq("test@example.com"),
                 eq(null),
                 eq("Test Org"),
-                eq("PositionEntity 2")
-        );
+                eq("PositionEntity 2"),
+                linkCaptor.capture());
     }
 
     @Test
@@ -244,13 +244,13 @@ class OrganizationControllerTest {
                         content().string("Invite sent to existing8@example.com")
                 );
 
-        ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendInvitation(
                 eq("existing8@example.com"),
                 eq("ZEighth Existing Profile"),
                 eq("Test Org"),
-                eq("PositionEntity 2")
-        );
+                eq("PositionEntity 2"),
+                linkCaptor.capture());
 
     }
 

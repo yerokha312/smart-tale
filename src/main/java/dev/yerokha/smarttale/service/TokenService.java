@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import static dev.yerokha.smarttale.util.RedisUtil.containsKey;
 import static dev.yerokha.smarttale.util.RedisUtil.deleteKey;
 import static dev.yerokha.smarttale.util.RedisUtil.setValue;
-import static dev.yerokha.smarttale.util.TokenEncryptionUtil.decryptToken;
-import static dev.yerokha.smarttale.util.TokenEncryptionUtil.encryptToken;
+import static dev.yerokha.smarttale.util.EncryptionUtil.decrypt;
+import static dev.yerokha.smarttale.util.EncryptionUtil.encrypt;
 
 @Service
 public class TokenService {
@@ -47,7 +47,7 @@ public class TokenService {
     public String generateAccessToken(UserEntity entity) {
         String accessToken = generateToken(entity, ACCESS_TOKEN_EXPIRATION, TokenType.ACCESS);
         setValue("access_token:" + entity.getUsername(),
-                encryptToken(accessToken),
+                encrypt(accessToken),
                 ACCESS_TOKEN_EXPIRATION,
                 TimeUnit.MINUTES);
         return accessToken;
@@ -55,7 +55,7 @@ public class TokenService {
 
     public String generateRefreshToken(UserEntity entity) {
         String refreshToken = generateToken(entity, REFRESH_TOKEN_EXPIRATION, TokenType.REFRESH);
-        String encryptedToken = encryptToken("Bearer " + refreshToken);
+        String encryptedToken = encrypt("Bearer " + refreshToken);
         RefreshToken refreshTokenEntity = new RefreshToken(
                 encryptedToken,
                 entity,
@@ -155,7 +155,7 @@ public class TokenService {
                 TokenType.ACCESS);
         String token = encodeToken(claims);
         String key = "access_token:" + email;
-        setValue(key, encryptToken(token), ACCESS_TOKEN_EXPIRATION, TimeUnit.MINUTES);
+        setValue(key, encrypt(token), ACCESS_TOKEN_EXPIRATION, TimeUnit.MINUTES);
         return new LoginResponse(
                 token,
                 refreshToken.substring(7),
@@ -172,7 +172,7 @@ public class TokenService {
         }
 
         for (RefreshToken token : tokenList) {
-            if (refreshToken.equals(decryptToken(token.getToken()))) {
+            if (refreshToken.equals(decrypt(token.getToken()))) {
                 return false;
             }
         }
@@ -193,7 +193,7 @@ public class TokenService {
         }
         List<RefreshToken> notRevokedByUsername = tokenRepository.findNotRevokedByEmail(email);
         for (RefreshToken refreshToken : notRevokedByUsername) {
-            if (token.equals(decryptToken(refreshToken.getToken()))) {
+            if (token.equals(decrypt(refreshToken.getToken()))) {
                 refreshToken.setRevoked(true);
                 tokenRepository.save(refreshToken);
                 return;

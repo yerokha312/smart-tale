@@ -1,15 +1,18 @@
 package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.FullPurchase;
+import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.OrderDto;
-import dev.yerokha.smarttale.dto.Purchase;
+import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
+import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.exception.MissedException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
 import dev.yerokha.smarttale.repository.AdvertisementRepository;
@@ -21,8 +24,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +39,7 @@ import static dev.yerokha.smarttale.enums.OrderStatus.CHECKING;
 import static dev.yerokha.smarttale.enums.OrderStatus.DISPATCHED;
 import static dev.yerokha.smarttale.enums.OrderStatus.IN_PROGRESS;
 import static dev.yerokha.smarttale.enums.OrderStatus.NEW;
+import static dev.yerokha.smarttale.mapper.AdMapper.mapToFullCard;
 import static dev.yerokha.smarttale.mapper.AdMapper.toDto;
 import static dev.yerokha.smarttale.mapper.AdMapper.toFullDto;
 import static java.lang.Integer.parseInt;
@@ -45,25 +51,26 @@ public class AdvertisementService {
     private final OrderRepository orderRepository;
     private final AdvertisementRepository advertisementRepository;
     private final ImageService imageService;
+    private final UserService userService;
+    private final MailService mailService;
 
     private static final byte CLOSE = 1;
     private static final byte DISCLOSE = 2;
     private static final byte DELETE = 3;
     private static final byte RESTORE = 4;
 
-    public AdvertisementService(ProductRepository productRepository, OrderRepository orderRepository, AdvertisementRepository advertisementRepository, ImageService imageService) {
+    public AdvertisementService(ProductRepository productRepository, OrderRepository orderRepository, AdvertisementRepository advertisementRepository, UserService userService, ImageService imageService, MailService mailService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
+        this.mailService = mailService;
+        this.userService = userService;
         this.imageService = imageService;
     }
 
 
     public Page<AdvertisementInterface> getAds(Long userId, Map<String, String> params) {
-        Pageable pageable = PageRequest.of(
-                parseInt(params.getOrDefault("page", "0")),
-                parseInt(params.getOrDefault("size", "10")),
-                Sort.by(Sort.Direction.DESC, "publishedAt"));
+        Pageable pageable = getPageable(params);
 
         String query = params.get("q");
 
@@ -78,8 +85,9 @@ public class AdvertisementService {
         return getAllAds(userId, pageable);
     }
 
+    // get Ads from account / my advertisements
     private Page<AdvertisementInterface> getAllAds(Long userId, Pageable pageable) {
-        Page<Advertisement> ads = advertisementRepository.findAllByPublishedByUserId(userId, pageable);
+        Page<Advertisement> ads = advertisementRepository.findAllByPublishedByUserIdAndIsDeletedFalse(userId, pageable);
         List<AdvertisementInterface> modifiedAds = ads.getContent().stream()
                 .map(ad -> {
                     if (ad instanceof OrderEntity order) {
@@ -91,16 +99,17 @@ public class AdvertisementService {
         return new PageImpl<>(modifiedAds, pageable, ads.getTotalElements());
     }
 
-    private Page<AdvertisementInterface> getProducts(Long userIdFromAuthToken, Pageable pageable) {
-        return productRepository.findAllByPublishedByUserId(userIdFromAuthToken, pageable)
+    private Page<AdvertisementInterface> getProducts(Long userId, Pageable pageable) {
+        return productRepository.findAllByPublishedByUserIdAndIsDeletedFalse(userId, pageable)
                 .map(AdMapper::toDto);
     }
 
-    private Page<AdvertisementInterface> getOrders(Long userIdFromAuthToken, Pageable pageable) {
-        return orderRepository.findAllByPublishedByUserId(userIdFromAuthToken, pageable)
+    private Page<AdvertisementInterface> getOrders(Long userId, Pageable pageable) {
+        return orderRepository.findAllByPublishedByUserIdAndIsDeletedFalse(userId, pageable)
                 .map(AdMapper::toDto);
     }
 
+    // get Ad of user from Personal account / My advertisements
     public AdvertisementInterface getAd(Long userId, Long advertisementId) {
         return toFullDto(getAdEntity(userId, advertisementId));
     }
@@ -186,19 +195,19 @@ public class AdvertisementService {
         }
     }
 
-    public Page<Purchase> getPurchases(Long userId, Map<String, String> params) {
+    public Page<Card> getPurchases(Long userId, Map<String, String> params) {
         Pageable pageable = PageRequest.of(
                 Integer.parseInt(params.getOrDefault("page", "0")),
-                Integer.parseInt(params.getOrDefault("size", "8")),
-                Sort.by(Sort.Direction.DESC, "purchasedAt"));
-        return productRepository.findAllByPurchasedByUserId(userId, pageable)
-                .map(AdMapper::mapToPurchaseDto);
+                Integer.parseInt(params.getOrDefault("size", "8")));
+
+        return advertisementRepository.findUserPurchases(userId, pageable)
+                .map(AdMapper::mapToCards);
     }
 
-    public FullPurchase getPurchase(Long userId, Long productId) {
-        return AdMapper.mapToFullPurchase(productRepository
+    public AdvertisementInterface getPurchase(Long userId, Long productId) {
+        return AdMapper.mapToFullCard(productRepository
                 .findByPurchasedByUserIdAndAdvertisementId(userId, productId)
-                .orElseThrow(() -> new NotFoundException("Purchase not found")));
+                .orElseThrow(() -> new NotFoundException("Card not found")));
     }
 
     public Page<SmallOrder> getOrders(Long userId, Map<String, String> params) {
@@ -232,4 +241,74 @@ public class AdvertisementService {
         return AdMapper.toOrderDto(orderRepository.findByAcceptedByUserIdAndAdvertisementId(userId, orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found")));
     }
+
+    private static Pageable getPageable(Map<String, String> params) {
+        return PageRequest.of(
+                parseInt(params.getOrDefault("page", "0")),
+                parseInt(params.getOrDefault("size", "10")),
+                Sort.by(Sort.Direction.DESC, "publishedAt"));
+    }
+
+    private Advertisement getAdById(Long advertisementId) {
+        return advertisementRepository
+                .findById(advertisementId)
+                .orElseThrow(() -> new NotFoundException("Advertisement not found"));
+    }
+
+    // get Ads for marketplace
+    public Page<Card> getAds(Map<String, String> params) {
+        Pageable pageable = getPageable(params);
+
+        String query = params.get("type");
+
+        return switch (query) {
+            case "orders" -> orderRepository
+                    .findAllByAcceptedByIsNullAndClosedFalseAndDeletedFalse(pageable)
+                    .map(AdMapper::mapToCards);
+            case "products" -> productRepository
+                    .findAllByPurchasedByIsNullAndIsClosedFalseAndIsDeletedFalse(pageable)
+                    .map(AdMapper::mapToCards);
+            default -> throw new IllegalStateException("Unexpected value: " + query);
+        };
+
+    }
+
+    // get Ad for marketplace
+    public AdvertisementInterface getAd(Long advertisementId) {
+        Advertisement advertisement = getAdById(advertisementId);
+        if (advertisement.isClosed() || advertisement.isDeleted() || advertisement.getPurchasedAt() != null) {
+            throw new NotFoundException("Advertisement not found");
+        }
+
+        return mapToFullCard(advertisement);
+    }
+
+    @Transactional
+    public void purchase(Long advertisementId, Long userId) {
+        ProductEntity product = (ProductEntity) getAdById(advertisementId);
+
+        if (product.isClosed() || product.isDeleted()) {
+            throw new NotFoundException("Advertisement not found");
+        }
+
+        if (product.getPurchasedAt() != null) {
+            throw new MissedException("You are late!");
+        }
+
+        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+
+        product.setPurchasedAt(LocalDateTime.now());
+        product.setPurchasedBy(user);
+        productRepository.save(product);
+
+        String price = product.getPrice() == null ? "" : product.getPrice().toString();
+        mailService.sendPurchaseRequest(product.getPurchasedBy().getEmail(), new PurchaseRequest(
+                product.getTitle(),
+                product.getDescription(),
+                price,
+                user.getEmail(),
+                user.getPhoneNumber()
+        ));
+    }
+
 }

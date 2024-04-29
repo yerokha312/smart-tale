@@ -53,9 +53,12 @@ FROM
     generate_series(0, 9) AS t(n);
 
 -- imitate purchases for 5 products --
+UPDATE abstract_advertisements
+SET    purchased_at = CURRENT_TIMESTAMP
+WHERE advertisement_id IN (SELECT advertisement_id FROM abstract_advertisements LIMIT 5);
+
 UPDATE products
-SET purchased_by = 100002,
-    purchased_at = CURRENT_TIMESTAMP
+SET purchased_by = 100002
 WHERE advertisement_id IN (SELECT advertisement_id FROM products LIMIT 5);
 
 -- create additional 10 abstract ads --

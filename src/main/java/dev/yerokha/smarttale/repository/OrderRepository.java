@@ -14,12 +14,14 @@ import java.util.Set;
 @Repository
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
-    Page<OrderEntity> findAllByPublishedByUserId(Long userId, Pageable pageable);
+    Page<OrderEntity> findAllByPublishedByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
 
     Page<OrderEntity> findAllByAcceptedByUserIdAndStatusNotIn(Long userId, List<OrderStatus> orderStatuses, Pageable pageable);
 
     Optional<OrderEntity> findByAcceptedByUserIdAndAdvertisementId(Long userId, Long orderId);
 
     Page<OrderEntity> findAllByAcceptedByUserIdInAndStatusNotIn(Set<Long> employeeIds, List<OrderStatus> orderStatuses, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByIsNullAndClosedFalseAndDeletedFalse(Pageable pageable);
 
 }
