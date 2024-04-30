@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -110,7 +111,7 @@ public class AdvertisementController {
     }
 
     @Operation(
-            summary = "Update ad", description = "EP for updating an advertisement",
+            summary = "Update ad", description = "EP for updating an advertisement. Send date as string format: yyyy-MM-dd",
             tags = {"advertisement", "user", "put", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -121,7 +122,7 @@ public class AdvertisementController {
     )
     @PutMapping
     public ResponseEntity<String> updateAd(Authentication authentication,
-                                           @RequestPart("dto") UpdateAdRequest request,
+                                           @RequestPart("dto") @Valid UpdateAdRequest request,
                                            @RequestPart(value = "images",
                                                    required = false) List<MultipartFile> files) {
 

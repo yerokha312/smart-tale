@@ -24,7 +24,7 @@ import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
-@Tag(name = "Card", description = "EPs for My purchases")
+@Tag(name = "Purchases", description = "EPs for My purchases")
 @RestController
 @RequestMapping("/v1/account/purchases")
 public class PurchaseController {
@@ -64,7 +64,7 @@ public class PurchaseController {
                     @ApiResponse(responseCode = "200", description = "Success Product", content = @Content(
                             schema = @Schema(implementation = FullProductCard.class))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Purchase not found", content = @Content),
             }
     )
     @GetMapping("/{productId}")
