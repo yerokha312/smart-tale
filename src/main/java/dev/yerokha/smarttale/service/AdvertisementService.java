@@ -212,7 +212,7 @@ public class AdvertisementService {
     public AdvertisementInterface getPurchase(Long userId, Long productId) {
         return AdMapper.mapToFullCard(productRepository
                 .findByPurchasedByUserIdAndAdvertisementId(userId, productId)
-                .orElseThrow(() -> new NotFoundException("Purchase not found")));
+                .orElseThrow(() -> new NotFoundException("Card not found")));
     }
 
     public Page<SmallOrder> getOrders(Long userId, Map<String, String> params) {
