@@ -94,7 +94,7 @@ public class AccountController {
         return ResponseEntity.ok("Avatar updated successfully!");
     }
 
-    static void validateImage(MultipartFile file) {
+    public static void validateImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is not provided");
         }

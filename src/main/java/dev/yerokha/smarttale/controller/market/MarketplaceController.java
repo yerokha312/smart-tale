@@ -1,7 +1,9 @@
 package dev.yerokha.smarttale.controller.market;
 
+import dev.yerokha.smarttale.controller.account.AccountController;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.CreateAdRequest;
 import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
@@ -11,7 +13,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,8 +24,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
@@ -82,7 +89,7 @@ public class MarketplaceController {
             }
     )
     @PostMapping("/{advertisementId}")
-    public ResponseEntity<String> purchase(@PathVariable Long advertisementId,
+    public ResponseEntity<String> purchaseProduct(@PathVariable Long advertisementId,
                                            Authentication authentication) {
 
         advertisementService.purchaseProduct(advertisementId, getUserIdFromAuthToken(authentication));
@@ -100,11 +107,40 @@ public class MarketplaceController {
             }
     )
     @PutMapping("/{advertisementId}")
-    public ResponseEntity<String> accept(@PathVariable Long advertisementId,
+    public ResponseEntity<String> acceptOrder(@PathVariable Long advertisementId,
                                          Authentication authentication) {
 
         advertisementService.acceptOrder(advertisementId, getUserIdFromAuthToken(authentication));
 
         return ResponseEntity.ok("Order accepted");
+    }
+
+    @Operation(
+            summary = "Place advertisement", description = "Create Order or Product. Send date as string format: yyyy-MM-dd",
+            tags = {"post", "market", "order", "product"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Ad created"),
+                    @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content),
+            }
+    )
+    @PostMapping
+    public ResponseEntity<String> placeAdvertisement(@RequestPart("dto") @Valid CreateAdRequest request,
+                                                     @RequestPart("images")List<MultipartFile> files,
+                                                     Authentication authentication) {
+
+        if (files != null && !files.isEmpty()) {
+            if (files.size() > 5) {
+                throw new IllegalArgumentException("You can not upload more than 5 images");
+            }
+            for (MultipartFile file : files) {
+                AccountController.validateImage(file);
+            }
+        }
+
+        advertisementService.createAd(request, files, getUserIdFromAuthToken(authentication));
+
+        return new ResponseEntity<>("Advertisement placed successfully", HttpStatus.CREATED);
     }
 }

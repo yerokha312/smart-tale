@@ -24,7 +24,7 @@ import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
-@Tag(name = "Card", description = "EPs for My purchases")
+@Tag(name = "Purchases", description = "EPs for My purchases")
 @RestController
 @RequestMapping("/v1/account/purchases")
 public class PurchaseController {

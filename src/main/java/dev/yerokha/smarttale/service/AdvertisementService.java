@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.CreateAdRequest;
 import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
@@ -336,5 +337,57 @@ public class AdvertisementService {
         orderRepository.save(order);
 
         userDetailsRepository.updateActiveOrdersCount(1, userId);
+    }
+
+    @Transactional
+    public void createAd(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+        if (request.type().equals("order")) {
+            createOrder(request, files, userId);
+            return;
+        }
+
+        createProduct(request, files, userId);
+    }
+
+    private void createOrder(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+        OrderEntity order = new OrderEntity();
+
+        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+
+        order.setPublishedBy(user);
+        order.setTitle(request.title());
+        order.setDescription(request.description());
+        order.setPrice(request.price());
+        order.setPublishedAt(LocalDateTime.now());
+        order.setSize(request.size());
+        order.setDeadlineAt(request.deadline());
+
+        if (files != null && !files.isEmpty()) {
+            order.setImages(files.stream()
+                    .map(imageService::processImage)
+                    .toList());
+        }
+
+        orderRepository.save(order);
+    }
+
+    private void createProduct(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+        ProductEntity product = new ProductEntity();
+
+        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+
+        product.setPublishedBy(user);
+        product.setTitle(request.title());
+        product.setDescription(request.description());
+        product.setPrice(request.price());
+        product.setPublishedAt(LocalDateTime.now());
+
+        if (files != null && !files.isEmpty()) {
+            product.setImages(files.stream()
+                    .map(imageService::processImage)
+                    .toList());
+        }
+
+        productRepository.save(product);
     }
 }

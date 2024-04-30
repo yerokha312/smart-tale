@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.controller.market;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import dev.yerokha.smarttale.dto.CreateAdRequest;
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
@@ -21,9 +22,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
@@ -33,6 +37,7 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -114,7 +119,7 @@ class MarketplaceControllerTest {
 
     @Test
     @Order(1)
-    void getProducts() throws Exception {
+    void getMarketProducts() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/market?type=products"))
                 .andExpectAll(
                         status().isOk(),
@@ -212,7 +217,7 @@ class MarketplaceControllerTest {
 
     @Test
     @Order(6)
-    void getOrders() throws Exception {
+    void getMarketOrders() throws Exception {
         mockMvc.perform(get("/v1/market?type=orders"))
                 .andExpectAll(
                         status().isOk(),
@@ -315,4 +320,95 @@ class MarketplaceControllerTest {
 
     }
 
+    @Test
+    @Order(12)
+    void placeOrder() throws Exception {
+        CreateAdRequest request = new CreateAdRequest(
+                "order",
+                "Created Order",
+                "Description of created Order",
+                BigDecimal.valueOf(2000),
+                "Regular size",
+                LocalDate.parse("2024-10-10")
+        );
+
+        MockMultipartFile textPart = new MockMultipartFile(
+                "dto", null, APP_JSON, objectMapper.writeValueAsBytes(request)
+        );
+
+        MockMultipartFile image1 = new MockMultipartFile("images", "image1.jpg", "image/jpeg", "image data 1".getBytes());
+        MockMultipartFile image2 = new MockMultipartFile("images", "image2.jpg", "image/jpeg", "image data 2".getBytes());
+        MockMultipartFile image3 = new MockMultipartFile("images", "image3.jpg", "image/jpeg", "image data 3".getBytes());
+
+        mockMvc.perform(multipart("/v1/market")
+                        .file(textPart)
+                        .file(image1)
+                        .file(image2)
+                        .file(image3)
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @Order(12)
+    void placeProduct() throws Exception {
+        CreateAdRequest request = new CreateAdRequest(
+                "product",
+                "Created Product",
+                "Description of created Product",
+                BigDecimal.valueOf(200_000),
+                null,
+                null
+        );
+
+        MockMultipartFile textPart = new MockMultipartFile(
+                "dto", null, APP_JSON, objectMapper.writeValueAsBytes(request)
+        );
+
+        MockMultipartFile image1 = new MockMultipartFile("images", "image1.jpg", "image/jpeg", "image data 1".getBytes());
+        MockMultipartFile image2 = new MockMultipartFile("images", "image2.jpg", "image/jpeg", "image data 2".getBytes());
+        MockMultipartFile image3 = new MockMultipartFile("images", "image3.jpg", "image/jpeg", "image data 3".getBytes());
+
+        mockMvc.perform(multipart("/v1/market")
+                        .file(textPart)
+                        .file(image1)
+                        .file(image2)
+                        .file(image3)
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @Order(13)
+    void getMarketProducts_AfterPlaceProduct() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/market?type=products"))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.content", hasSize(5))
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+
+        List<String> dates = JsonPath.read(content, "$.content[*].publishedAt");
+
+        for (int i = 1; i < dates.size(); i++) {
+            assert dates.get(i - 1).compareTo(dates.get(i)) >= 0;
+        }
+    }
+
+
+    @Test
+    @Order(13)
+    void getMarketOrders_AfterPlaceOrder() throws Exception {
+        mockMvc.perform(get("/v1/market?type=orders"))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.content", hasSize(1))
+                );
+    }
 }
