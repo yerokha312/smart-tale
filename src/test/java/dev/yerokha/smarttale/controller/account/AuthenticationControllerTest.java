@@ -70,7 +70,7 @@ public class AuthenticationControllerTest {
                 .andExpect(content().string(containsString("johndoe@example.com")));
 
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(mailService).sendEmailVerification(
+        Mockito.verify(mailService).sendEmailVerificationCode(
                 eq("johndoe@example.com"),
                 confirmationUrlCaptor.capture()
         );
@@ -209,7 +209,7 @@ public class AuthenticationControllerTest {
                 .andExpect(content().string(containsString("johndoe@example.com")));
 
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(mailService).sendEmailVerification(
+        Mockito.verify(mailService).sendEmailVerificationCode(
                 eq("johndoe@example.com"),
                 confirmationUrlCaptor.capture()
         );
@@ -329,7 +329,7 @@ public class AuthenticationControllerTest {
                 .andExpect(status().isOk());
 
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(mailService).sendEmailVerification(
+        Mockito.verify(mailService).sendLoginCode(
                 eq("johndoe@example.com"),
                 confirmationUrlCaptor.capture()
         );

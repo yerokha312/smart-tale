@@ -54,7 +54,7 @@ class PurchaseControllerTest {
                 .content(email));
 
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(mailService).sendEmailVerification(
+        Mockito.verify(mailService).sendLoginCode(
                 anyString(),
                 confirmationUrlCaptor.capture()
         );

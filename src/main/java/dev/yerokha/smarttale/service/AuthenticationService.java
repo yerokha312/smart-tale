@@ -97,13 +97,16 @@ public class AuthenticationService {
         UserEntity user = (UserEntity) getValue(email);
 
         if (user == null) {
-            throw new NotFoundException(String.format("Profile with email %s not found", email));
+            throw new NotFoundException(String.format("User with email %s not found", email));
         }
 
-        user.setVerificationCode(generateVerificationCode());
-        setValue(email, user, 15, TimeUnit.MINUTES);
-
-        mailService.sendEmailVerification(email, user.getVerificationCode());
+        if (user.isEnabled()) {
+            sendLoginEmail(email);
+        } else {
+            user.setVerificationCode(generateVerificationCode());
+            setValue(email, user, 15, TimeUnit.MINUTES);
+            mailService.sendEmailVerificationCode(email, user.getVerificationCode());
+        }
     }
 
     public LoginResponse verifyEmail(String email, String code) {
@@ -111,7 +114,7 @@ public class AuthenticationService {
         UserDetailsEntity details = (UserDetailsEntity) getValue("details:" + email);
 
         if (user == null) {
-            throw new NotFoundException(String.format("Profile with email %s not found", email));
+            throw new NotFoundException(String.format("User with email %s not found", email));
         }
 
         if (!user.getVerificationCode().equals(code)) {
@@ -173,10 +176,24 @@ public class AuthenticationService {
 
         setValue(email, user, 15, TimeUnit.MINUTES);
 
-        sendVerificationEmail(email);
+        sendLoginEmail(email);
 
         return String.format("Code generated, email sent to %s", email);
     }
+
+    private void sendLoginEmail(String email) {
+        UserEntity user = (UserEntity) getValue(email);
+
+        if (user == null) {
+            throw new NotFoundException(String.format("User with email %s not found", email));
+        }
+
+        user.setVerificationCode(generateVerificationCode());
+        setValue(email, user, 15, TimeUnit.MINUTES);
+
+        mailService.sendLoginCode(email, user.getVerificationCode());
+    }
+
 
     @Transactional
     public String register(RegistrationRequest request, String code) {
@@ -226,6 +243,7 @@ public class AuthenticationService {
         details.setOrganization(invitation.getOrganization());
         details.setPosition(invitation.getPosition());
         details.getAcceptedOrders().removeIf(order -> !order.getStatus().equals(OrderStatus.ARRIVED));
+        details.setActiveOrdersCount(0);
 
         userRepository.save(user);
         invitationRepository.deleteAll(details.getInvitations());
@@ -238,7 +256,7 @@ public class AuthenticationService {
 
         setValue(email, user, 15, TimeUnit.MINUTES);
 
-        sendVerificationEmail(email);
+        sendLoginEmail(email);
 
         return String.format("Code generated, email sent to %s", email);
     }

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -117,7 +118,7 @@ public class OrganizationController {
             }
     )
     @PostMapping("/employees")
-    public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody InviteRequest request) {
+    public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody @Valid InviteRequest request) {
         String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
 
         return new ResponseEntity<>(String.format("Invite sent to %s", email), HttpStatus.CREATED);

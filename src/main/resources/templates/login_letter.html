@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  lang="ru"
+>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>Smart Tale</title>
+    <style type="text/css">
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+      table {
+        border-spacing: 0;
+        mso-cellspacing: 0;
+        mso-padding-alt: 0;
+      }
+
+      td {
+        padding: 0;
+      }
+
+      #outlook a {
+        padding: 0;
+      }
+
+      a {
+        text-decoration: none;
+        color: #e8fbfa;
+        font-size: 16px;
+      }
+    </style>
+    <!--[if (gte mso 9)|(IE)]>
+      <style type="text/css">
+        table {
+          border-collapse: collapse !important;
+        }
+      </style>
+    <![endif]-->
+
+    <!--[if (gte mso 9)|(IE)]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:AllowPNG />
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+  </head>
+
+  <body style="margin: 0; padding: 0; min-width: 100%; background-color: #dde0e1">
+    <!--[if (gte mso 9)|(IE)]>
+      <style type="text/css">
+        body {
+          background-color: #dde0e1 !important;
+        }
+        body,
+        table,
+        td,
+        p,
+        a {
+          font-family: sans-serif, Arial, Helvetica !important;
+        }
+      </style>
+    <![endif]-->
+    <center
+      style="
+        width: 100%;
+        table-layout: fixed;
+        background-color: #dde0e1;
+        padding-top: 40px;
+        padding-bottom: 40px;
+      "
+    >
+      <div
+        style="
+          max-width: 600px;
+          background-color: #fafdfe;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <!-- Preheader (remove comment) -->
+        <div
+          style="
+            font-size: 0px;
+            color: #fafdfe;
+            line-height: 1px;
+            mso-line-height-rule: exactly;
+            display: none;
+            max-width: 0px;
+            max-height: 0px;
+            opacity: 0;
+            overflow: hidden;
+            mso-hide: all;
+          "
+        >
+          Authentication email letter from Neobis Smart Tale
+        </div>
+        <!-- End Preheader (remove comment) -->
+        <!--[if (gte mso 9)|(IE)]>
+        <table width="600" align="center" border="0" cellspacing="0" cellpadding="0" role="presentation"
+          style="color:#1C1E23;">
+        <tr>
+        <td>
+      <![endif]-->
+
+        <table
+          align="center"
+          border="0"
+          cellspacing="0"
+          cellpadding="0"
+          role="presentation"
+          style="
+            color: #1c1e23;
+            font-family: 'Roboto', sans-serif, Arial, Helvetica;
+            background-color: #fafdfe;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 600px;
+          "
+        >
+          <!-- Logo -->
+          <tr>
+            <td>
+              <table
+                align="center"
+                border="0"
+                cellspacing="0"
+                cellpadding="0"
+                role="presentation"
+              >
+                <tr>
+                  <td style="padding: 0 0 19px 0; text-align: center">
+                    <a href="https://neobis-smart-tale.vercel.app/" target="_blank">
+                      <img
+                        src="https://i.ibb.co/VwVbdhF/Screenshot-2024-05-01-095425.png"
+                        alt="Smart Tale Logo"
+                        border="0"
+                        width="600"
+                      />
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- End Logo -->
+          <!-- Main -->
+          <tr>
+            <td>
+              <table
+                align="center"
+                border="0"
+                cellspacing="0"
+                cellpadding="0"
+                role="presentation"
+              >
+                <tr>
+                  <td style="padding: 0 36px 19px 36px; text-align: center">
+                    <h1>Добро пожаловать <br />в Smart Tale!</h1>
+                    <p
+                      style="
+                        margin: 0;
+                        font-weight: 400;
+                        font-size: 16px;
+                        line-height: 25px;
+                      "
+                    >
+                      Чтобы авторизоваться на сайте, <br>введите следующий код:
+                    </p>
+                    <p
+                      style="
+                        margin: 16px;
+                        font-weight: 700;
+                        font-size: 32px;
+                        line-height: 32px;
+                      "
+                    >
+                      <span th:text="${verificationCode}"></span>
+                    </p>
+                    <p
+                      style="
+                        margin: 0;
+                        font-weight: 400;
+                        font-size: 14px;
+                        line-height: 25px;
+                      "
+                    >
+                      Если вы не пытались авторизоваться на сайте, <br>просто
+                      проигнорируйте это письмо.
+                    </p>
+                    <p
+                      style="
+                        margin: 12px 0 0 0;
+                        font-weight: 400;
+                        font-size: 16px;
+                        line-height: 25px;
+                      "
+                    >
+                      С уважением,<br />Наша команда
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- End Main -->
+          <!-- Footer -->
+          <tr>
+            <td>
+              <table
+                align="center"
+                border="0"
+                cellspacing="0"
+                cellpadding="0"
+                role="presentation"
+              >
+                <tr>
+                  <td style="padding: 0 0 0 0; text-align: center">
+                    <a href="https://neobis-smart-tale.vercel.app/" target="_blank">
+                      <img
+                        src="https://i.ibb.co/kmLQxh6/1653712160-5-celes-club-p-fon-dlya-prezentatsii-po-shveinomu-delu-kr-6.png"
+                        alt="Smart Tale Logo"
+                        border="0"
+                        width="600"
+                      />
+                    </a>
+                    <br />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- End Footer -->
+        </table>
+
+        <!--[if (gte mso 9)|(IE)]>
+        </td>
+        </tr>
+        </table>
+      <![endif]-->
+      </div>
+    </center>
+  </body>
+</html>
