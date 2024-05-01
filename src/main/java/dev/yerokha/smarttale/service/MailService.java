@@ -49,13 +49,13 @@ public class MailService implements NotificationService {
         }
     }
 
-    public void sendEmailVerification(String to, String verificationCode) {
+    public void sendEmailVerificationCode(String to, String verificationCode) {
         Context context = new Context();
         context.setVariables(Map.of("verificationCode", verificationCode));
 
         String emailBody = engine.process("confirmation_letter", context);
 
-        send(to, "Подтверждение почты", emailBody);
+        send(to, "Код одтверждения почты", emailBody);
     }
 
     public void sendSubscriptionRequest(UserDetailsEntity user) {
@@ -100,4 +100,12 @@ public class MailService implements NotificationService {
         send(to, "Запрос о покупке", emailBody);
     }
 
+    public void sendLoginCode(String to, String verificationCode) {
+        Context context = new Context();
+        context.setVariables(Map.of("verificationCode", verificationCode));
+
+        String emailBody = engine.process("login_letter", context);
+
+        send(to, "Код для входа", emailBody);
+    }
 }

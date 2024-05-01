@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -63,7 +64,7 @@ public class AccountController {
     )
     @PutMapping
     public ResponseEntity<Profile> updateProfile(Authentication authentication,
-                                                 @RequestBody UpdateProfileRequest request) {
+                                                 @RequestBody @Valid UpdateProfileRequest request) {
 
         if (!request.isValid()) {
             throw new IllegalArgumentException("Name fields should be either all Latin or all Cyrillic");
