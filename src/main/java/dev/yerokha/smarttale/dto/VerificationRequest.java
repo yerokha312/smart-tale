@@ -11,6 +11,7 @@ public record VerificationRequest(
         @NotNull @NotEmpty @Email
         String email,
         @Length(min = CODE_LENGTH, max = CODE_LENGTH, message = "Invalid code, please try again")
+        @NotNull
         String code
 ) {
 }

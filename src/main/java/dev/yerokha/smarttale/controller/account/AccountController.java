@@ -42,8 +42,8 @@ public class AccountController {
             tags = {"account", "get", "user", "profile"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Profile not found"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content),
             }
     )
     @GetMapping
