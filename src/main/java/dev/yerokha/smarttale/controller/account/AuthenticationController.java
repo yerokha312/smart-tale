@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -85,9 +86,10 @@ public class AuthenticationController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Email sent"),
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
-            }
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE))
     )
-    @PostMapping("/resend-verification")
+    @PostMapping(value = "/resend-verification", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> resend(@RequestBody @Valid @Email String email) {
         authenticationService.sendVerificationEmail(email);
         return ResponseEntity.ok(String.format("Code generated, email sent to %s", email));

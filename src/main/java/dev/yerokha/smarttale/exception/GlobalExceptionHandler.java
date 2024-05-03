@@ -10,6 +10,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -93,6 +94,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissedException.class)
     public ResponseEntity<String> handleMissedException(MissedException exception) {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.GONE);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<String> handleHandlerMethodValidationException(HandlerMethodValidationException exception) {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
 }
