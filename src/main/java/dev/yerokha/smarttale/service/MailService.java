@@ -55,7 +55,7 @@ public class MailService implements NotificationService {
 
         String emailBody = engine.process("confirmation_letter", context);
 
-        send(to, "Код одтверждения почты", emailBody);
+        send(to, "Код подтверждения почты", emailBody);
     }
 
     public void sendSubscriptionRequest(UserDetailsEntity user) {

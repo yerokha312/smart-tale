@@ -15,12 +15,13 @@ public record UpdateProfileRequest(
         @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
                 message = "Last name must be either Latin or Cyrillic, not a mix")
         String lastName,
-        @NotNull @Length(max = 20, message = "Name must be between 2 and 20 characters")
+        @Length(max = 20, message = "Name must be between 2 and 20 characters")
         @Pattern(regexp = "^[\\p{IsLatin}&&[^\\p{IsCyrillic}]]+$|^[\\p{IsCyrillic}&&[^\\p{IsLatin}]]+$",
                 message = "Father name must be either Latin or Cyrillic, not a mix")
         String middleName,
         @NotNull @Email @NotEmpty
         String email,
+        @NotNull
         String phoneNumber
 ) {
     public boolean isValid() {
