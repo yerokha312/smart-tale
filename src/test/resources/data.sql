@@ -22,7 +22,7 @@ INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'Po
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'Position 5', 100001 );
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'Position 6', 100001 );
 
-INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'Example', 'existing@example.com', '+7999999999');
+INSERT INTO user_details (details_id, last_name, first_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'existing@example.com', '+7999999999');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100002, 'Third', 'Existing', 'Profile', 'existing3@example.com', '+777712345690');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id) VALUES (100003, 'Fourth', 'Existing', 'Profile', 'existing4@example.com', '+777712345600', 100000, 100000);

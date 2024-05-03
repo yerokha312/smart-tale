@@ -53,12 +53,13 @@ public class AuthenticationControllerTest {
 
     @Test
     @Order(1)
-    void registerCustomer() throws Exception {
+    void register() throws Exception {
         RegistrationRequest request = new RegistrationRequest(
                 "John",
                 "Doe",
                 "Father",
-                "johndoe@example.com"
+                "johndoe@example.com",
+                "+996123456789"
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -87,7 +88,8 @@ public class AuthenticationControllerTest {
                 "J",
                 "D",
                 "F",
-                "regular@email.com"
+                "regular@email.com",
+                "+996123456789"
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -106,7 +108,8 @@ public class AuthenticationControllerTest {
                 "John",
                 "Доу",
                 "Максимович",
-                "regular@email.com"
+                "regular@email.com",
+                "+996123456789"
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -125,7 +128,8 @@ public class AuthenticationControllerTest {
                 "John 1",
                 "Doe",
                 "Fred",
-                "regular@email.com"
+                "regular@email.com",
+                "+996123456789"
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -144,7 +148,8 @@ public class AuthenticationControllerTest {
                 "John 1",
                 "Doe",
                 "Fred",
-                "regular@emailcom"
+                "regular@emailcom",
+                "+996123456789"
         );
 
         String json = objectMapper.writeValueAsString(request);

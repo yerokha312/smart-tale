@@ -66,7 +66,8 @@ public class AuthenticationService {
                 request.firstName(),
                 request.lastName(),
                 request.middleName(),
-                email
+                email,
+                request.phoneNumber()
         );
 
         if (userIsInvited) {

@@ -107,11 +107,12 @@ public class UserDetailsEntity {
     public UserDetailsEntity() {
     }
 
-    public UserDetailsEntity(String firstName, String lastName, String middleName, String email) {
+    public UserDetailsEntity(String firstName, String lastName, String middleName, String email, String phoneNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.middleName = middleName;
         this.email = email;
+        this.phoneNumber = phoneNumber;
     }
 
     public String getName() {
