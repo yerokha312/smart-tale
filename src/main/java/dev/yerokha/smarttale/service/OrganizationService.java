@@ -3,13 +3,13 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
-import dev.yerokha.smarttale.enums.OrderStatus;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
 import dev.yerokha.smarttale.repository.InvitationRepository;
@@ -25,16 +25,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import static dev.yerokha.smarttale.enums.OrderStatus.ARRIVED;
-import static dev.yerokha.smarttale.enums.OrderStatus.CANCELED;
 import static java.lang.Integer.parseInt;
 
 @Service
@@ -57,35 +52,34 @@ public class OrganizationService {
     }
 
     public Page<CurrentOrder> getOrders(Long employeeId, Map<String, String> params) {
-        Sort sort = getSort(params);
+        Sort sort = getSortProps(params);
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
                 parseInt(params.getOrDefault("size", "6")),
                 sort.equals(Sort.unsorted()) ?
                         Sort.by(Sort.Direction.DESC, "acceptedAt") : sort);
 
-        List<OrderStatus> inactiveStatuses = Arrays.asList(ARRIVED, CANCELED);
-
         OrganizationEntity organization = userDetailsRepository.findById(employeeId)
                 .orElseThrow(() -> new NotFoundException("User not found"))
                 .getOrganization();
 
-        Set<Long> employeeIds = organization.getEmployees().stream()
-                .map(UserDetailsEntity::getUserId)
-                .collect(Collectors.toSet());
+        String query = params.get("q");
+
+        if (query.equals("active")) {
+            return orderRepository
+                    .findAllByAcceptedByOrganizationIdAndCompletedAtIsNull(organization.getOrganizationId(), pageable)
+                    .map(AdMapper::toCurrentOrder);
+        }
 
         return orderRepository
-                .findAllByAcceptedByUserIdInAndStatusNotIn(
-                        employeeIds,
-                        inactiveStatuses,
-                        pageable)
+                .findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNull(organization.getOrganizationId(), pageable)
                 .map(AdMapper::toCurrentOrder);
     }
 
-    private Sort getSort(Map<String, String> params) {
+    private Sort getSortProps(Map<String, String> params) {
         List<Sort.Order> orders = new ArrayList<>();
         params.forEach((key, value) -> {
-            if (!(key.startsWith("page") || key.startsWith("size"))) {
+            if (!(key.startsWith("page") || key.startsWith("size") || key.equals("q"))) {
                 Sort.Direction direction = value.equalsIgnoreCase("asc") ?
                         Sort.Direction.ASC : Sort.Direction.DESC;
                 switch (key) {
@@ -104,7 +98,7 @@ public class OrganizationService {
     }
 
     public Page<Employee> getEmployees(Long employeeId, Map<String, String> params) {
-        Sort sort = getSort(params);
+        Sort sort = getSortProps(params);
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
                 parseInt(params.getOrDefault("size", "6")),
@@ -115,18 +109,16 @@ public class OrganizationService {
                 .orElseThrow(() -> new NotFoundException("User not found"))
                 .getOrganization();
 
-        List<OrderStatus> inactiveStatuses = Arrays.asList(ARRIVED, CANCELED);
-
-        return getEmployees(organization.getOrganizationId(), inactiveStatuses, pageable);
+        return getEmployees(organization.getOrganizationId(), pageable);
 
     }
 
-    private Page<Employee> getEmployees(Long organizationId, List<OrderStatus> inactiveStatuses, Pageable pageable) {
+    private Page<Employee> getEmployees(Long organizationId, Pageable pageable) {
         return userDetailsRepository
                 .findAllEmployeesAndInvitees(organizationId, pageable)
                 .map(user -> {
                     String name = user.getName() == null ? "" : user.getName();
-                    List<CurrentOrder> orders = getCurrentOrders(user, inactiveStatuses, organizationId);
+                    List<CurrentOrder> orders = getCurrentOrders(user, organizationId);
                     String position = getPosition(user, organizationId);
                     String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
 
@@ -163,7 +155,6 @@ public class OrganizationService {
     }
 
     private static List<CurrentOrder> getCurrentOrders(UserDetailsEntity employee,
-                                                       List<OrderStatus> inactiveStatuses,
                                                        Long organizationId) {
 
         OrganizationEntity organization = employee.getOrganization();
@@ -171,8 +162,8 @@ public class OrganizationService {
             return null;
         }
 
-        return employee.getAcceptedOrders().stream()
-                .filter(order -> !inactiveStatuses.contains(order.getStatus()))
+        return employee.getAssignedTasks().stream()
+                .filter(order -> order.getCompletedAt() == null)
                 .map(AdMapper::toCurrentOrder)
                 .toList();
     }
@@ -186,7 +177,8 @@ public class OrganizationService {
                 .orElseThrow(() -> new NotFoundException("Position not found"));
 
         UserDetailsEntity invitee = getInvitee(request);
-        InvitationEntity invitation = new InvitationEntity(LocalDate.now(), inviter, invitee, organization, position);
+        InvitationEntity invitation = new InvitationEntity(
+                LocalDate.now(), inviter, invitee, organization, position);
         invitationRepository.save(invitation);
 
         String name = invitee.getName();
@@ -217,6 +209,21 @@ public class OrganizationService {
                     userDetails.setUser(newUser);
                     userDetails.setEmail(request.email());
 
+                    String lastName = request.lastName();
+                    if (lastName != null) {
+                        userDetails.setLastName(lastName);
+                    }
+
+                    String firstName = request.firstName();
+                    if (firstName != null) {
+                        userDetails.setFirstName(firstName);
+                    }
+
+                    String middleName = request.middleName();
+                    if (middleName != null) {
+                        userDetails.setMiddleName(middleName);
+                    }
+
                     return userDetailsRepository.save(userDetails);
                 });
     }
@@ -232,5 +239,25 @@ public class OrganizationService {
                         pos.getTitle()
                 ))
                 .toList();
+    }
+
+    public Organization getOrganization(Long userId) {
+        OrganizationEntity organization = userDetailsRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"))
+                .getOrganization();
+
+        UserDetailsEntity owner = organization.getOwner();
+        String avatarUrl = owner.getImage() == null ? null : owner.getImage().getImageUrl();
+        String logoUrl = organization.getImage() == null ? null : organization.getImage().getImageUrl();
+        return new Organization(
+                organization.getOrganizationId(),
+                owner.getUserId(),
+                owner.getName(),
+                avatarUrl,
+                organization.getName(),
+                organization.getDescription(),
+                organization.getRegisteredAt(),
+                logoUrl
+        );
     }
 }

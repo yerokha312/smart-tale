@@ -2,10 +2,11 @@ package dev.yerokha.smarttale.controller.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import dev.yerokha.smarttale.dto.Action;
+import dev.yerokha.smarttale.enums.Action;
 import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.enums.ContactInfo;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
@@ -192,7 +193,8 @@ class AdvertisementControllerTest {
                 BigDecimal.valueOf(100_000),
                 "10x10",
                 LocalDate.of(2025, 12, 31),
-                imageOperationList
+                imageOperationList,
+                ContactInfo.EMAIL_PHONE
         );
 
         MockMultipartFile textPart = new MockMultipartFile(

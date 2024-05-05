@@ -9,7 +9,9 @@ public record PurchaseRequest(
         String description,
         String price,
         @NotNull
-        String requesterEmail,
-        String requesterPhoneNumber
+        String buyerEmail,
+        String buyerPhoneNumber,
+        String sellerEmail,
+        String sellerPhoneNumber
 ) {
 }

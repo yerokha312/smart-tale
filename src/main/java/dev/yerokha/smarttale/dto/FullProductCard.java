@@ -24,6 +24,7 @@ public record FullProductCard(
         @NotNull
         String publisherName,
         String publisherAvatarUrl,
+        @NotNull
         String publisherPhoneNumber,
         @NotNull
         String publisherEmail,

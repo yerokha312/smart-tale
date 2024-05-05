@@ -2,8 +2,11 @@ package dev.yerokha.smarttale.entity.advertisement;
 
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.enums.ContactInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,9 +42,6 @@ public class Advertisement {
     @JoinColumn(name = "published_by")
     private UserDetailsEntity publishedBy;
 
-    @Column(name = "purchased_at")
-    private LocalDateTime purchasedAt;
-
     @Column(name = "title", nullable = false, length = 250)
     private String title; //sort
 
@@ -60,6 +60,10 @@ public class Advertisement {
     )
     @Size(max = 5)
     private List<Image> images;
+
+    @Column(name = "contact_information")
+    @Enumerated(EnumType.ORDINAL)
+    private ContactInfo contactInfo;
 
     @Column(name = "views", columnDefinition = "bigint default 0")
     private long views;

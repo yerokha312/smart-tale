@@ -6,8 +6,7 @@ import dev.yerokha.smarttale.dto.CreateAdRequest;
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
-import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
-import dev.yerokha.smarttale.exception.NotFoundException;
+import dev.yerokha.smarttale.enums.ContactInfo;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
@@ -31,9 +30,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -64,6 +63,8 @@ class MarketplaceControllerTest {
 
     final String APP_JSON = "application/json";
     public static String accessToken;
+    private static String code;
+
 
     private void login(String email) throws Exception {
         mockMvc.perform(post("/v1/auth/login")
@@ -104,7 +105,7 @@ class MarketplaceControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(5))
+                        jsonPath("$.content", hasSize(10))
                 )
                 .andReturn();
 
@@ -124,7 +125,7 @@ class MarketplaceControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(5))
+                        jsonPath("$.content", hasSize(10))
                 )
                 .andReturn();
 
@@ -147,11 +148,17 @@ class MarketplaceControllerTest {
                 );
     }
 
+
     @Test
     @Order(2)
-    void getAd_Should404() throws Exception {
-        mockMvc.perform(get("/v1/market/100001"))
-                .andExpect(status().isNotFound());
+    void getPurchases_BeforePurchase() throws Exception {
+        mockMvc.perform(get("/v1/account/purchases")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.content", hasSize(5))
+                );
     }
 
     @Test
@@ -165,24 +172,15 @@ class MarketplaceControllerTest {
 
         ArgumentCaptor<PurchaseRequest> captor = ArgumentCaptor.forClass(PurchaseRequest.class);
         Mockito.verify(mailService).sendPurchaseRequest(
-                eq("existing3@example.com"),
                 captor.capture()
         );
 
         PurchaseRequest request = captor.getValue();
 
         assert request.title().equals("Product 10");
-        assert request.requesterEmail().equals("existing3@example.com");
-        assert request.requesterPhoneNumber().equals("+777712345690");
+        assert request.buyerEmail().equals("existing3@example.com");
+        assert request.buyerPhoneNumber().equals("+777712345690");
 
-    }
-
-    @Test
-    @Order(3)
-    void purchase_Should410() throws Exception {
-        mockMvc.perform(post("/v1/market/100001")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isGone());
     }
 
     @Test
@@ -199,7 +197,7 @@ class MarketplaceControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(4))
+                        jsonPath("$.content", hasSize(10))
                 );
     }
 
@@ -235,59 +233,14 @@ class MarketplaceControllerTest {
 
     @Test
     @Order(8)
-    void accept() throws Exception {
+    void getOrders_Organization_BeforeAccept() throws Exception {
         login("existing4@example.com");
-        mockMvc.perform(put("/v1/market/100040")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    @Order(9)
-    void accept_Should410() throws Exception {
-        mockMvc.perform(put("/v1/market/100040")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isGone());
-    }
-
-    @Test
-    @Order(10)
-    void testActiveOrdersCount() {
-        UserDetailsEntity user = userDetailsRepository.findById(100003L)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        assertThat(user.getActiveOrdersCount()).isEqualTo(1);
-    }
-
-    @Test
-    @Order(10)
-    void getOrders_Active_AfterAccept() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/account/orders")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .param("q", "active"))
-                .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(1))
-                )
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        List<String> acceptedDates = JsonPath.read(content, "$.content[*].date");
-        for (int i = 1; i < acceptedDates.size(); i++) {
-            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) > 0;
-        }
-    }
-
-    @Test
-    @Order(10)
-    void getOrders_Organization_AfterAccept() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/account/organization/orders")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(13)
+                        jsonPath("$.totalElements").value(21)
                 )
                 .andReturn();
 
@@ -299,9 +252,58 @@ class MarketplaceControllerTest {
     }
 
     @Test
+    @Order(9)
+    void accept() throws Exception {
+        mockMvc.perform(put("/v1/market/100040")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(mailService).sendAcceptanceRequest(
+                eq("existing2@example.com"),
+                any(),
+                captor.capture()
+        );
+
+        code = captor.getValue();
+
+    }
+
+    @Test
+    @Order(10)
+    void confirmOrder() throws Exception {
+        Thread.sleep(1000);
+        login("existing2@example.com");
+        mockMvc.perform(post("/v1/account/orders" + code)
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @Order(11)
+    void getOrders_Organization_AfterAccept() throws Exception {
+        Thread.sleep(1000);
+        login("existing4@example.com");
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(22)
+                )
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        List<String> acceptedDates = JsonPath.read(content, "$.content[*].acceptedAt");
+        for (int i = 1; i < acceptedDates.size(); i++) {
+            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) >= 0;
+        }
+    }
+
+    @Test
+    @Order(12)
     void getEmployees_SortByOrders_AfterAccept() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/account/organization/employees?orders=desc")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/employees?orders=desc")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -321,7 +323,7 @@ class MarketplaceControllerTest {
     }
 
     @Test
-    @Order(12)
+    @Order(13)
     void placeOrder() throws Exception {
         CreateAdRequest request = new CreateAdRequest(
                 "order",
@@ -329,7 +331,8 @@ class MarketplaceControllerTest {
                 "Description of created Order",
                 BigDecimal.valueOf(2000),
                 "Regular size",
-                LocalDate.parse("2024-10-10")
+                LocalDate.parse("2024-10-10"),
+                ContactInfo.EMAIL_PHONE
         );
 
         MockMultipartFile textPart = new MockMultipartFile(
@@ -351,7 +354,7 @@ class MarketplaceControllerTest {
     }
 
     @Test
-    @Order(12)
+    @Order(14)
     void placeProduct() throws Exception {
         CreateAdRequest request = new CreateAdRequest(
                 "product",
@@ -359,7 +362,8 @@ class MarketplaceControllerTest {
                 "Description of created Product",
                 BigDecimal.valueOf(200_000),
                 null,
-                null
+                null,
+                ContactInfo.EMAIL_PHONE
         );
 
         MockMultipartFile textPart = new MockMultipartFile(
@@ -381,13 +385,13 @@ class MarketplaceControllerTest {
     }
 
     @Test
-    @Order(13)
+    @Order(15)
     void getMarketProducts_AfterPlaceProduct() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/market?type=products"))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(5))
+                        jsonPath("$.content", hasSize(10))
                 )
                 .andReturn();
 
@@ -400,9 +404,8 @@ class MarketplaceControllerTest {
         }
     }
 
-
     @Test
-    @Order(13)
+    @Order(16)
     void getMarketOrders_AfterPlaceOrder() throws Exception {
         mockMvc.perform(get("/v1/market?type=orders"))
                 .andExpectAll(

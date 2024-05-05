@@ -76,6 +76,8 @@ public class MarketplaceController {
     )
     @GetMapping("/{advertisementId}")
     public ResponseEntity<AdvertisementInterface> getAd(@PathVariable Long advertisementId) {
+        advertisementService.incrementViewCount(advertisementId);
+
         return ResponseEntity.ok(advertisementService.getAd(advertisementId));
     }
 
@@ -90,7 +92,7 @@ public class MarketplaceController {
     )
     @PostMapping("/{advertisementId}")
     public ResponseEntity<String> purchaseProduct(@PathVariable Long advertisementId,
-                                           Authentication authentication) {
+                                                  Authentication authentication) {
 
         advertisementService.purchaseProduct(advertisementId, getUserIdFromAuthToken(authentication));
 
@@ -108,7 +110,7 @@ public class MarketplaceController {
     )
     @PutMapping("/{advertisementId}")
     public ResponseEntity<String> acceptOrder(@PathVariable Long advertisementId,
-                                         Authentication authentication) {
+                                              Authentication authentication) {
 
         advertisementService.acceptOrder(advertisementId, getUserIdFromAuthToken(authentication));
 
@@ -127,7 +129,7 @@ public class MarketplaceController {
     )
     @PostMapping
     public ResponseEntity<String> placeAdvertisement(@RequestPart("dto") @Valid CreateAdRequest request,
-                                                     @RequestPart("images")List<MultipartFile> files,
+                                                     @RequestPart("images") List<MultipartFile> files,
                                                      Authentication authentication) {
 
         if (files != null && !files.isEmpty()) {

@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.dto;
 
+import dev.yerokha.smarttale.enums.ContactInfo;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +23,7 @@ public record CreateAdRequest(
         BigDecimal price,
         String size,
         @Future
-        LocalDate deadline
+        LocalDate deadline,
+        ContactInfo contactInfo
 ) {
 }

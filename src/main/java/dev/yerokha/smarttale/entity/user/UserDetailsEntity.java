@@ -6,12 +6,15 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
+import dev.yerokha.smarttale.entity.advertisement.PurchaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
@@ -24,6 +27,7 @@ import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -74,12 +78,20 @@ public class UserDetailsEntity {
     @OneToMany(mappedBy = "publishedBy")
     private List<ProductEntity> products;
 
+    @OneToMany(mappedBy = "purchasedBy")
+    private List<PurchaseEntity> purchases = new ArrayList<>();
+
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
 
-    @OneToMany(mappedBy = "acceptedBy")
-    private List<OrderEntity> acceptedOrders;
+    @ManyToMany
+    @JoinTable(
+            name = "task_employee_junction",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "task_id")
+    )
+    List<OrderEntity> assignedTasks;
 
     @Column(name = "active_orders_count", columnDefinition = "int default 0")
     private int activeOrdersCount;
@@ -107,11 +119,12 @@ public class UserDetailsEntity {
     public UserDetailsEntity() {
     }
 
-    public UserDetailsEntity(String firstName, String lastName, String middleName, String email) {
+    public UserDetailsEntity(String firstName, String lastName, String middleName, String email, String phoneNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.middleName = middleName;
         this.email = email;
+        this.phoneNumber = phoneNumber;
     }
 
     public String getName() {
