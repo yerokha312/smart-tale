@@ -12,8 +12,8 @@ INSERT INTO users (user_id, email, is_enabled) VALUES ( 100005, 'existing6@examp
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100006, 'existing7@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100007, 'existing8@example.com', true);
 
-INSERT INTO organizations(organization_id, name) VALUES ( 100000, 'Test Org' );
-INSERT INTO organizations(organization_id, name) VALUES ( 100001, 'Second Test Org' );
+INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100000, 'First Organization', '2024-01-01' );
+INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100001, 'Second Organization', '2024-01-01' );
 
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100000, 'Position 1', 100000 );
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100001, 'Position 2', 100000 );
@@ -22,7 +22,7 @@ INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'Po
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'Position 5', 100001 );
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'Position 6', 100001 );
 
-INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'Example', 'existing@example.com', '+7999999999');
+INSERT INTO user_details (details_id, last_name, first_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'existing@example.com', '+7999999999');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100002, 'Third', 'Existing', 'Profile', 'existing3@example.com', '+777712345690');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id) VALUES (100003, 'Fourth', 'Existing', 'Profile', 'existing4@example.com', '+777712345600', 100000, 100000);
@@ -32,141 +32,161 @@ INSERT INTO user_details (details_id, last_name, first_name, middle_name, email,
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100007, 'ZEighth', 'Existing', 'Profile', 'existing8@example.com', '+777712345400', 100001, 100003, 4);
 
 
-
-
 -- create 10 abstract ads --
-INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
-SELECT
-    100000 + n,
-    DATEADD('SECOND', RAND() * 31536000, '2000-01-01 00:00:00'),
-    100001,
-    CONCAT('Product ', 1 + n),
-    'Example description'
-FROM
-    generate_series(0, 9) AS t(n);
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
+                                     contact_information)
+SELECT 100000 + n,
+       current_timestamp - INTERVAL '1' SECOND * (FLOOR(RANDOM() * 31536000)),
+       100001,
+       CONCAT('Product ', 1 + n),
+       'Example description',
+       2
+FROM generate_series(0, 9) AS t(n);
 
 -- create 10 products --
 INSERT INTO products (advertisement_id)
-SELECT
-    100000 + n,
-FROM
-    generate_series(0, 9) AS t(n);
+SELECT 100000 + n
+FROM generate_series(0, 9) AS t(n);
 
 -- imitate purchases for 5 products --
-UPDATE abstract_advertisements
-SET    purchased_at = CURRENT_TIMESTAMP
-WHERE advertisement_id IN (SELECT advertisement_id FROM abstract_advertisements LIMIT 5);
-
-UPDATE products
-SET purchased_by = 100002
-WHERE advertisement_id IN (SELECT advertisement_id FROM products LIMIT 5);
+INSERT INTO purchases (purchase_id, purchased_by, product_id, purchased_at)
+SELECT 100000 + n,
+       100002,
+       100000 + n,
+       current_timestamp
+FROM generate_series(0, 4) AS t(n);
 
 -- create additional 10 abstract ads --
-INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
-SELECT
-    100010 + n,
-    DATEADD('SECOND', RAND() * 31536000, '2000-01-01 00:00:00'),
-    100001,
-    CONCAT('Order ', 1 + n),
-    'Example description'
-FROM
-    generate_series(0, 9) AS t(n);
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
+                                     contact_information)
+SELECT 100010 + n,
+       current_timestamp - INTERVAL '1' SECOND * (FLOOR(RANDOM() * 31536000)),
+       100001,
+       concat('Order ', 1 + n),
+       'Example description',
+       2
+FROM generate_series(0, 9) AS t(n);
 
--- create 10 orders and make them accepted by Third User with id 100002 --
-INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status)
-SELECT
-    100010 + n,
-    100002,
-    DATEADD('DAY', -n, CURRENT_TIMESTAMP),
-    '1'
-FROM
-    generate_series(0, 9) as t(n);
+-- create 10 orders and make them accepted by First Organization with id 100000 and assign to Third User with id 100002--
+INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
+SELECT 100010 + n,
+       100000,
+       current_date - INTERVAL '1' DAY * n,
+       '1',
+       concat('T-1-', n + 1)
+FROM generate_series(0, 9) as t(n);
 
--- set completed for 4 of 10 orders that accepted by Third User with id 100002 --
+INSERT INTO task_employee_junction (task_id, user_id)
+SELECT 100010 + n,
+       100002
+FROM generate_series(0, 9) AS t(n);
+
+-- set DONE for 4 of 10 orders that accepted by First Organization with id 100000 --
 UPDATE orders
-SET completed_at = CURRENT_TIMESTAMP,
-    status = '5'
+SET completed_at = current_timestamp,
+    status       = '6'
 WHERE advertisement_id IN (SELECT advertisement_id FROM orders LIMIT 4);
 
 -- create additional 5 abstract ads --
-INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
-SELECT
-    100020 + n,
-    DATEADD('SECOND', RAND() * 31536000, '2000-01-01 00:00:00'),
-    100001,
-    CONCAT('Order ', 11 + n),
-    'Example description'
-FROM
-    generate_series(0, 4) AS t(n);
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
+                                     contact_information)
+SELECT 100020 + n,
+       current_timestamp - INTERVAL '1' SECOND * (FLOOR(RANDOM() * 31536000)),
+       100001,
+       concat('Order ', 11 + n),
+       'Example description',
+       2
+FROM generate_series(0, 4) AS t(n);
 
--- create additional 5 orders and make accepted by Fifth User with id 100004 --
-INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status) VALUES
-    ( 100020, 100004, DATEADD('DAY', -1, CURRENT_TIMESTAMP), '0'),
-    ( 100021, 100004, DATEADD('DAY', -2, CURRENT_TIMESTAMP), '1'),
-    ( 100022, 100004, DATEADD('DAY', -3, CURRENT_TIMESTAMP), '2'),
-    ( 100023, 100004, DATEADD('DAY', -4, CURRENT_TIMESTAMP), '4'),
-    ( 100024, 100004, DATEADD('DAY', -5, CURRENT_TIMESTAMP), '5');
+-- create additional 5 orders and make accepted by First Organization, assign to Fifth User with id 100004 --
+INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
+VALUES (100020, 100000, current_date - INTERVAL '1' DAY, '1', 'T-1-11'),
+       (100021, 100000, current_date - INTERVAL '2' DAY, '2', 'T-1-12'),
+       (100022, 100000, current_date - INTERVAL '3' DAY, '3', 'T-1-13'),
+       (100023, 100000, current_date - INTERVAL '4' DAY, '5', 'T-1-14'),
+       (100024, 100000, current_date - INTERVAL '5' DAY, '6', 'T-1-15');
 
--- create additional 5 abstract ads --
-INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
-SELECT
-    100025 + n,
-    DATEADD('SECOND', RAND() * 31536000, '2000-01-01 00:00:00'),
-    100001,
-    CONCAT('Order ', 15 + n),
-    'Example description'
-FROM
-    generate_series(0, 4) AS t(n);
-
--- create additional 5 orders and make accepted by Sixth User with id 100005 --
-INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status) VALUES
-    ( 100025, 100005, DATEADD('DAY', -1, CURRENT_TIMESTAMP), '0'),
-    ( 100026, 100005, DATEADD('DAY', -2, CURRENT_TIMESTAMP), '1'),
-    ( 100027, 100005, DATEADD('DAY', -3, CURRENT_TIMESTAMP), '2'),
-    ( 100028, 100005, DATEADD('DAY', -4, CURRENT_TIMESTAMP), '3'),
-    ( 100029, 100005, DATEADD('DAY', -5, CURRENT_TIMESTAMP), '5');
+INSERT INTO task_employee_junction(task_id, user_id)
+SELECT 100020 + n,
+       100004
+FROM generate_series(0, 4) AS t(n);
 
 -- create additional 5 abstract ads --
-INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
-SELECT
-    100030 + n,
-    DATEADD('SECOND', RAND() * 31536000, '2000-01-01 00:00:00'),
-    100001,
-    CONCAT('Order ', 20 + n),
-    'Example description'
-FROM
-    generate_series(0, 4) AS t(n);
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
+                                     contact_information)
+SELECT 100025 + n,
+       current_timestamp - INTERVAL '1' SECOND * (FLOOR(RANDOM() * 31536000)),
+       100001,
+       CONCAT('Order ', 16 + n),
+       'Example description',
+       2
+FROM generate_series(0, 4) AS t(n);
 
--- create additional 5 orders and make accepted by Seventh User with id 100006 --
-INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status) VALUES
-    ( 100030, 100006, DATEADD('DAY', -1, CURRENT_TIMESTAMP), '0'),
-    ( 100031, 100006, DATEADD('DAY', -2, CURRENT_TIMESTAMP), '1'),
-    ( 100032, 100006, DATEADD('DAY', -3, CURRENT_TIMESTAMP), '2'),
-    ( 100033, 100006, DATEADD('DAY', -4, CURRENT_TIMESTAMP), '3'),
-    ( 100034, 100006, DATEADD('DAY', -5, CURRENT_TIMESTAMP), '3');
+-- create additional 5 orders and make accepted by First Organization, assign to Sixth User with id 100005 --
+INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
+VALUES (100025, 100000, current_date - INTERVAL '1' DAY, '0', 'T-1-16'),
+       (100026, 100000, current_date - INTERVAL '2' DAY, '1', 'T-1-17'),
+       (100027, 100000, current_date - INTERVAL '3' DAY, '2', 'T-1-18'),
+       (100028, 100000, current_date - INTERVAL '4' DAY, '3', 'T-1-19'),
+       (100029, 100000, current_date - INTERVAL '5' DAY, '5', 'T-1-20');
+
+INSERT INTO task_employee_junction(task_id, user_id)
+SELECT 100025 + n,
+       100005
+FROM generate_series(0, 4) AS t(n);
 
 -- create additional 5 abstract ads --
-INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description)
-SELECT
-    100035 + n,
-    DATEADD('SECOND', RAND() * 31536000, '2000-01-01 00:00:00'),
-    100001,
-    CONCAT('Order ', 25 + n),
-    'Example description'
-FROM
-    generate_series(0, 4) AS t(n);
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
+                                     contact_information)
+SELECT 100030 + n,
+       current_timestamp - INTERVAL '1' SECOND * (FLOOR(RANDOM() * 31536000)),
+       100001,
+       CONCAT('Order ', 21 + n),
+       'Example description',
+       2
+FROM generate_series(0, 4) AS t(n);
 
--- create additional 5 orders and make accepted by Eighth User with id 100007 --
-INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status) VALUES
-    ( 100035, 100007, DATEADD('DAY', -1, CURRENT_TIMESTAMP), '0'),
-    ( 100036, 100007, DATEADD('DAY', -2, CURRENT_TIMESTAMP), '1'),
-    ( 100037, 100007, DATEADD('DAY', -3, CURRENT_TIMESTAMP), '2'),
-    ( 100038, 100007, DATEADD('DAY', -4, CURRENT_TIMESTAMP), '3'),
-    ( 100039, 100007, DATEADD('DAY', -5, CURRENT_TIMESTAMP), '4');
+-- create additional 5 orders and make accepted by First Organization, assign to Seventh User with id 100006 --
+INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
+VALUES (100030, 100000, current_date - INTERVAL '1' DAY, '0', 'T-1-21'),
+       (100031, 100000, current_date - INTERVAL '2' DAY, '1', 'T-1-22'),
+       (100032, 100000, current_date - INTERVAL '3' DAY, '2', 'T-1-23'),
+       (100033, 100000, current_date - INTERVAL '4' DAY, '3', 'T-1-24'),
+       (100034, 100000, current_date - INTERVAL '5' DAY, '3', 'T-1-25');
+
+INSERT INTO task_employee_junction(task_id, user_id)
+SELECT 100030 + n,
+       100006
+FROM generate_series(0, 4) AS t(n);
+
+-- create additional 5 abstract ads --
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
+                                     contact_information)
+SELECT 100035 + n,
+       current_timestamp - INTERVAL '1' SECOND * (FLOOR(RANDOM() * 31536000)),
+       100001,
+       CONCAT('Order ', 26 + n),
+       'Example description',
+       2
+FROM generate_series(0, 4) AS t(n);
+
+-- create additional 5 orders and make accepted by Second Organization assign to ZEighth User with id 100007 --
+INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
+VALUES (100035, 100001, current_date - INTERVAL '1' DAY, '0', 'T-1-26'),
+       (100036, 100001, current_date - INTERVAL '2' DAY, '1', 'T-1-27'),
+       (100037, 100001, current_date - INTERVAL '3' DAY, '2', 'T-1-28'),
+       (100038, 100001, current_date - INTERVAL '4' DAY, '3', 'T-1-29'),
+       (100039, 100001, current_date - INTERVAL '5' DAY, '4', 'T-1-30');
+
+INSERT INTO task_employee_junction(task_id, user_id)
+SELECT 100035 + n,
+       100007
+FROM generate_series(0, 4) AS t(n);
 
 -- create 1 order --
-INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description) VALUES
-   ( 100040, DATEADD('HOUR', -1, CURRENT_TIMESTAMP), 100001, 'Order 30', 'Example description' );
-INSERT INTO orders (advertisement_id) VALUES
-    ( 100040 )
+INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
+                                     contact_information)
+VALUES (100040, CURRENT_TIMESTAMP - INTERVAL '1' HOUR, 100001, 'Order 31', 'Example description', 2);
 
+INSERT INTO orders (advertisement_id)
+VALUES (100040);

@@ -22,13 +22,14 @@ public record FullOrderCard(
         LocalDate deadlineAt,
         Long acceptedBy,
         String acceptorName,
-        String acceptorAvatarUrl,
+        String acceptorLogoUrl,
         @NotNull
         Long publishedBy,
         @NotNull
         String publisherName,
         @NotNull
         String publisherAvatarUrl,
+        @NotNull
         String publisherPhoneNumber,
         @NotNull
         String publisherEmail,

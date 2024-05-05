@@ -18,9 +18,6 @@ public record Card(
         String imageUrl,
         @NotNull
         Long publishedBy,
-        String publisherAvatarUrl,
-        @NotNull
-        LocalDateTime date
-
+        String publisherAvatarUrl
 ) {
 }

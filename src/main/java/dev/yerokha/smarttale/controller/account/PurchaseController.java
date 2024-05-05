@@ -36,8 +36,8 @@ public class PurchaseController {
     }
 
     @Operation(
-            summary = "All purchases", description = "Returns orders and products which user paid for",
-            tags = {"purchase", "user", "get", "account", "order", "product"},
+            summary = "All purchases", description = "Returns products purchased by user, id of product replaced by purchase id",
+            tags = {"purchase", "user", "get", "account", "product"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
@@ -55,8 +55,8 @@ public class PurchaseController {
     }
 
     @Operation(
-            summary = "One purchase", description = "Get one purchase by unique id",
-            tags = {"purchase", "user", "get", "account", "order", "product"},
+            summary = "One purchase", description = "Get one product ad by unique id of purchase",
+            tags = {"purchase", "user", "get", "account", "product"},
             responses = {
 
                     @ApiResponse(responseCode = "200", description = "Success Order", content = @Content(
@@ -68,8 +68,7 @@ public class PurchaseController {
             }
     )
     @GetMapping("/{productId}")
-    public ResponseEntity<AdvertisementInterface> getPurchase(Authentication authentication,
-                                                              @PathVariable Long productId) {
-        return ResponseEntity.ok(advertisementService.getPurchase(getUserIdFromAuthToken(authentication), productId));
+    public ResponseEntity<AdvertisementInterface> getPurchase(@PathVariable Long productId) {
+        return ResponseEntity.ok(advertisementService.getPurchase(productId));
     }
 }

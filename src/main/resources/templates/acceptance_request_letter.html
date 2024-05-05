@@ -164,8 +164,8 @@
                 <tr>
                   <td style="padding: 0 36px 19px 36px; text-align: center">
                     <h1>Вас приветствует <br />Smart Tale!</h1>
-                    <h3>Запрос о покупке</h3>
-                    <p>Пришел запрос о покупке оборудования.</p>
+                    <h3>Запрос о принятии заказа</h3>
+                    <p>Пришел запрос о принятии заказа на исполнение.</p>
                     <p>
                       Название:
                       <span style="margin: 0; color: #b67600" th:text="${title}"></span>
@@ -182,40 +182,18 @@
                       <span style="margin: 0; color: #b67600" th:text="${price}"></span>
                     </p>
                     <p>
-                      Связаться с покупателем:
+                      Организация:
                       <br>
-                      Почтовый ящик:
-                      <span style="margin: 0; color: #b67600" th:text="${email}"></span>
+                      <a th:href="${organizationUrl}" target="_blank" style="color: #b67600; text-decoration: none;">
+                        <img src="#" th:src="${organizationLogo}" alt="Organization Logo" style="max-width: 100px;">
+                        <span th:text="${organizationName}" style="margin-left: 10px;"></span>
+                      </a>
+                      <br><br/>
+                    <a th:href="${confirmUrl}" target="_blank" style="display: inline-block;
+                    background-color: #F5C40E; color: black; text-decoration: none; padding:
+                    10px 20px; border-radius: 10px;">Подтвердить</a>
                     </p>
-                    <p>
-                      Номер телефона:
-                      <span style="margin: 0; color: #b67600" th:text="${phone}"></span>
-                    </p>
-                    <p
-                      style="
-                        margin: 12px 0 0 0;
-                        font-weight: 400;
-                        font-size: 16px;
-                        line-height: 25px;
-                      "
-                    ><p>
-                      Связаться с продавцом:
-                      <br>
-                      Почтовый ящик:
-                      <span style="margin: 0; color: #b67600" th:text="${sellerEmail}"></span>
-                    </p>
-                    <p>
-                      Номер телефона:
-                      <span style="margin: 0; color: #b67600" th:text="${sellerPhone}"></span>
-                    </p>
-                    <p
-                      style="
-                        margin: 12px 0 0 0;
-                        font-weight: 400;
-                        font-size: 16px;
-                        line-height: 25px;
-                      "
-                    >
+                    <p style="margin: 12px 0 0 0; font-weight: 400; font-size: 16px; line-height: 25px;">
                       С уважением,<br />Наша команда
                     </p>
                   </td>

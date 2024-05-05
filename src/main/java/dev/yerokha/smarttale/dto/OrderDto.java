@@ -15,18 +15,16 @@ public record OrderDto(
         String description,
         BigDecimal price,
         String size,
+        @NotNull
+        Long acceptedBy,
+        @NotNull
+        String acceptorName,
+        String acceptorLogoUrl,
+        @NotNull
+        LocalDate acceptedAt,
         LocalDate deadlineAt,
-        List<String> imageUrls,
-        @NotNull
-        Long publishedBy,
-        @NotNull
-        String publisherAvatarUrl,
-        @NotNull
-        String publisherName,
-        String publisherPhoneNumber,
-        @NotNull
-        String publisherEmail,
-        @NotNull
-        LocalDate date
+        LocalDate completedAt,
+        List<String> imageUrls
+
 ) {
 }

@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.entity.user;
 
 import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -13,7 +14,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -39,10 +40,10 @@ public class OrganizationEntity {
     private Image image;
 
     @Column(name = "founded_at")
-    private LocalDateTime foundedAt;
+    private LocalDate foundedAt;
 
     @Column(name = "registered_at")
-    private LocalDateTime registeredAt;
+    private LocalDate registeredAt;
 
     @OneToOne
     @JoinColumn(name = "owner_id")
@@ -50,6 +51,9 @@ public class OrganizationEntity {
 
     @OneToMany(mappedBy = "organization")
     private Set<UserDetailsEntity> employees;
+
+    @OneToMany(mappedBy = "acceptedBy")
+    private List<OrderEntity> acceptedOrders;
 
     @OneToMany(mappedBy = "organization")
     private List<PositionEntity> positions;
