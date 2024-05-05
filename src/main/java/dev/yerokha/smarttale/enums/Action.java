@@ -1,4 +1,4 @@
-package dev.yerokha.smarttale.dto;
+package dev.yerokha.smarttale.enums;
 
 public enum Action {
     ADD,

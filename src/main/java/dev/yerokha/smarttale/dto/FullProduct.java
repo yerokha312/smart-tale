@@ -13,8 +13,6 @@ public record FullProduct(
         LocalDateTime publishedAt,
         @NotNull
         Long publishedBy,
-        LocalDateTime purchasedAt,
-        Long purchasedBy,
         @NotNull
         String title,
         @NotNull

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,8 +33,9 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "Get orders", description = "Retrieve all active or completed orders",
-            tags = {"get", "account", "status"},
+            summary = "Get orders", description = "Retrieve all active or completed orders of author. " +
+            "Sort by fields of object. Default sorting by deadlineAt",
+            tags = {"get", "account", "order"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad param"),
@@ -53,7 +55,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "Get status", description = "Retrieve one status by id", tags = {"get", "status", "account"},
+            summary = "Get order", description = "Retrieve one order by id", tags = {"get", "order", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -63,5 +65,22 @@ public class OrderController {
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderDto> getOrder(Authentication authentication, @PathVariable Long orderId) {
         return ResponseEntity.ok(advertisementService.getOrder(getUserIdFromAuthToken(authentication), orderId));
+    }
+
+    @Operation(
+            summary = "Confirm order", description = "User confirms accepting Org's request", tags = {"post", "order", "account"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Order confirmed"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "It's not user's order"),
+                    @ApiResponse(responseCode = "404", description = "Order or org not found"),
+                    @ApiResponse(responseCode = "410", description = "Link is expired")
+            }
+    )
+    @PostMapping
+    public ResponseEntity<String> confirmOrder(Authentication authentication, @RequestParam("code") String code) {
+        advertisementService.confirmOrder(code, getUserIdFromAuthToken(authentication));
+
+        return ResponseEntity.ok("Order confirmed");
     }
 }

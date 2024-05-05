@@ -6,8 +6,8 @@ import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.Role;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
-import dev.yerokha.smarttale.enums.OrderStatus;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
+import dev.yerokha.smarttale.exception.MissedException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.RoleRepository;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -210,6 +211,10 @@ public class AuthenticationService {
                         Long.valueOf(EncryptionUtil.decrypt(code)))
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
+        if (invitation.getInvitedAt().plusDays(7).isBefore(LocalDate.now())) {
+            throw new MissedException("Invitation is expired");
+        }
+
         user.setAuthorities(getUserRole());
         user.setEnabled(true);
         user.setInvited(false);
@@ -240,10 +245,14 @@ public class AuthenticationService {
                         Long.valueOf(EncryptionUtil.decrypt(code)))
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
+        if (invitation.getInvitedAt().plusDays(7).isBefore(LocalDate.now())) {
+            throw new MissedException("Invitation is expired");
+        }
+
         UserDetailsEntity details = user.getDetails();
         details.setOrganization(invitation.getOrganization());
         details.setPosition(invitation.getPosition());
-        details.getAcceptedOrders().removeIf(order -> !order.getStatus().equals(OrderStatus.ARRIVED));
+        details.getAssignedTasks().clear();
         details.setActiveOrdersCount(0);
 
         userRepository.save(user);

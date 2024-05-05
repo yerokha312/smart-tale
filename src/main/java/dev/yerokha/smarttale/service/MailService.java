@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.service.interfaces.NotificationService;
@@ -85,19 +86,22 @@ public class MailService implements NotificationService {
         send(ADMIN_EMAIL, "Приглашение в организацию", emailBody);
     }
 
-    public void sendPurchaseRequest(String to, PurchaseRequest request) {
+    public void sendPurchaseRequest(PurchaseRequest request) {
         Context context = new Context();
         context.setVariables(Map.of(
                 "title", request.title(),
                 "description", request.description(),
                 "price", request.price(),
-                "email", request.requesterEmail(),
-                "phone", request.requesterPhoneNumber()
+                "email", request.buyerEmail(),
+                "phone", request.buyerPhoneNumber(),
+                "sellerEmail", request.sellerEmail(),
+                "sellerPhone", request.sellerPhoneNumber()
         ));
 
         String emailBody = engine.process("purchase_request_letter", context);
 
-        send(to, "Запрос о покупке", emailBody);
+        send(request.sellerEmail(), "Запрос о покупке", emailBody);
+        send(request.buyerEmail(), "Запрос о покупке", emailBody);
     }
 
     public void sendLoginCode(String to, String verificationCode) {
@@ -107,5 +111,22 @@ public class MailService implements NotificationService {
         String emailBody = engine.process("login_letter", context);
 
         send(to, "Код для входа", emailBody);
+    }
+
+    public void sendAcceptanceRequest(String email, AcceptanceRequest request, String encryptedCode) {
+        Context context = new Context();
+        context.setVariables(Map.of(
+                "title", request.title(),
+                "description", request.description(),
+                "price", request.price(),
+                "organizationUrl", request.organizationUrl(),
+                "organizationName", request.organizationName(),
+                "organizationLogo", request.organizationLogo(),
+                "confirmUrl", encryptedCode
+        ));
+
+        String emailBody = engine.process("acceptance_request_letter", context);
+
+        send(email, "Запрос о принятии заказа", emailBody);
     }
 }

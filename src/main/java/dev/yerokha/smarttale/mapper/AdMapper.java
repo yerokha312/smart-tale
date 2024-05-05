@@ -15,9 +15,9 @@ import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
+import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +71,7 @@ public class AdMapper {
                 order.getPublishedAt(),
                 getUserId(order.getPublishedBy()),
                 order.getAcceptedAt(),
-                getUserId(order.getAcceptedBy()),
+                order.getAcceptedBy().getOrganizationId(),
                 order.getTitle(),
                 order.getDescription(),
                 order.getPrice(),
@@ -89,8 +89,6 @@ public class AdMapper {
                 product.getAdvertisementId(),
                 product.getPublishedAt(),
                 getUserId(product.getPublishedBy()),
-                product.getPurchasedAt(),
-                getUserId(product.getPurchasedBy()),
                 product.getTitle(),
                 product.getDescription(),
                 product.getPrice(),
@@ -101,71 +99,77 @@ public class AdMapper {
         );
     }
 
-    public static Card mapToCards(Advertisement entity) {
+    public static Card mapToCards(Advertisement advertisement) {
         String imageUrl = null;
-        List<Image> images = entity.getImages();
+        List<Image> images = advertisement.getImages();
         if (images != null && !images.isEmpty()) {
             imageUrl = images.get(0).getImageUrl();
         }
-        UserDetailsEntity publishedBy = entity.getPublishedBy();
+        UserDetailsEntity publishedBy = advertisement.getPublishedBy();
         Image avatar = publishedBy.getImage();
-        String description = entity.getDescription();
+        String description = advertisement.getDescription();
         String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         String publisherAvatarUrl = avatar == null ? null : avatar.getImageUrl();
-        LocalDateTime date = entity.getPurchasedAt();
 
         return new Card(
-                entity.getAdvertisementId(),
-                entity.getPublishedAt(),
-                entity.getTitle(),
+                advertisement.getAdvertisementId(),
+                advertisement.getPublishedAt(),
+                advertisement.getTitle(),
                 truncatedDescription,
-                entity.getPrice(),
+                advertisement.getPrice(),
                 imageUrl,
                 publishedBy.getUserId(),
-                publisherAvatarUrl,
-                date
+                publisherAvatarUrl
         );
     }
 
     public static AdvertisementInterface mapToFullCard(Advertisement entity) {
         Result result = getResult(entity);
-        if (entity instanceof OrderEntity) {
-            UserDetailsEntity acceptedBy = ((OrderEntity) entity).getAcceptedBy();
+        String contact = entity.getContactInfo().toString();
+        if (entity instanceof OrderEntity order) {
+            OrganizationEntity acceptedBy = order.getAcceptedBy();
+            boolean isAccepted = acceptedBy != null;
             return new FullOrderCard(
-                    entity.getAdvertisementId(),
-                    entity.getTitle(),
-                    entity.getDescription(),
-                    entity.getPrice(),
+                    order.getAdvertisementId(),
+                    order.getTitle(),
+                    order.getDescription(),
+                    order.getPrice(),
                     result.imageUrls(),
-                    ((OrderEntity) entity).getSize(),
-                    entity.getPublishedAt(),
-                    ((OrderEntity) entity).getDeadlineAt(),
-                    acceptedBy.getUserId(),
-                    acceptedBy.getName(),
-                    acceptedBy.getImage() == null ? null : acceptedBy.getImage().getImageUrl(),
+                    order.getSize(),
+                    order.getPublishedAt(),
+                    order.getDeadlineAt(),
+                    isAccepted ? acceptedBy.getOrganizationId() : null,
+                    isAccepted ? acceptedBy.getName() : null,
+                    isAccepted && acceptedBy.getImage() != null ? acceptedBy.getImage().getImageUrl() : null,
+                    result.user().getUserId(),
+                    result.publisherName(),
+                    result.avatar() != null ? result.avatar().getImageUrl() : null,
+                    contact.contains("PHONE") ? result.user().getPhoneNumber() : null,
+                    contact.contains("EMAIL") ? result.user().getEmail() : null,
+                    order.getViews()
+            );
+        }
+
+        if (entity instanceof ProductEntity product) {
+            return new FullProductCard(
+                    product.getAdvertisementId(),
+                    product.getTitle(),
+                    product.getDescription(),
+                    product.getPrice(),
+                    result.imageUrls(),
+                    product.getPublishedAt(),
+                    product.getPurchasedAt(),
                     result.user().getUserId(),
                     result.publisherName(),
                     result.avatar() == null ? null : result.avatar().getImageUrl(),
-                    result.user().getPhoneNumber(),
-                    result.user().getEmail(),
-                    entity.getViews()
+                    contact.contains("PHONE") ? result.user().getPhoneNumber() : null,
+                    contact.contains("PHONE") ? result.user().getEmail() : null,
+                    product.getViews()
             );
         }
-        return new FullProductCard(
-                entity.getAdvertisementId(),
-                entity.getTitle(),
-                entity.getDescription(),
-                entity.getPrice(),
-                result.imageUrls(),
-                entity.getPublishedAt(),
-                entity.getPurchasedAt(),
-                result.user().getUserId(),
-                result.publisherName(),
-                result.avatar() == null ? null : result.avatar().getImageUrl(),
-                result.user().getPhoneNumber(),
-                result.user().getEmail(),
-                entity.getViews()
-        );
+
+        throw new IllegalArgumentException("Unsupported advertisement type");
+
     }
 
     private static Long getUserId(UserDetailsEntity user) {
@@ -177,26 +181,30 @@ public class AdMapper {
                 order.getAdvertisementId(),
                 order.getTitle(),
                 order.getPrice(),
-                order.getAcceptedAt()
+                order.getAcceptedAt(),
+                order.getDeadlineAt(),
+                order.getCompletedAt(),
+                order.getStatus().toString()
         );
     }
 
     public static OrderDto toOrderDto(OrderEntity entity) {
         Result result = getResult(entity);
+        OrganizationEntity acceptedOrganization = entity.getAcceptedBy();
+        String logoUrl = acceptedOrganization.getImage() == null ? null : acceptedOrganization.getImage().getImageUrl();
         return new OrderDto(
                 entity.getAdvertisementId(),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getPrice(),
                 entity.getSize(),
+                acceptedOrganization.getOrganizationId(),
+                acceptedOrganization.getName(),
+                logoUrl,
+                entity.getAcceptedAt(),
                 entity.getDeadlineAt(),
-                result.imageUrls(),
-                result.user().getUserId(),
-                result.avatar() == null ? null : result.avatar().getImageUrl(),
-                result.publisherName(),
-                result.user().getPhoneNumber(),
-                result.user().getEmail(),
-                entity.getCompletedAt() == null ? entity.getAcceptedAt() : entity.getCompletedAt()
+                entity.getCompletedAt(),
+                result.imageUrls()
         );
     }
 

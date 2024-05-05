@@ -12,6 +12,9 @@ public record SmallOrder(
         String title,
         BigDecimal price,
         @NotNull
-        LocalDate date
+        LocalDate acceptedAt,
+        LocalDate deadlineAt,
+        LocalDate completedAt,
+        String status
 ) {
 }
