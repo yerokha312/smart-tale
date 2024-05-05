@@ -21,7 +21,8 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
     @Query("SELECT DISTINCT ud FROM UserDetailsEntity ud " +
             "LEFT JOIN ud.invitations inv " +
             "LEFT JOIN ud.organization org " +
-            "WHERE org.organizationId = :orgId OR inv.organization.organizationId = :orgId")
+            "WHERE org.organizationId = :orgId OR (inv.organization.organizationId = :orgId " +
+            "AND DATEADD(DAY, 7, inv.invitedAt) >= CURRENT_DATE)")
     Page<UserDetailsEntity> findAllEmployeesAndInvitees(@Param("orgId") Long orgId, Pageable pageable);
 
     @Modifying

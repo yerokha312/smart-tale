@@ -8,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -40,7 +39,7 @@ public class InvitationEntity {
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "position_id")
     private PositionEntity position;
 

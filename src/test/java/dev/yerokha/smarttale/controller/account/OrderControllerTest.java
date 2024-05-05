@@ -82,14 +82,14 @@ class OrderControllerTest {
     @Order(1)
     void getOrders_Active() throws Exception {
         Thread.sleep(1000);
-        login("existing3@example.com");
+        login("existing2@example.com");
         MvcResult result = mockMvc.perform(get("/v1/account/orders")
                         .header("Authorization", "Bearer " + accessToken)
                         .param("q", "active"))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(6))
+                        jsonPath("$.totalElements").value(26)
                 )
                 .andReturn();
 

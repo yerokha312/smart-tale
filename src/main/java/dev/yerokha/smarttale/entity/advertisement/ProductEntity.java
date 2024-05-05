@@ -1,12 +1,16 @@
 package dev.yerokha.smarttale.entity.advertisement;
 
-import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @EqualsAndHashCode(callSuper = true)
@@ -15,7 +19,9 @@ import lombok.EqualsAndHashCode;
 @Table(name = "products")
 public class ProductEntity extends Advertisement {
 
-    @ManyToOne
-    @JoinColumn(name = "purchased_by")
-    private UserDetailsEntity purchasedBy;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PurchaseEntity> purchases = new ArrayList<>();
+
+    @Transient
+    private LocalDateTime purchasedAt;
 }

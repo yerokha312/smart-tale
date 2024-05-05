@@ -1,8 +1,9 @@
-package dev.yerokha.smarttale.controller.account;
+package dev.yerokha.smarttale.controller.organization;
 
 import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,9 +29,9 @@ import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
-@Tag(name = "Organization", description = "Organization controller EPs in Personal Account tab")
+@Tag(name = "Organization", description = "Organization controller EPs")
 @RestController
-@RequestMapping("/v1/account/organization")
+@RequestMapping("/v1/organizations")
 public class OrganizationController {
 
     private final OrganizationService organizationService;
@@ -40,8 +41,21 @@ public class OrganizationController {
     }
 
     @Operation(
+            summary = "Get own Org", tags = {"get", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "404", description = "Org not found")
+            }
+    )
+    @GetMapping
+    public ResponseEntity<Organization> getOrganization(Authentication authentication) {
+        return ResponseEntity.ok(organizationService.getOrganization(getUserIdFromAuthToken(authentication)));
+    }
+
+    @Operation(
             summary = "Get orders", description = "Get all current orders of organization",
-            tags = {"organization", "get", "order", "account"},
+            tags = {"organization", "get", "order"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad param request", content = @Content),
@@ -49,6 +63,7 @@ public class OrganizationController {
                     @ApiResponse(responseCode = "404", description = "User or organization not found", content = @Content)
             },
             parameters = {
+                    @Parameter(name = "q", description = "active or done", required = true),
                     @Parameter(name = "page", description = "Page number. Default 0"),
                     @Parameter(name = "size", description = "Page size. Default 6"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +
