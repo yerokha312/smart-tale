@@ -4,12 +4,15 @@ import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdRequest;
+import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.ImageOperation;
+import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
@@ -40,9 +43,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import static dev.yerokha.smarttale.enums.OrderStatus.CHECKING;
+import static dev.yerokha.smarttale.enums.OrderStatus.COMPLETED;
+import static dev.yerokha.smarttale.enums.OrderStatus.IN_PROGRESS;
+import static dev.yerokha.smarttale.enums.OrderStatus.NEW;
 import static dev.yerokha.smarttale.enums.OrderStatus.PENDING;
 import static dev.yerokha.smarttale.mapper.AdMapper.mapToCards;
 import static dev.yerokha.smarttale.mapper.AdMapper.mapToFullCard;
@@ -177,6 +185,10 @@ public class AdvertisementService {
 
     public void updateAd(Long userId, UpdateAdRequest request, List<MultipartFile> files) {
         Advertisement advertisement = getAdEntity(userId, request.advertisementId());
+        if (!advertisement.getPublishedBy().getUserId().equals(userId)) {
+            throw new ForbiddenException("It is not your ad");
+        }
+
         advertisement.setTitle(request.title());
         advertisement.setDescription(request.description());
         advertisement.setPrice(request.price());
@@ -341,6 +353,10 @@ public class AdvertisementService {
 
         productRepository.save(product);
 
+        sendPurchaseRequest(product, buyer, seller);
+    }
+
+    private void sendPurchaseRequest(ProductEntity product, UserDetailsEntity buyer, UserDetailsEntity seller) {
         String price = product.getPrice() == null ? "" : product.getPrice().toString();
         mailService.sendPurchaseRequest(new PurchaseRequest(
                 product.getTitle(),
@@ -353,6 +369,7 @@ public class AdvertisementService {
         ));
     }
 
+    @Transactional
     public void acceptOrder(Long advertisementId, Long userId) {
         OrderEntity order = (OrderEntity) getAdById(advertisementId);
 
@@ -364,27 +381,38 @@ public class AdvertisementService {
             throw new MissedException("You are late!");
         }
 
+        //TODO check permissions
         UserDetailsEntity user = userService.getUserDetailsEntity(userId);
 
+        OrganizationEntity organization = user.getOrganization();
+
+        AcceptanceEntity acceptanceEntity = new AcceptanceEntity(
+                order, organization, LocalDate.now()
+        );
+
         order.setStatus(PENDING);
+        order.addAcceptanceRequest(acceptanceEntity);
         orderRepository.save(order);
 
+        sendAcceptanceRequest(advertisementId, order, organization);
+    }
+
+    private void sendAcceptanceRequest(Long advertisementId, OrderEntity order, OrganizationEntity organization) {
         String price = order.getPrice() == null ? null : order.getPrice().toString();
-        Image image = user.getOrganization().getImage();
+        Image image = organization.getImage();
         String imageUrl = image == null ? null : image.getImageUrl();
         AcceptanceRequest request = new AcceptanceRequest(
                 order.getTitle(),
                 order.getDescription(),
                 price,
-                user.getOrganization().getOrganizationId().toString(),
-                user.getOrganization().getName(),
+                organization.getOrganizationId().toString(),
+                organization.getName(),
                 imageUrl
         );
 
-        String code = user.getOrganization().getOrganizationId() + " " + advertisementId + " " + LocalDate.now();
+        String code = organization.getOrganizationId() + " " + advertisementId + " " + LocalDate.now();
         String encryptedCode = "?code=" + EncryptionUtil.encrypt(code);
         mailService.sendAcceptanceRequest(order.getPublishedBy().getEmail(), request, encryptedCode);
-
     }
 
     @Transactional
@@ -441,17 +469,17 @@ public class AdvertisementService {
         productRepository.save(product);
     }
 
+    @Transactional
     public void confirmOrder(String code, Long userId) {
         String[] decryptedCode = EncryptionUtil.decrypt(code).split(" ");
 
         LocalDate requestDate = LocalDate.parse(decryptedCode[2]);
 
-        if (requestDate.isBefore(LocalDate.now())) {
-            throw new MissedException("Link is expired");
+        if (requestDate.plusDays(7).isBefore(LocalDate.now())) {
+            throw new MissedException("Request is expired");
         }
 
-        OrderEntity order = orderRepository.findById(Long.valueOf(decryptedCode[1]))
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+        OrderEntity order = getOrderEntity(Long.valueOf(decryptedCode[1]));
 
         if (!order.getPublishedBy().getUserId().equals(userId)) {
             throw new ForbiddenException("It is not your order");
@@ -462,8 +490,9 @@ public class AdvertisementService {
 
         order.setAcceptedBy(organization);
         order.setAcceptedAt(LocalDate.now());
-        order.setStatus(OrderStatus.NEW);
+        order.setStatus(NEW);
         order.setTaskKey(taskKeyGeneratorService.generateTaskKey(organization));
+        order.getAcceptanceEntities().clear();
 
         orderRepository.save(order);
     }
@@ -471,5 +500,65 @@ public class AdvertisementService {
     @Transactional
     public void incrementViewCount(Long advertisementId) {
         advertisementRepository.incrementViewsCount(advertisementId);
+    }
+
+    public List<DashboardOrder> getDashboard(Long userId) {
+        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+        OrganizationEntity organization = user.getOrganization();
+        return orderRepository.findAllDashboardOrders(organization.getOrganizationId(), COMPLETED).stream()
+                .map(AdMapper::toDashboardOrder)
+                .sorted(Comparator.comparing(DashboardOrder::status))
+                .toList();
+    }
+
+    public MonitoringOrder getMonitoringOrder(Long userId, Long orderId) {
+        OrganizationEntity organization = userService.getUserDetailsEntity(userId).getOrganization();
+
+        OrderEntity order = getOrderEntity(orderId);
+
+        if (!order.getAcceptedBy().getOrganizationId().equals(organization.getOrganizationId())) {
+            throw new NotFoundException("Order not found");
+        }
+
+        return AdMapper.mapToMonitoringOrder(order);
+    }
+
+    @Transactional
+    public void changeStatus(Long userId, Long orderId, String status) {
+        OrderEntity order = getOrderEntity(orderId);
+
+        if (order.getAcceptedBy().getEmployees().stream().noneMatch(emp -> emp.getUserId().equals(userId))) {
+            throw new NotFoundException("Order not found");
+        }
+
+        OrderStatus oldStatus = order.getStatus();
+        OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
+
+        if (newStatus.equals(oldStatus)) {
+            return;
+        }
+
+        //TODO implement permissions
+        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+
+        boolean isValidTransition = switch (newStatus) {
+            case NEW, DISPATCHED -> oldStatus.equals(CHECKING);
+            case IN_PROGRESS -> oldStatus.equals(NEW) || oldStatus.equals(CHECKING);
+            case CHECKING -> oldStatus.equals(IN_PROGRESS);
+            default -> false;
+        };
+
+        if (isValidTransition) {
+            order.setStatus(newStatus);
+        } else {
+            throw new ForbiddenException(String.format("Status %s cannot be changed to status %s", oldStatus, newStatus));
+        }
+
+        orderRepository.save(order);
+    }
+
+    private OrderEntity getOrderEntity(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
     }
 }

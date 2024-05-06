@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.dto;
 
+import dev.yerokha.smarttale.enums.OrderStatus;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -9,6 +10,8 @@ import java.util.List;
 public record OrderDto(
         @NotNull
         Long orderId,
+        @NotNull
+        OrderStatus status,
         @NotNull
         String title,
         @NotNull

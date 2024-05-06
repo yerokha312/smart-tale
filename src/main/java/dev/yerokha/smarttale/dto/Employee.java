@@ -11,7 +11,7 @@ public record Employee(
         String name,
         @NotNull
         String email,
-        List<CurrentOrder> orderList,
+        List<OrderSummary> orderList,
         @NotNull
         String position,
         @NotNull

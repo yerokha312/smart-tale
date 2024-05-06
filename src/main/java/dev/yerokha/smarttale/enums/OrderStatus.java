@@ -7,6 +7,6 @@ public enum OrderStatus {
     CHECKING,
     DISPATCHED,
     ARRIVED,
-    DONE,
+    COMPLETED,
     CANCELED
 }
