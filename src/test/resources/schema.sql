@@ -170,7 +170,7 @@ create table orders
         check ((status >= 0) AND (status <= 7))
 );
 
-create table acceptance_request
+create table acceptance_requests
 (
     requested_at    date,
     acceptance_id   bigserial,

@@ -3,7 +3,7 @@ package dev.yerokha.smarttale.controller.market;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.CreateAdRequest;
-import dev.yerokha.smarttale.dto.CurrentOrder;
+import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.enums.ContactInfo;
@@ -235,7 +235,7 @@ class MarketplaceControllerTest {
     @Order(8)
     void getOrders_Organization_BeforeAccept() throws Exception {
         login("existing4@example.com");
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?active=true")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -284,7 +284,7 @@ class MarketplaceControllerTest {
     void getOrders_Organization_AfterAccept() throws Exception {
         Thread.sleep(1000);
         login("existing4@example.com");
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?active=true")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -311,7 +311,7 @@ class MarketplaceControllerTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        List<List<CurrentOrder>> orders = JsonPath.read(content, "$.content[*].orderList");
+        List<List<OrderSummary>> orders = JsonPath.read(content, "$.content[*].orderList");
 
         for (int i = 1; i < orders.size(); i++) {
             if (orders.get(i - 1) == null || orders.get(i) == null) {

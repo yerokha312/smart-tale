@@ -1,8 +1,8 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
@@ -51,7 +51,7 @@ public class OrganizationService {
         this.positionRepository = positionRepository;
     }
 
-    public Page<CurrentOrder> getOrders(Long employeeId, Map<String, String> params) {
+    public Page<OrderSummary> getOrders(Long employeeId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
@@ -59,27 +59,148 @@ public class OrganizationService {
                 sort.equals(Sort.unsorted()) ?
                         Sort.by(Sort.Direction.DESC, "acceptedAt") : sort);
 
-        OrganizationEntity organization = userDetailsRepository.findById(employeeId)
+        Long organizationId = userDetailsRepository.findById(employeeId)
                 .orElseThrow(() -> new NotFoundException("User not found"))
-                .getOrganization();
+                .getOrganization()
+                .getOrganizationId();
 
-        String query = params.get("q");
+        boolean isActive = Boolean.parseBoolean(params.getOrDefault("active", "true"));
+        return isActive
+                ? getActiveOrders(organizationId, params, pageable)
+                : getCompletedOrders(organizationId, params, pageable);
+    }
 
-        if (query.equals("active")) {
-            return orderRepository
-                    .findAllByAcceptedByOrganizationIdAndCompletedAtIsNull(organization.getOrganizationId(), pageable)
-                    .map(AdMapper::toCurrentOrder);
+    private Page<OrderSummary> getActiveOrders(Long organizationId, Map<String, String> params, Pageable pageable) {
+        return getOrdersByDateRange(organizationId, params, pageable, true);
+    }
+
+    private Page<OrderSummary> getCompletedOrders(Long organizationId, Map<String, String> params, Pageable pageable) {
+        return getOrdersByDateRange(organizationId, params, pageable, false);
+    }
+
+    private Page<OrderSummary> getOrdersByDateRange(Long organizationId, Map<String, String> params, Pageable pageable, boolean isActive) {
+        String dateType = params.get("dateType");
+        if (dateType != null) {
+            return switch (dateType) {
+                case "accepted" -> getOrdersByAcceptedDate(organizationId, isActive, params, pageable);
+                case "deadline" -> getOrdersByDeadlineDate(organizationId, isActive, params, pageable);
+                case "completed" -> isActive ? null : getOrdersByCompletedDate(organizationId, params, pageable);
+                default -> throw new IllegalArgumentException("Date type is not valid");
+            };
         }
-
-        return orderRepository
-                .findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNull(organization.getOrganizationId(), pageable)
+        return isActive
+                ? orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNull(organizationId, pageable)
+                .map(AdMapper::toCurrentOrder)
+                : orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNull(organizationId, pageable)
                 .map(AdMapper::toCurrentOrder);
     }
+
+    private Page<OrderSummary> getOrdersByCompletedDate(Long organizationId,
+                                                        Map<String, String> params,
+                                                        Pageable pageable) {
+
+        LocalDate exactDate = parseDate(params.get("date"));
+
+        if (exactDate == null) {
+            LocalDate startDate = parseDate(params.get("startDate"));
+            LocalDate endDate = parseDate(params.get("endDate"));
+            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtBetween(
+                            organizationId,
+                            startDate,
+                            endDate,
+                            pageable)
+                    .map(AdMapper::toCurrentOrder);
+        }
+        return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAt(
+                        organizationId,
+                        exactDate,
+                        pageable)
+                .map(AdMapper::toCurrentOrder);
+    }
+
+    private Page<OrderSummary> getOrdersByDeadlineDate(Long organizationId,
+                                                       boolean isActive,
+                                                       Map<String, String> params,
+                                                       Pageable pageable) {
+
+        LocalDate exactDate = parseDate(params.get("date"));
+
+        if (exactDate == null) {
+            LocalDate startDate = parseDate(params.get("startDate"));
+            LocalDate endDate = parseDate(params.get("endDate"));
+            if (isActive) {
+                return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAtBetween(
+                                organizationId,
+                                startDate,
+                                endDate,
+                                pageable)
+                        .map(AdMapper::toCurrentOrder);
+            }
+            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAtBetween(
+                    organizationId,
+                    startDate,
+                    endDate,
+                    pageable).map(AdMapper::toCurrentOrder);
+        }
+        if (isActive) {
+            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAt(
+                    organizationId,
+                    exactDate,
+                    pageable).map(AdMapper::toCurrentOrder);
+        }
+        return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAt(
+                organizationId,
+                exactDate,
+                pageable).map(AdMapper::toCurrentOrder);
+    }
+
+    private Page<OrderSummary> getOrdersByAcceptedDate(Long organizationId,
+                                                       boolean isActive,
+                                                       Map<String, String> params,
+                                                       Pageable pageable) {
+
+        LocalDate exactDate = parseDate(params.get("date"));
+
+        if (exactDate == null) {
+            LocalDate startDate = parseDate(params.get("startDate"));
+            LocalDate endDate = parseDate(params.get("endDate"));
+            if (isActive) {
+                return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAtBetween(
+                        organizationId,
+                        startDate,
+                        endDate,
+                        pageable).map(AdMapper::toCurrentOrder);
+            }
+            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAtBetween(
+                    organizationId,
+                    startDate,
+                    endDate,
+                    pageable).map(AdMapper::toCurrentOrder);
+        }
+        if (isActive) {
+            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAt(
+                    organizationId,
+                    exactDate,
+                    pageable).map(AdMapper::toCurrentOrder);
+        }
+        return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAt(
+                organizationId,
+                exactDate,
+                pageable).map(AdMapper::toCurrentOrder);
+    }
+
+    private LocalDate parseDate(String dateStr) {
+        if (dateStr != null) {
+            return LocalDate.parse(dateStr);
+        }
+        return null;
+    }
+
 
     private Sort getSortProps(Map<String, String> params) {
         List<Sort.Order> orders = new ArrayList<>();
         params.forEach((key, value) -> {
-            if (!(key.startsWith("page") || key.startsWith("size") || key.equals("q"))) {
+            if (!(key.startsWith("page") || key.startsWith("size") || key.equals("active") || key.toLowerCase().contains("date"))) {
                 Sort.Direction direction = value.equalsIgnoreCase("asc") ?
                         Sort.Direction.ASC : Sort.Direction.DESC;
                 switch (key) {
@@ -118,7 +239,7 @@ public class OrganizationService {
                 .findAllEmployeesAndInvitees(organizationId, pageable)
                 .map(user -> {
                     String name = user.getName() == null ? "" : user.getName();
-                    List<CurrentOrder> orders = getCurrentOrders(user, organizationId);
+                    List<OrderSummary> orders = getCurrentOrders(user, organizationId);
                     String position = getPosition(user, organizationId);
                     String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
 
@@ -154,7 +275,7 @@ public class OrganizationService {
         return position.getTitle();
     }
 
-    private static List<CurrentOrder> getCurrentOrders(UserDetailsEntity employee,
+    private static List<OrderSummary> getCurrentOrders(UserDetailsEntity employee,
                                                        Long organizationId) {
 
         OrganizationEntity organization = employee.getOrganization();

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +35,26 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
             "WHERE (org.organizationId = :organizationId AND o.status != :orderStatus) " +
             "OR (ae.organization.organizationId = :organizationId AND DATEADD(DAY, 7, ae.requestedAt) >= CURRENT_DATE)")
     List<OrderEntity> findAllDashboardOrders(Long organizationId, OrderStatus orderStatus);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAt(Long organizationId, LocalDate exactDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAt(Long organizationId, LocalDate exactDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAt(Long organizationId, LocalDate exactDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAt(Long organizationId, LocalDate exactDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAt(Long organizationId, LocalDate exactDate, Pageable pageable);
 
 }
 

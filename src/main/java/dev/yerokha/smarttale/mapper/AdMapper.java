@@ -3,7 +3,6 @@ package dev.yerokha.smarttale.mapper;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.AssignedEmployee;
 import dev.yerokha.smarttale.dto.Card;
-import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullOrderCard;
@@ -12,6 +11,7 @@ import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.Order;
 import dev.yerokha.smarttale.dto.OrderDto;
+import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Product;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.entity.Image;
@@ -279,11 +279,11 @@ public class AdMapper {
         return imageUrls;
     }
 
-    public static CurrentOrder toCurrentOrder(OrderEntity order) {
+    public static OrderSummary toCurrentOrder(OrderEntity order) {
         List<Image> images = order.getImages();
         String description = order.getDescription();
         String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
-        return new CurrentOrder(
+        return new OrderSummary(
                 order.getAdvertisementId(),
                 order.getTitle(),
                 truncatedDescription,
@@ -291,6 +291,7 @@ public class AdMapper {
                 images == null ? null : images.isEmpty() ? null : images.get(0).getImageUrl(),
                 order.getStatus(),
                 order.getAcceptedAt(),
-                order.getDeadlineAt());
+                order.getDeadlineAt(),
+                order.getCompletedAt());
     }
 }

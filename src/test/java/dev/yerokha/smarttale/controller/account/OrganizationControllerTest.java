@@ -2,8 +2,8 @@ package dev.yerokha.smarttale.controller.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
@@ -87,9 +87,9 @@ class OrganizationControllerTest {
 
     @Test
     @Order(1)
-    void getOrders() throws Exception {
+    void getOrders_NoParam() throws Exception {
         login("existing4@example.com");
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -108,7 +108,7 @@ class OrganizationControllerTest {
     @Test
     @Order(2)
     void getOrders_SortedByTitleAsc() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active&title=asc")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?active=true&title=asc")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -127,7 +127,7 @@ class OrganizationControllerTest {
     @Test
     @Order(2)
     void getOrders_SortedByTitleDesc() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active&title=desc")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?active=true&title=desc")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -146,7 +146,7 @@ class OrganizationControllerTest {
     @Test
     @Order(2)
     void getOrders_SortedByTitleDescAndByAcceptedDateAsc() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?q=active&title=desc&acceptedAt=Asc")
+        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?active=true&title=desc&acceptedAt=Asc")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
@@ -192,7 +192,7 @@ class OrganizationControllerTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        List<List<CurrentOrder>> orders = JsonPath.read(content, "$.content[*].orderList");
+        List<List<OrderSummary>> orders = JsonPath.read(content, "$.content[*].orderList");
         for (int i = 1; i < orders.size(); i++) {
             assert orders.get(i - 1).size() >= orders.get(i).size();
         }

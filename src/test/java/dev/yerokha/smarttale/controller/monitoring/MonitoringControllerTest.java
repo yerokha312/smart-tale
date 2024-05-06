@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.controller.monitoring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
@@ -94,7 +95,7 @@ class MonitoringControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        List<DashboardOrder> orders = Arrays.asList(new ObjectMapper()
+        List<DashboardOrder> orders = Arrays.asList(objectMapper
                 .readValue(result.getResponse().getContentAsString(), DashboardOrder[].class));
 
         for (int i = 1; i < orders.size(); i++) {
@@ -162,6 +163,45 @@ class MonitoringControllerTest {
                         .content("dispatched")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Order(8)
+    void changeStatus_Should400() throws Exception {
+        mockMvc.perform(put("/v1/monitoring/100021")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("invalid")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(9)
+    void changeStatus_Should401() throws Exception {
+        mockMvc.perform(put("/v1/monitoring/100021")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("dispatched"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @Order(10)
+    void getHistory() throws Exception {
+        MvcResult result = mockMvc.perform(get(
+                        "/v1/monitoring/orders?" +
+                                "active=true&dateType=accepted&startDate=2000-01-01&endDate=2024-12-31&acceptedAt=desc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray()
+                )
+                .andReturn();
+
+        List<String> acceptedDates = JsonPath.read(result.getResponse().getContentAsString(), "$.content[*].acceptedAt");
+
+        for (int i = 1; i < acceptedDates.size(); i++) {
+            assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) >= 0;
+        }
     }
 
 }
