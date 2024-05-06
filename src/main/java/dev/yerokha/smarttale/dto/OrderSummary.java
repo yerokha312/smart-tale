@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record CurrentOrder(
+public record OrderSummary(
         @NotNull
         Long orderId,
         @NotNull
@@ -19,6 +19,7 @@ public record CurrentOrder(
         OrderStatus status,
         @NotNull
         LocalDate acceptedAt,
-        LocalDate deadlineAt
+        LocalDate deadlineAt,
+        LocalDate completedAt
 ) {
 }

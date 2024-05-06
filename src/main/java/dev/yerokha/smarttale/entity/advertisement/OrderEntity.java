@@ -3,17 +3,20 @@ package dev.yerokha.smarttale.entity.advertisement;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -35,6 +38,9 @@ public class OrderEntity extends Advertisement {
     @JoinColumn(name = "accepted_by")
     private OrganizationEntity acceptedBy;
 
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<AcceptanceEntity> acceptanceEntities;
+
     @Column(name = "accepted_at")
     private LocalDate acceptedAt; //sort
 
@@ -54,5 +60,13 @@ public class OrderEntity extends Advertisement {
 
     @Column(name = "completed_at")
     private LocalDate completedAt;
+
+    public void addAcceptanceRequest(AcceptanceEntity acceptance) {
+        if (this.acceptanceEntities == null) {
+            this.acceptanceEntities = new ArrayList<>();
+        }
+
+        this.acceptanceEntities.add(acceptance);
+    }
 
 }

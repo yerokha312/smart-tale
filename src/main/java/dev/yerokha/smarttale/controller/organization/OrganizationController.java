@@ -1,8 +1,8 @@
 package dev.yerokha.smarttale.controller.organization;
 
-import dev.yerokha.smarttale.dto.CurrentOrder;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.service.OrganizationService;
@@ -53,9 +53,10 @@ public class OrganizationController {
         return ResponseEntity.ok(organizationService.getOrganization(getUserIdFromAuthToken(authentication)));
     }
 
+
     @Operation(
-            summary = "Get orders", description = "Get all current orders of organization",
-            tags = {"organization", "get", "order"},
+            summary = "Get order history", description = "Get all orders of organization",
+            tags = {"organization", "get", "order", "monitoring"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad param request", content = @Content),
@@ -63,7 +64,11 @@ public class OrganizationController {
                     @ApiResponse(responseCode = "404", description = "User or organization not found", content = @Content)
             },
             parameters = {
-                    @Parameter(name = "q", description = "active or done", required = true),
+                    @Parameter(name = "active", description = "true, null or false"),
+                    @Parameter(name = "dateType", description = "accepted, deadline, completed"),
+                    @Parameter(name = "startDate"),
+                    @Parameter(name = "endDate"),
+                    @Parameter(name = "date", description = "Exact date without date range"),
                     @Parameter(name = "page", description = "Page number. Default 0"),
                     @Parameter(name = "size", description = "Page size. Default 6"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +
@@ -74,7 +79,7 @@ public class OrganizationController {
             }
     )
     @GetMapping("/orders")
-    public ResponseEntity<Page<CurrentOrder>> getOrders(Authentication authentication,
+    public ResponseEntity<Page<OrderSummary>> getOrders(Authentication authentication,
                                                         @RequestParam Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getOrders(getUserIdFromAuthToken(authentication), params));
     }

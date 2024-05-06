@@ -100,11 +100,11 @@ FROM generate_series(0, 4) AS t(n);
 
 -- create additional 5 orders and make accepted by First Organization, assign to Fifth User with id 100004 --
 INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
-VALUES (100020, 100000, current_date - INTERVAL '1' DAY, '1', 'T-1-11'),
-       (100021, 100000, current_date - INTERVAL '2' DAY, '2', 'T-1-12'),
-       (100022, 100000, current_date - INTERVAL '3' DAY, '3', 'T-1-13'),
-       (100023, 100000, current_date - INTERVAL '4' DAY, '5', 'T-1-14'),
-       (100024, 100000, current_date - INTERVAL '5' DAY, '6', 'T-1-15');
+VALUES (100020, 100000, current_date - INTERVAL '6' DAY, '1', 'T-1-11'),
+       (100021, 100000, current_date - INTERVAL '7' DAY, '2', 'T-1-12'),
+       (100022, 100000, current_date - INTERVAL '8' DAY, '3', 'T-1-13'),
+       (100023, 100000, current_date - INTERVAL '9' DAY, '5', 'T-1-14'),
+       (100024, 100000, current_date - INTERVAL '10' DAY, '6', 'T-1-15');
 
 INSERT INTO task_employee_junction(task_id, user_id)
 SELECT 100020 + n,
@@ -124,11 +124,11 @@ FROM generate_series(0, 4) AS t(n);
 
 -- create additional 5 orders and make accepted by First Organization, assign to Sixth User with id 100005 --
 INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
-VALUES (100025, 100000, current_date - INTERVAL '1' DAY, '0', 'T-1-16'),
-       (100026, 100000, current_date - INTERVAL '2' DAY, '1', 'T-1-17'),
-       (100027, 100000, current_date - INTERVAL '3' DAY, '2', 'T-1-18'),
-       (100028, 100000, current_date - INTERVAL '4' DAY, '3', 'T-1-19'),
-       (100029, 100000, current_date - INTERVAL '5' DAY, '5', 'T-1-20');
+VALUES (100025, 100000, current_date - INTERVAL '11' DAY, '1', 'T-1-16'),
+       (100026, 100000, current_date - INTERVAL '12' DAY, '1', 'T-1-17'),
+       (100027, 100000, current_date - INTERVAL '13' DAY, '2', 'T-1-18'),
+       (100028, 100000, current_date - INTERVAL '14' DAY, '3', 'T-1-19'),
+       (100029, 100000, current_date - INTERVAL '15' DAY, '5', 'T-1-20');
 
 INSERT INTO task_employee_junction(task_id, user_id)
 SELECT 100025 + n,
@@ -148,11 +148,11 @@ FROM generate_series(0, 4) AS t(n);
 
 -- create additional 5 orders and make accepted by First Organization, assign to Seventh User with id 100006 --
 INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
-VALUES (100030, 100000, current_date - INTERVAL '1' DAY, '0', 'T-1-21'),
-       (100031, 100000, current_date - INTERVAL '2' DAY, '1', 'T-1-22'),
-       (100032, 100000, current_date - INTERVAL '3' DAY, '2', 'T-1-23'),
-       (100033, 100000, current_date - INTERVAL '4' DAY, '3', 'T-1-24'),
-       (100034, 100000, current_date - INTERVAL '5' DAY, '3', 'T-1-25');
+VALUES (100030, 100000, current_date - INTERVAL '11' DAY, '1', 'T-1-21'),
+       (100031, 100000, current_date - INTERVAL '21' DAY, '1', 'T-1-22'),
+       (100032, 100000, current_date - INTERVAL '31' DAY, '2', 'T-1-23'),
+       (100033, 100000, current_date - INTERVAL '41' DAY, '3', 'T-1-24'),
+       (100034, 100000, current_date - INTERVAL '51' DAY, '3', 'T-1-25');
 
 INSERT INTO task_employee_junction(task_id, user_id)
 SELECT 100030 + n,
@@ -172,7 +172,7 @@ FROM generate_series(0, 4) AS t(n);
 
 -- create additional 5 orders and make accepted by Second Organization assign to ZEighth User with id 100007 --
 INSERT INTO orders (advertisement_id, accepted_by, accepted_at, status, task_key)
-VALUES (100035, 100001, current_date - INTERVAL '1' DAY, '0', 'T-1-26'),
+VALUES (100035, 100001, current_date - INTERVAL '1' DAY, '1', 'T-1-26'),
        (100036, 100001, current_date - INTERVAL '2' DAY, '1', 'T-1-27'),
        (100037, 100001, current_date - INTERVAL '3' DAY, '2', 'T-1-28'),
        (100038, 100001, current_date - INTERVAL '4' DAY, '3', 'T-1-29'),
