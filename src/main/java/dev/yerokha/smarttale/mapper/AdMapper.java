@@ -1,12 +1,15 @@
 package dev.yerokha.smarttale.mapper;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.AssignedEmployee;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CurrentOrder;
+import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullProductCard;
+import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.Order;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Product;
@@ -18,7 +21,6 @@ import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AdMapper {
@@ -163,7 +165,7 @@ public class AdMapper {
                     result.publisherName(),
                     result.avatar() == null ? null : result.avatar().getImageUrl(),
                     contact.contains("PHONE") ? result.user().getPhoneNumber() : null,
-                    contact.contains("PHONE") ? result.user().getEmail() : null,
+                    contact.contains("EMAIL") ? result.user().getEmail() : null,
                     product.getViews()
             );
         }
@@ -184,7 +186,7 @@ public class AdMapper {
                 order.getAcceptedAt(),
                 order.getDeadlineAt(),
                 order.getCompletedAt(),
-                order.getStatus().toString()
+                order.getStatus()
         );
     }
 
@@ -194,6 +196,7 @@ public class AdMapper {
         String logoUrl = acceptedOrganization.getImage() == null ? null : acceptedOrganization.getImage().getImageUrl();
         return new OrderDto(
                 entity.getAdvertisementId(),
+                entity.getStatus(),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getPrice(),
@@ -217,13 +220,59 @@ public class AdMapper {
         return new Result(imageUrls, avatar, user, publisherName);
     }
 
+    public static DashboardOrder toDashboardOrder(OrderEntity order) {
+        String comment = null;
+        if (order.getComment() == null) {
+            String description = order.getDescription();
+            comment = description.length() >= 40 ? description.substring(0, 40) : description;
+        }
+
+        return new DashboardOrder(
+                order.getAdvertisementId(),
+                order.getStatus(),
+                order.getTitle(),
+                order.getTaskKey(),
+                comment,
+                order.getDeadlineAt()
+        );
+    }
+
+    public static MonitoringOrder mapToMonitoringOrder(OrderEntity order) {
+        UserDetailsEntity author = order.getPublishedBy();
+        String contact = order.getContactInfo().toString();
+        return new MonitoringOrder(
+                order.getAdvertisementId(),
+                order.getPublishedAt(),
+                order.getAcceptedAt(),
+                order.getDeadlineAt(),
+                order.getTaskKey(),
+                order.getTitle(),
+                order.getDescription(),
+                order.getSize(),
+                getImageUrls(order.getImages()),
+                order.getStatus(),
+                author.getUserId(),
+                author.getImage() == null ? null : author.getImage().getImageUrl(),
+                contact.contains("EMAIL") ? author.getEmail() : null,
+                contact.contains("PHONE") ? author.getPhoneNumber() : null,
+                order.getContractors() == null ? null : order.getContractors().stream()
+                        .map(emp -> new AssignedEmployee(
+                                emp.getUserId(),
+                                emp.getName(),
+                                emp.getImage() == null ? null : emp.getImage().getImageUrl()
+                        ))
+                        .toList(),
+                order.getViews()
+        );
+    }
+
     private record Result(List<String> imageUrls, Image avatar, UserDetailsEntity user, String publisherName) {
     }
 
-    private static List<String> getImageUrls(List<Image> order) {
-        List<String> imageUrls = new ArrayList<>();
-        if (order != null && !order.isEmpty()) {
-            imageUrls = order.stream()
+    private static List<String> getImageUrls(List<Image> images) {
+        List<String> imageUrls = null;
+        if (images != null && !images.isEmpty()) {
+            imageUrls = images.stream()
                     .map(Image::getImageUrl)
                     .toList();
         }

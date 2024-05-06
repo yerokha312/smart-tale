@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.dto;
 
+import dev.yerokha.smarttale.enums.OrderStatus;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -15,6 +16,6 @@ public record SmallOrder(
         LocalDate acceptedAt,
         LocalDate deadlineAt,
         LocalDate completedAt,
-        String status
+        OrderStatus status
 ) {
 }

@@ -104,21 +104,21 @@ create table user_details
 
 create table abstract_advertisements
 (
-    is_closed        boolean default false,
-    is_deleted       boolean default false,
-    price            numeric(38, 2),
-    advertisement_id bigserial,
-    published_at     timestamp(6),
-    published_by     bigint,
-    views            bigint  default 0,
-    title            varchar(250)  not null,
-    description      varchar(1000) not null,
     contact_information smallint,
-    constraint contact_information_check
-        check ((contact_information >= 0) AND (contact_information <= 2)),
+    is_closed           boolean default false,
+    is_deleted          boolean default false,
+    price               numeric(38, 2),
+    advertisement_id    bigserial,
+    published_at        timestamp(6),
+    published_by        bigint,
+    views               bigint  default 0,
+    title               varchar(250)  not null,
+    description         varchar(1000) not null,
     primary key (advertisement_id),
     constraint fk5pdy89af9tqcyu4f6iklwxg4m
-        foreign key (published_by) references user_details
+        foreign key (published_by) references user_details,
+    constraint abstract_advertisements_contact_information_check
+        check ((contact_information >= 0) AND (contact_information <= 2))
 );
 
 create table advertisement_image_junction
@@ -168,6 +168,19 @@ create table orders
         foreign key (advertisement_id) references abstract_advertisements,
     constraint orders_status_check
         check ((status >= 0) AND (status <= 7))
+);
+
+create table acceptance_request
+(
+    requested_at    date,
+    acceptance_id   bigserial,
+    order_id        bigint,
+    organization_id bigint,
+    primary key (acceptance_id),
+    constraint fkjvm2vwu8wep26unujk966supx
+        foreign key (order_id) references orders,
+    constraint fk80ke2kc0c60mi4bvw4yjx472c
+        foreign key (organization_id) references organizations
 );
 
 alter table organizations

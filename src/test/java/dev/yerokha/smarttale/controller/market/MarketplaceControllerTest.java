@@ -275,7 +275,7 @@ class MarketplaceControllerTest {
         Thread.sleep(1000);
         login("existing2@example.com");
         mockMvc.perform(post("/v1/account/orders" + code)
-                .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk());
     }
 

@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.entity.user;
 
 import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,6 +55,9 @@ public class OrganizationEntity {
 
     @OneToMany(mappedBy = "acceptedBy")
     private List<OrderEntity> acceptedOrders;
+
+    @OneToMany(mappedBy = "organization")
+    private List<AcceptanceEntity> acceptanceEntities;
 
     @OneToMany(mappedBy = "organization")
     private List<PositionEntity> positions;
