@@ -29,7 +29,6 @@ import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.ProductRepository;
 import dev.yerokha.smarttale.repository.PurchaseRepository;
-import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -67,7 +66,6 @@ public class AdvertisementService {
     private final ImageService imageService;
     private final UserService userService;
     private final MailService mailService;
-    private final UserDetailsRepository userDetailsRepository;
     private final PurchaseRepository purchaseRepository;
     private final TaskKeyGeneratorService taskKeyGeneratorService;
     private final OrganizationRepository organizationRepository;
@@ -83,7 +81,6 @@ public class AdvertisementService {
                                 UserService userService,
                                 ImageService imageService,
                                 MailService mailService,
-                                UserDetailsRepository userDetailsRepository,
                                 PurchaseRepository purchaseRepository,
                                 TaskKeyGeneratorService taskKeyGeneratorService,
                                 OrganizationRepository organizationRepository) {
@@ -93,7 +90,6 @@ public class AdvertisementService {
         this.mailService = mailService;
         this.userService = userService;
         this.imageService = imageService;
-        this.userDetailsRepository = userDetailsRepository;
         this.purchaseRepository = purchaseRepository;
         this.taskKeyGeneratorService = taskKeyGeneratorService;
         this.organizationRepository = organizationRepository;

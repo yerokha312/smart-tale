@@ -18,6 +18,8 @@ public record Card(
         String imageUrl,
         @NotNull
         Long publishedBy,
+        @NotNull
+        String publisherName,
         String publisherAvatarUrl
 ) {
 }

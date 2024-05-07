@@ -5,6 +5,7 @@ import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
@@ -38,9 +39,9 @@ public class OrderController {
             tags = {"get", "account", "order"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Bad param"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "User not found")
+                    @ApiResponse(responseCode = "400", description = "Bad param", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
             },
             parameters = {
                     @Parameter(name = "q", description = "\"active\" or any other value for completed", required = true),
@@ -58,8 +59,8 @@ public class OrderController {
             summary = "Get order", description = "Retrieve one order by id", tags = {"get", "order", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Order not found")
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
             }
     )
     @GetMapping("/{orderId}")
@@ -71,10 +72,10 @@ public class OrderController {
             summary = "Confirm order", description = "User confirms accepting Org's request", tags = {"post", "order", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Order confirmed"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "403", description = "It's not user's order"),
-                    @ApiResponse(responseCode = "404", description = "Order or org not found"),
-                    @ApiResponse(responseCode = "410", description = "Link is expired")
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "It's not user's order", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Order or org not found", content = @Content),
+                    @ApiResponse(responseCode = "410", description = "Link is expired", content = @Content)
             }
     )
     @PostMapping

@@ -12,8 +12,6 @@ public record FullProduct(
         @NotNull
         LocalDateTime publishedAt,
         @NotNull
-        Long publishedBy,
-        @NotNull
         String title,
         @NotNull
         String description,

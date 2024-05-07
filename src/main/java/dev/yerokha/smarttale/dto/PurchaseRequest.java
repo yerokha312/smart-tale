@@ -10,8 +10,11 @@ public record PurchaseRequest(
         String price,
         @NotNull
         String buyerEmail,
+        @NotNull
         String buyerPhoneNumber,
+        @NotNull
         String sellerEmail,
+        @NotNull
         String sellerPhoneNumber
 ) {
 }
