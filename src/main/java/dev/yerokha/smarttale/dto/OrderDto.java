@@ -21,8 +21,8 @@ public record OrderDto(
         @NotNull
         Long acceptedBy,
         @NotNull
-        String acceptorName,
-        String acceptorLogoUrl,
+        String organizationName,
+        String organizationLogoUrl,
         @NotNull
         LocalDate acceptedAt,
         LocalDate deadlineAt,

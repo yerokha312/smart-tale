@@ -12,10 +12,10 @@ public record FullOrder(
         Long orderId,
         @NotNull
         LocalDateTime publishedAt,
-        @NotNull
-        Long publishedBy,
         LocalDate acceptedAt,
         Long acceptedBy,
+        String organizationName,
+        String organizationLogoUrl,
         @NotNull
         String title,
         @NotNull

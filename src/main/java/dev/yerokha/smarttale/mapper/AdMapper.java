@@ -71,9 +71,10 @@ public class AdMapper {
         return new FullOrder(
                 order.getAdvertisementId(),
                 order.getPublishedAt(),
-                getUserId(order.getPublishedBy()),
                 order.getAcceptedAt(),
                 order.getAcceptedBy().getOrganizationId(),
+                order.getAcceptedBy().getName(),
+                order.getAcceptedBy().getImage() == null ? null : order.getAcceptedBy().getImage().getImageUrl(),
                 order.getTitle(),
                 order.getDescription(),
                 order.getPrice(),
@@ -90,7 +91,6 @@ public class AdMapper {
         return new FullProduct(
                 product.getAdvertisementId(),
                 product.getPublishedAt(),
-                getUserId(product.getPublishedBy()),
                 product.getTitle(),
                 product.getDescription(),
                 product.getPrice(),
@@ -121,6 +121,7 @@ public class AdMapper {
                 advertisement.getPrice(),
                 imageUrl,
                 publishedBy.getUserId(),
+                publishedBy.getName(),
                 publisherAvatarUrl
         );
     }
@@ -172,10 +173,6 @@ public class AdMapper {
 
         throw new IllegalArgumentException("Unsupported advertisement type");
 
-    }
-
-    private static Long getUserId(UserDetailsEntity user) {
-        return user != null ? user.getUserId() : null;
     }
 
     public static SmallOrder toSmallOrder(OrderEntity order) {

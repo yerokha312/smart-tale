@@ -13,6 +13,7 @@ public record Profile(
         String middleName,
         @NotNull
         String email,
+        @NotNull
         String phoneNumber,
         String avatarUrl,
         LocalDate subscriptionEndDate

@@ -49,8 +49,8 @@ public class AdvertisementController {
             "\"orderId\" and \"productId\" field of objects",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(implementation = Order.class))),
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(implementation = Product.class))),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
+                            anyOf = {Order.class, Product.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad request param", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
@@ -76,8 +76,8 @@ public class AdvertisementController {
             "\"orderId\" and \"productId\" field of object",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(implementation = FullProduct.class))),
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(implementation = FullOrder.class))),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
+                            anyOf = {FullOrder.class, FullProduct.class}))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User or Ad not found", content = @Content)
             }

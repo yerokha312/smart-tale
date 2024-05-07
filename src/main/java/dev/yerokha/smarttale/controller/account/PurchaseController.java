@@ -2,7 +2,6 @@ package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
-import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,9 +58,7 @@ public class PurchaseController {
             tags = {"purchase", "user", "get", "account", "product"},
             responses = {
 
-                    @ApiResponse(responseCode = "200", description = "Success Order", content = @Content(
-                            schema = @Schema(implementation = FullOrderCard.class))),
-                    @ApiResponse(responseCode = "200", description = "Success Product", content = @Content(
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
                             schema = @Schema(implementation = FullProductCard.class))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "Card not found", content = @Content),

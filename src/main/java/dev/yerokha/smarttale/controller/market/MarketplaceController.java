@@ -67,10 +67,8 @@ public class MarketplaceController {
             summary = "Get one ad", description = "Get order or product by id",
             tags = {"get", "order", "product", "market", "advertisement"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success",
-                            content = @Content(schema = @Schema(implementation = FullOrderCard.class))),
-                    @ApiResponse(responseCode = "200", description = "Success",
-                            content = @Content(schema = @Schema(implementation = FullProductCard.class))),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
+                                    anyOf = {FullProductCard.class, FullOrderCard.class}))),
                     @ApiResponse(responseCode = "404", description = "Ad not found", content = @Content)
             }
     )
@@ -103,9 +101,9 @@ public class MarketplaceController {
             summary = "Accept order", description = "Accept order by it's id", tags = {"put", "market", "order"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Not found"),
-                    @ApiResponse(responseCode = "410", description = "Already accepted"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Not found", content = @Content),
+                    @ApiResponse(responseCode = "410", description = "Already accepted", content = @Content),
             }
     )
     @PutMapping("/{advertisementId}")

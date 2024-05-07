@@ -21,8 +21,8 @@ public record FullOrderCard(
         LocalDateTime publishedAt,
         LocalDate deadlineAt,
         Long acceptedBy,
-        String acceptorName,
-        String acceptorLogoUrl,
+        String organizationName,
+        String organizationLogoUrl,
         @NotNull
         Long publishedBy,
         @NotNull
