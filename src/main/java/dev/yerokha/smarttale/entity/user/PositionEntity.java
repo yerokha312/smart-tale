@@ -30,6 +30,9 @@ public class PositionEntity {
     @Column(name = "authorities", columnDefinition = "integer default 0")
     private int authorities = 0;
 
+    @Column(name = "hierarchy", columnDefinition = "integer default 0")
+    private int hierarchy = 0;
+
     @OneToMany(mappedBy = "position")
     private Set<UserDetailsEntity> employees;
 

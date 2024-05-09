@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+// in get my advertisements
 public record Product(
         @NotNull
         Long productId,

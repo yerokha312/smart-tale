@@ -22,6 +22,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -59,7 +60,7 @@ public class Advertisement {
             inverseJoinColumns = @JoinColumn(name = "image_id")
     )
     @Size(max = 5)
-    private List<Image> images;
+    private List<Image> images = new ArrayList<>();
 
     @Column(name = "contact_information")
     @Enumerated(EnumType.ORDINAL)

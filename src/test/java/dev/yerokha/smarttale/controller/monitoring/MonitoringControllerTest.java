@@ -189,7 +189,7 @@ class MonitoringControllerTest {
     void getHistory() throws Exception {
         MvcResult result = mockMvc.perform(get(
                         "/v1/monitoring/orders?" +
-                                "active=true&dateType=accepted&startDate=2000-01-01&endDate=2024-12-31&acceptedAt=desc")
+                                "active=true&dateType=accepted&dateFrom=2000-01-01&dateTo=2024-12-31&acceptedAt=desc")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),

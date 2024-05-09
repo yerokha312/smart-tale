@@ -7,12 +7,14 @@ INSERT INTO users (user_id, email, is_enabled) VALUES ( 100000, 'existing@exampl
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100001, 'existing2@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100002, 'existing3@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100003, 'existing4@example.com', true);
+INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100003, 'Fourth', 'Existing', 'Profile', 'existing4@example.com', '+777712345600');
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100004, 'existing5@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100005, 'existing6@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100006, 'existing7@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100007, 'existing8@example.com', true);
+INSERT INTO users (user_id, email, is_enabled) VALUES ( 100008, 'invited1@example.com', true);
 
-INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100000, 'First Organization', '2024-01-01' );
+INSERT INTO organizations(organization_id, name, registered_at, owner_id) VALUES ( 100000, 'First Organization', '2024-01-01', 100003 );
 INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100001, 'Second Organization', '2024-01-01' );
 
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100000, 'Position 1', 100000 );
@@ -22,15 +24,18 @@ INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'Po
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'Position 5', 100001 );
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'Position 6', 100001 );
 
+UPDATE user_details SET organization_id = 100000, position_id = 100000 WHERE details_id = 100003;
+
 INSERT INTO user_details (details_id, last_name, first_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'existing@example.com', '+7999999999');
-INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567');
+INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, is_subscribed) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567', true);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100002, 'Third', 'Existing', 'Profile', 'existing3@example.com', '+777712345690');
-INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id) VALUES (100003, 'Fourth', 'Existing', 'Profile', 'existing4@example.com', '+777712345600', 100000, 100000);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100004, 'Fifth', 'Existing', 'Profile', 'existing5@example.com', '+777712345100', 100000, 100001, 3);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100005, 'Sixth', 'Existing', 'Profile', 'existing6@example.com', '+777712345200', 100000, 100002, 4);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100006, 'Seventh', 'Existing', 'Profile', 'existing7@example.com', '+777712345300', 100000, 100003, 5);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100007, 'ZEighth', 'Existing', 'Profile', 'existing8@example.com', '+777712345400', 100001, 100003, 4);
+INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100008, 'Invited', 'Person', 'Profile', 'invited1@example.com', '+777712341100', null, null, 0);
 
+INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES ('2023-01-01', 100000, 100008, 100003, 100000, 100003);
 
 -- create 10 abstract ads --
 INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,
@@ -106,6 +111,8 @@ VALUES (100020, 100000, current_date - INTERVAL '6' DAY, '1', 'T-1-11'),
        (100023, 100000, current_date - INTERVAL '9' DAY, '5', 'T-1-14'),
        (100024, 100000, current_date - INTERVAL '10' DAY, '6', 'T-1-15');
 
+UPDATE orders SET completed_at = current_date - INTERVAL '8' DAY WHERE advertisement_id = 100024;
+
 INSERT INTO task_employee_junction(task_id, user_id)
 SELECT 100020 + n,
        100004
@@ -128,7 +135,9 @@ VALUES (100025, 100000, current_date - INTERVAL '11' DAY, '1', 'T-1-16'),
        (100026, 100000, current_date - INTERVAL '12' DAY, '1', 'T-1-17'),
        (100027, 100000, current_date - INTERVAL '13' DAY, '2', 'T-1-18'),
        (100028, 100000, current_date - INTERVAL '14' DAY, '3', 'T-1-19'),
-       (100029, 100000, current_date - INTERVAL '15' DAY, '5', 'T-1-20');
+       (100029, 100000, current_date - INTERVAL '15' DAY, '6', 'T-1-20');
+
+UPDATE orders SET completed_at = current_date - INTERVAL '13' DAY WHERE advertisement_id = 100029;
 
 INSERT INTO task_employee_junction(task_id, user_id)
 SELECT 100025 + n,

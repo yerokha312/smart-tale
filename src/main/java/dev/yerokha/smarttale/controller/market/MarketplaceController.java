@@ -68,7 +68,7 @@ public class MarketplaceController {
             tags = {"get", "order", "product", "market", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
-                                    anyOf = {FullProductCard.class, FullOrderCard.class}))),
+                            anyOf = {FullProductCard.class, FullOrderCard.class}))),
                     @ApiResponse(responseCode = "404", description = "Ad not found", content = @Content)
             }
     )
@@ -127,7 +127,7 @@ public class MarketplaceController {
     )
     @PostMapping
     public ResponseEntity<String> placeAdvertisement(@RequestPart("dto") @Valid CreateAdRequest request,
-                                                     @RequestPart("images") List<MultipartFile> files,
+                                                     @RequestPart(value = "images", required = false) List<MultipartFile> files,
                                                      Authentication authentication) {
 
         if (files != null && !files.isEmpty()) {

@@ -91,7 +91,7 @@ public class UserDetailsEntity {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "task_id")
     )
-    List<OrderEntity> assignedTasks;
+    private List<OrderEntity> assignedTasks;
 
     @Column(name = "active_orders_count", columnDefinition = "int default 0")
     private int activeOrdersCount;

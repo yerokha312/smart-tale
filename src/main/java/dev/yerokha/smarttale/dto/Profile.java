@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
+// in get account/profile
 public record Profile(
         @NotNull
         String firstName,

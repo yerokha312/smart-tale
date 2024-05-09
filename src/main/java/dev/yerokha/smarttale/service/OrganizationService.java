@@ -1,19 +1,26 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.Employee;
+import dev.yerokha.smarttale.dto.EmployeeDto;
+import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
-import dev.yerokha.smarttale.dto.Position;
+import dev.yerokha.smarttale.dto.OrganizationSummary;
+import dev.yerokha.smarttale.dto.PositionSummary;
+import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
+import dev.yerokha.smarttale.exception.ForbiddenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
 import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
+import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.util.EncryptionUtil;
@@ -22,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -31,6 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static java.lang.Integer.parseInt;
+import static java.time.LocalDate.parse;
 
 @Service
 public class OrganizationService {
@@ -42,13 +51,18 @@ public class OrganizationService {
     private final InvitationRepository invitationRepository;
     private final UserDetailsRepository userDetailsRepository;
     private final PositionRepository positionRepository;
+    private final OrganizationRepository organizationRepository;
+    private final ImageService imageService;
 
-    public OrganizationService(OrderRepository orderRepository, MailService mailService, InvitationRepository invitationRepository, UserDetailsRepository userDetailsRepository, PositionRepository positionRepository) {
+
+    public OrganizationService(OrderRepository orderRepository, MailService mailService, InvitationRepository invitationRepository, UserDetailsRepository userDetailsRepository, PositionRepository positionRepository, OrganizationRepository organizationRepository, ImageService imageService) {
         this.orderRepository = orderRepository;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
         this.userDetailsRepository = userDetailsRepository;
         this.positionRepository = positionRepository;
+        this.organizationRepository = organizationRepository;
+        this.imageService = imageService;
     }
 
     public Page<OrderSummary> getOrders(Long employeeId, Map<String, String> params) {
@@ -65,142 +79,24 @@ public class OrganizationService {
                 .getOrganizationId();
 
         boolean isActive = Boolean.parseBoolean(params.getOrDefault("active", "true"));
-        return isActive
-                ? getActiveOrders(organizationId, params, pageable)
-                : getCompletedOrders(organizationId, params, pageable);
-    }
-
-    private Page<OrderSummary> getActiveOrders(Long organizationId, Map<String, String> params, Pageable pageable) {
-        return getOrdersByDateRange(organizationId, params, pageable, true);
-    }
-
-    private Page<OrderSummary> getCompletedOrders(Long organizationId, Map<String, String> params, Pageable pageable) {
-        return getOrdersByDateRange(organizationId, params, pageable, false);
-    }
-
-    private Page<OrderSummary> getOrdersByDateRange(Long organizationId, Map<String, String> params, Pageable pageable, boolean isActive) {
         String dateType = params.get("dateType");
+
         if (dateType != null) {
-            return switch (dateType) {
-                case "accepted" -> getOrdersByAcceptedDate(organizationId, isActive, params, pageable);
-                case "deadline" -> getOrdersByDeadlineDate(organizationId, isActive, params, pageable);
-                case "completed" -> isActive ? null : getOrdersByCompletedDate(organizationId, params, pageable);
-                default -> throw new IllegalArgumentException("Date type is not valid");
-            };
-        }
-        return isActive
-                ? orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNull(organizationId, pageable)
-                .map(AdMapper::toCurrentOrder)
-                : orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNull(organizationId, pageable)
-                .map(AdMapper::toCurrentOrder);
-    }
-
-    private Page<OrderSummary> getOrdersByCompletedDate(Long organizationId,
-                                                        Map<String, String> params,
-                                                        Pageable pageable) {
-
-        LocalDate exactDate = parseDate(params.get("date"));
-
-        if (exactDate == null) {
-            LocalDate startDate = parseDate(params.get("startDate"));
-            LocalDate endDate = parseDate(params.get("endDate"));
-            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtBetween(
-                            organizationId,
-                            startDate,
-                            endDate,
-                            pageable)
+            LocalDate dateFrom = parse(params.get("dateFrom"));
+            LocalDate dateTo = parse(params.get("dateTo"));
+            return orderRepository.findByDateRange(organizationId, isActive, dateType, dateFrom, dateTo, pageable)
                     .map(AdMapper::toCurrentOrder);
         }
-        return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAt(
-                        organizationId,
-                        exactDate,
-                        pageable)
+
+        return orderRepository.findByActiveStatus(organizationId, isActive, pageable)
                 .map(AdMapper::toCurrentOrder);
-    }
-
-    private Page<OrderSummary> getOrdersByDeadlineDate(Long organizationId,
-                                                       boolean isActive,
-                                                       Map<String, String> params,
-                                                       Pageable pageable) {
-
-        LocalDate exactDate = parseDate(params.get("date"));
-
-        if (exactDate == null) {
-            LocalDate startDate = parseDate(params.get("startDate"));
-            LocalDate endDate = parseDate(params.get("endDate"));
-            if (isActive) {
-                return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAtBetween(
-                                organizationId,
-                                startDate,
-                                endDate,
-                                pageable)
-                        .map(AdMapper::toCurrentOrder);
-            }
-            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAtBetween(
-                    organizationId,
-                    startDate,
-                    endDate,
-                    pageable).map(AdMapper::toCurrentOrder);
-        }
-        if (isActive) {
-            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAt(
-                    organizationId,
-                    exactDate,
-                    pageable).map(AdMapper::toCurrentOrder);
-        }
-        return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAt(
-                organizationId,
-                exactDate,
-                pageable).map(AdMapper::toCurrentOrder);
-    }
-
-    private Page<OrderSummary> getOrdersByAcceptedDate(Long organizationId,
-                                                       boolean isActive,
-                                                       Map<String, String> params,
-                                                       Pageable pageable) {
-
-        LocalDate exactDate = parseDate(params.get("date"));
-
-        if (exactDate == null) {
-            LocalDate startDate = parseDate(params.get("startDate"));
-            LocalDate endDate = parseDate(params.get("endDate"));
-            if (isActive) {
-                return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAtBetween(
-                        organizationId,
-                        startDate,
-                        endDate,
-                        pageable).map(AdMapper::toCurrentOrder);
-            }
-            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAtBetween(
-                    organizationId,
-                    startDate,
-                    endDate,
-                    pageable).map(AdMapper::toCurrentOrder);
-        }
-        if (isActive) {
-            return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAt(
-                    organizationId,
-                    exactDate,
-                    pageable).map(AdMapper::toCurrentOrder);
-        }
-        return orderRepository.findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAt(
-                organizationId,
-                exactDate,
-                pageable).map(AdMapper::toCurrentOrder);
-    }
-
-    private LocalDate parseDate(String dateStr) {
-        if (dateStr != null) {
-            return LocalDate.parse(dateStr);
-        }
-        return null;
     }
 
 
     private Sort getSortProps(Map<String, String> params) {
         List<Sort.Order> orders = new ArrayList<>();
         params.forEach((key, value) -> {
-            if (!(key.startsWith("page") || key.startsWith("size") || key.equals("active") || key.toLowerCase().contains("date"))) {
+            if (!(key.startsWith("page") || key.startsWith("size") || key.equals("active") || key.startsWith("date"))) {
                 Sort.Direction direction = value.equalsIgnoreCase("asc") ?
                         Sort.Direction.ASC : Sort.Direction.DESC;
                 switch (key) {
@@ -220,42 +116,116 @@ public class OrganizationService {
 
     public Page<Employee> getEmployees(Long employeeId, Map<String, String> params) {
         Sort sort = getSortProps(params);
-        Pageable pageable = PageRequest.of(
-                parseInt(params.getOrDefault("page", "0")),
-                parseInt(params.getOrDefault("size", "6")),
-                sort.equals(Sort.unsorted()) ?
-                        Sort.by(Sort.Direction.ASC, "lastName", "firstName", "middleName") : sort);
 
+        if (sort.isUnsorted()) {
+            sort = Sort.by(Sort.Direction.ASC, "lastName", "firstName", "middleName");
+        }
+
+        Pageable pageable = getPageable(params, sort);
+
+        OrganizationEntity organization = getOrganizationByEmployeeId(employeeId);
+
+        return getEmployees(organization.getOrganizationId(), pageable)
+                .map(emp -> mapToEmployee(emp, organization.getOrganizationId()));
+    }
+
+    private Employee mapToEmployee(UserDetailsEntity user, Long organizationId) {
+        String name = user.getName() == null ? "" : user.getName();
+        List<OrderSummary> orders = getCurrentOrders(user, organizationId);
+        String position = getPosition(user, organizationId);
+        String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
+
+        return new Employee(
+                user.getUserId(),
+                name,
+                user.getEmail(),
+                orders,
+                position,
+                status
+        );
+    }
+
+    private OrganizationEntity getOrganizationByEmployeeId(Long employeeId) {
         OrganizationEntity organization = userDetailsRepository.findById(employeeId)
                 .orElseThrow(() -> new NotFoundException("User not found"))
                 .getOrganization();
 
-        return getEmployees(organization.getOrganizationId(), pageable);
+        if (organization == null) {
+            throw new NotFoundException("Organization not found");
+        }
 
+        return organization;
     }
 
-    private Page<Employee> getEmployees(Long organizationId, Pageable pageable) {
+    private Pageable getPageable(Map<String, String> params, Sort sort) {
+        return PageRequest.of(
+                parseInt(params.getOrDefault("page", "0")),
+                parseInt(params.getOrDefault("size", "10")),
+                sort);
+    }
+
+    private Page<UserDetailsEntity> getEmployees(Long organizationId, Pageable pageable) {
         return userDetailsRepository
-                .findAllEmployeesAndInvitees(organizationId, pageable)
-                .map(user -> {
-                    String name = user.getName() == null ? "" : user.getName();
-                    List<OrderSummary> orders = getCurrentOrders(user, organizationId);
-                    String position = getPosition(user, organizationId);
-                    String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
-
-                    return new Employee(
-                            user.getUserId(),
-                            name,
-                            user.getEmail(),
-                            orders,
-                            position,
-                            status
-                    );
-                });
+                .findAllEmployeesAndInvitees(organizationId, pageable);
     }
 
-    private static String getPosition(UserDetailsEntity employee, Long organizationId) {
-        if (employee.getOrganization() == null) {
+    public EmployeeTasksResponse getEmployee(Long userId, Long employeeId, Map<String, String> params) {
+        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
+
+        UserDetailsEntity employee = findEmployeeById(organization, employeeId);
+        return new EmployeeTasksResponse(
+                mapToEmployeeDto(organization.getOrganizationId(), employee),
+                getTasks(employee, organization.getOrganizationId(), params)
+        );
+    }
+
+    private UserDetailsEntity findEmployeeById(OrganizationEntity organization, Long employeeId) {
+        return organization.getEmployees().stream()
+                .filter(emp -> emp.getUserId().equals(employeeId))
+                .findFirst()
+                .orElseGet(() -> findInvitedEmployee(organization, employeeId));
+    }
+
+    private UserDetailsEntity findInvitedEmployee(OrganizationEntity organization, Long employeeId) {
+        return organization.getInvitations().stream()
+                .map(InvitationEntity::getInvitee)
+                .filter(invitee -> invitee.getUserId().equals(employeeId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Employee not found"));
+    }
+
+    private EmployeeDto mapToEmployeeDto(Long organizationId, UserDetailsEntity employee) {
+        return new EmployeeDto(
+                employee.getUserId(),
+                employee.getName(),
+                employee.getImage() == null ? null : employee.getImage().getImageUrl(),
+                employee.getEmail(),
+                employee.getPhoneNumber(),
+                getPosition(employee, organizationId)
+        );
+    }
+
+    private Page<Task> getTasks(UserDetailsEntity employee, Long organizationId, Map<String, String> params) {
+        OrganizationEntity organization = employee.getOrganization();
+
+        if ((organization == null) || !organization.getOrganizationId().equals(organizationId)) {
+            return null;
+        }
+
+        boolean isActive = Boolean.parseBoolean(params.getOrDefault("active", "true"));
+
+        Sort sort = isActive
+                ? Sort.by(Sort.Direction.DESC, "acceptedAt")
+                : Sort.by(Sort.Direction.DESC, "completedAt");
+
+        Pageable pageable = getPageable(params, sort);
+
+        return orderRepository.findTasksByEmployeeId(employee.getUserId(), organizationId, isActive, pageable)
+                .map(AdMapper::toTask);
+    }
+
+    private String getPosition(UserDetailsEntity employee, Long organizationId) {
+        if (employee.getOrganization() == null || !employee.getOrganization().getOrganizationId().equals(organizationId)) {
             return Objects.requireNonNull(employee.getInvitations().stream()
                             .filter(inv -> inv.getOrganization().getOrganizationId().equals(organizationId))
                             .findFirst()
@@ -264,19 +234,11 @@ public class OrganizationService {
                     .getTitle();
         }
 
-        if (!employee.getOrganization().getOrganizationId().equals(organizationId)) {
-            return employee.getInvitations().stream()
-                    .filter(inv -> inv.getOrganization().getOrganizationId().equals(organizationId))
-                    .map(invitationEntity -> invitationEntity.getPosition().getTitle())
-                    .findFirst()
-                    .orElse(null);
-        }
-        PositionEntity position = employee.getPosition();
-        return position.getTitle();
+        return employee.getPosition().getTitle();
     }
 
-    private static List<OrderSummary> getCurrentOrders(UserDetailsEntity employee,
-                                                       Long organizationId) {
+    private List<OrderSummary> getCurrentOrders(UserDetailsEntity employee,
+                                                Long organizationId) {
 
         OrganizationEntity organization = employee.getOrganization();
         if ((organization == null) || !organization.getOrganizationId().equals(organizationId)) {
@@ -329,6 +291,7 @@ public class OrganizationService {
                     UserDetailsEntity userDetails = new UserDetailsEntity();
                     userDetails.setUser(newUser);
                     userDetails.setEmail(request.email());
+                    userDetails.setPhoneNumber(request.phoneNumber());
 
                     String lastName = request.lastName();
                     if (lastName != null) {
@@ -349,13 +312,13 @@ public class OrganizationService {
                 });
     }
 
-    public List<Position> getPositions(Long userId) {
+    public List<PositionSummary> getPositions(Long userId) {
         return userDetailsRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"))
                 .getOrganization()
                 .getPositions().stream()
                 .sorted(Comparator.comparing(PositionEntity::getTitle))
-                .map(pos -> new Position(
+                .map(pos -> new PositionSummary(
                         pos.getPositionId(),
                         pos.getTitle()
                 ))
@@ -363,22 +326,83 @@ public class OrganizationService {
     }
 
     public Organization getOrganization(Long userId) {
-        OrganizationEntity organization = userDetailsRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"))
-                .getOrganization();
+        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
 
+        return mapToOrganization(organization);
+    }
+
+    private static Organization mapToOrganization(OrganizationEntity organization) {
         UserDetailsEntity owner = organization.getOwner();
         String avatarUrl = owner.getImage() == null ? null : owner.getImage().getImageUrl();
         String logoUrl = organization.getImage() == null ? null : organization.getImage().getImageUrl();
         return new Organization(
                 organization.getOrganizationId(),
+                organization.getName(),
+                organization.getDescription(),
+                logoUrl,
                 owner.getUserId(),
                 owner.getName(),
                 avatarUrl,
-                organization.getName(),
-                organization.getDescription(),
-                organization.getRegisteredAt(),
-                logoUrl
+                organization.getRegisteredAt()
         );
+    }
+
+    public Page<OrganizationSummary> getAllOrganizations(Map<String, String> params) {
+        Pageable pageable = PageRequest.of(
+                Integer.parseInt(params.getOrDefault("page", "0")),
+                Integer.parseInt(params.getOrDefault("size", "10")));
+        return organizationRepository.findAll(pageable).map(OrganizationService::mapToOrganizationSummary);
+    }
+
+    private static OrganizationSummary mapToOrganizationSummary(OrganizationEntity organization) {
+        return new OrganizationSummary(
+                organization.getOrganizationId(),
+                organization.getName(),
+                organization.getImage() == null ? null : organization.getImage().getImageUrl()
+        );
+    }
+
+    public Organization getOrganizationById(Long organizationId) {
+        return mapToOrganization(organizationRepository.findById(organizationId).orElseThrow(
+                () -> new NotFoundException("Organization not found")));
+    }
+
+    public void createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
+        UserDetailsEntity user = userDetailsRepository.findById(userId).orElseThrow(
+                () -> new NotFoundException("User not found"));
+
+        if (!user.isSubscribed() || user.getOrganization() != null) {
+            throw new ForbiddenException("User is not subscribed or already has an organization");
+        }
+
+        OrganizationEntity organization = new OrganizationEntity(
+                request.name(),
+                request.description(),
+                file == null ? null : imageService.processImage(file),
+                LocalDate.now(),
+                user
+        );
+
+        user.setOrganization(organization);
+        organizationRepository.save(organization);
+        userDetailsRepository.save(user);
+    }
+
+    public void updateOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
+        UserDetailsEntity user = userDetailsRepository.findById(userId).orElseThrow(
+                () -> new NotFoundException("User not found"));
+
+        OrganizationEntity organization = user.getOrganization();
+        boolean isOwner = organization.getOwner().getUserId().equals(userId);
+
+        if (!isOwner) {
+            throw new ForbiddenException("User is not an owner of the organization");
+        }
+
+        organization.setName(request.name());
+        organization.setDescription(request.description());
+        organization.setImage(imageService.processImage(file));
+
+        organizationRepository.save(organization);
     }
 }

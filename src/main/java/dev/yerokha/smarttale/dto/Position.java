@@ -3,9 +3,13 @@ package dev.yerokha.smarttale.dto;
 import jakarta.validation.constraints.NotNull;
 
 public record Position(
-        @NotNull
         Long positionId,
         @NotNull
-        String title
+        String title,
+        String description,
+        @NotNull
+        int authorities,
+        @NotNull
+        Long organizationId
 ) {
 }
