@@ -51,8 +51,8 @@ public class OrganizationController {
             summary = "Get own Org", tags = {"get", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Org not found")
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Org not found", content = @Content)
             }
     )
     @GetMapping
@@ -60,6 +60,15 @@ public class OrganizationController {
         return ResponseEntity.ok(organizationService.getOrganization(getUserIdFromAuthToken(authentication)));
     }
 
+    @Operation(
+            summary = "Create organization", tags = {"post", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "User is not subscribed or already in Organization"),
+                    @ApiResponse(responseCode = "404", description = "User not found")
+            }
+    )
     @PostMapping
     public ResponseEntity<String> createOrganization(@RequestPart("dto") @Valid CreateOrgRequest request,
                                                      @RequestPart(value = "logo", required = false) MultipartFile file,
@@ -74,6 +83,15 @@ public class OrganizationController {
         return new ResponseEntity<>("Organization created", HttpStatus.CREATED);
     }
 
+    @Operation(
+            summary = "Update organization", tags = {"put", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "User is not an owner"),
+                    @ApiResponse(responseCode = "404", description = "Org not found")
+            }
+    )
     @PutMapping
     public ResponseEntity<String> updateOrganization(@RequestPart("dto") @Valid CreateOrgRequest request,
                                                      @RequestPart(value = "logo", required = false) MultipartFile file,
@@ -146,6 +164,21 @@ public class OrganizationController {
                 params));
     }
 
+    @Operation(
+            summary = "Get one employee", description = "Get employee and paged list of orders",
+            tags = {"get", "employee", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad param"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "404", description = "Employee not found")
+            },
+            parameters = {
+                    @Parameter(name = "page", description = "Page number. Default 0"),
+                    @Parameter(name = "size", description = "Page size. Default 10"),
+                    @Parameter(name = "active", description = "true or false, default true. Returns nested paged list of orders"),
+            }
+    )
     @GetMapping("/employees/{employeeId}")
     public ResponseEntity<EmployeeTasksResponse> getEmployee(@PathVariable Long employeeId,
                                                              Authentication authentication,
