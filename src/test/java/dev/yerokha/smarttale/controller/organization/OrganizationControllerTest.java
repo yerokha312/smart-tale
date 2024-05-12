@@ -402,7 +402,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.authorities", hasSize(4))
+                        jsonPath("$.authorities", hasSize(5))
                 );
     }
 
