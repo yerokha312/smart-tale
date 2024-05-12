@@ -31,12 +31,12 @@ INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100008 );
 INSERT INTO organizations(organization_id, name, registered_at, owner_id) VALUES ( 100000, 'First Organization', '2024-01-01', 100003 );
 INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100001, 'Second Organization', '2024-01-01' );
 
-INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100000, 'Position 1', 100000, 15, 0 );
-INSERT INTO positions (position_id, title, organization_id, hierarchy) VALUES ( 100001, 'Position 2', 100000, 1 );
-INSERT INTO positions (position_id, title, organization_id, hierarchy) VALUES ( 100002, 'Position 3', 100000, 2 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'Position 4', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'Position 5', 100001 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'Position 6', 100001 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100000, 'Position 1', 100000, 1 + 2 + 8 + 32, 0 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100001, 'Position 2', 100000, 32, 1 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100002, 'Position 3', 100000, 6, 1 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100003, 'Position 4', 100000, 32, 2 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100004, 'Position 5', 100001, 1023, 0 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100005, 'Position 6', 100001, 8, 1 );
 
 UPDATE user_details SET organization_id = 100000, position_id = 100000 WHERE details_id = 100003;
 

@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.config;
 
-import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.util.CustomPermissionEvaluator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,18 +23,21 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 public class WebSecurityConfig {
 
     private final TokenAuthenticationFilter tokenAuthenticationFilter;
-    private final PositionRepository positionRepository;
 
-    public WebSecurityConfig(TokenAuthenticationFilter tokenAuthenticationFilter, PositionRepository positionRepository) {
+    public WebSecurityConfig(TokenAuthenticationFilter tokenAuthenticationFilter) {
         this.tokenAuthenticationFilter = tokenAuthenticationFilter;
-        this.positionRepository = positionRepository;
     }
 
     @Bean
     public DefaultMethodSecurityExpressionHandler expressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setPermissionEvaluator(new CustomPermissionEvaluator(positionRepository));
+        expressionHandler.setPermissionEvaluator(customPermissionEvaluator());
         return expressionHandler;
+    }
+
+    @Bean
+    public CustomPermissionEvaluator customPermissionEvaluator() {
+        return new CustomPermissionEvaluator();
     }
 
     @Bean

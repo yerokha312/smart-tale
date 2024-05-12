@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.dto.AssignmentRequest;
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
@@ -9,8 +10,10 @@ import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.OrganizationSummary;
 import dev.yerokha.smarttale.dto.Position;
+import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.dto.Task;
+import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
@@ -32,6 +35,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -60,7 +64,15 @@ public class OrganizationService {
     private final AuthenticationService authenticationService;
 
 
-    public OrganizationService(OrderRepository orderRepository, MailService mailService, InvitationRepository invitationRepository, UserDetailsRepository userDetailsRepository, PositionRepository positionRepository, OrganizationRepository organizationRepository, ImageService imageService, RoleRepository roleRepository, AuthenticationService authenticationService) {
+    public OrganizationService(OrderRepository orderRepository,
+                               MailService mailService,
+                               InvitationRepository invitationRepository,
+                               UserDetailsRepository userDetailsRepository,
+                               PositionRepository positionRepository,
+                               OrganizationRepository organizationRepository,
+                               ImageService imageService,
+                               RoleRepository roleRepository,
+                               AuthenticationService authenticationService) {
         this.orderRepository = orderRepository;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
@@ -90,7 +102,12 @@ public class OrganizationService {
         if (dateType != null) {
             LocalDate dateFrom = parse(params.get("dateFrom"));
             LocalDate dateTo = parse(params.get("dateTo"));
-            return orderRepository.findByDateRange(organizationId, isActive, dateType, dateFrom, dateTo, pageable)
+            return orderRepository.findByDateRange(organizationId,
+                            isActive,
+                            dateType,
+                            dateFrom,
+                            dateTo,
+                            pageable)
                     .map(AdMapper::toCurrentOrder);
         }
 
@@ -316,10 +333,18 @@ public class OrganizationService {
                 });
     }
 
-    public List<PositionSummary> getPositions(Long userId) {
-        return getUserDetailsEntity(userId)
+    public List<PositionSummary> getPositionsDropdown(Long userId) {
+        UserDetailsEntity user = getUserDetailsEntity(userId);
+        return user
                 .getOrganization()
                 .getPositions().stream()
+                .filter(pos -> {
+                    int positionAuths = pos.getAuthorities();
+                    PositionEntity userPosition = user.getPosition();
+                    int userAuths = userPosition.getAuthorities();
+                    return pos.getHierarchy() > userPosition.getHierarchy()
+                            && ((positionAuths & userAuths) == positionAuths);
+                })
                 .sorted(Comparator.comparing(PositionEntity::getTitle))
                 .map(pos -> new PositionSummary(
                         pos.getPositionId(),
@@ -445,8 +470,74 @@ public class OrganizationService {
         positionRepository.save(positionEntity);
     }
 
+    public void updatePosition(Long userId, Position position) {
+        PositionEntity positionEntity = positionRepository.findById(position.positionId())
+                .orElseThrow(() -> new NotFoundException("Position not found"));
+        boolean userIsEmployeeOfPositionOrganization = positionEntity.getOrganization().getEmployees().stream()
+                .anyMatch(emp -> emp.getUserId().equals(userId));
+        if (!userIsEmployeeOfPositionOrganization) {
+            throw new ForbiddenException("The user is not an employee of the organization associated with this position");
+        }
+        int hierarchy = position.hierarchy();
+        int authorities = 0;
+        List<String> authoritiesList = position.authorities();
+
+        for (String authority : authoritiesList) {
+            authorities |= Authorities.valueOf(authority).getBitmask();
+        }
+        positionEntity.setHierarchy(hierarchy);
+        positionEntity.setAuthorities(authorities);
+
+        positionRepository.save(positionEntity);
+    }
+
     private UserDetailsEntity getUserDetailsEntity(Long userId) {
         return userDetailsRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    @Transactional
+    public void assignEmployees(Long userId, AssignmentRequest request) {
+        UserDetailsEntity user = getUserDetailsEntity(userId);
+        OrganizationEntity organization = user.getOrganization();
+        OrderEntity order = orderRepository.findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(
+                organization.getOrganizationId(), request.taskId())
+                .orElseThrow(() -> new NotFoundException("Task not found"));
+
+        List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
+                organization.getOrganizationId(), request.employeeIds());
+
+        for (UserDetailsEntity contractor : contractors) {
+            order.addContractor(contractor);
+            user.addAssignedTask(order);
+            user.setActiveOrdersCount(user.getActiveOrdersCount() + 1);
+            userDetailsRepository.save(user);
+        }
+
+        orderRepository.save(order);
+    }
+
+    public List<PositionSummary> getAllPositions(Long userId) {
+        return getUserDetailsEntity(userId).getOrganization().getPositions().stream()
+                .map(pos -> new PositionSummary(
+                        pos.getPositionId(),
+                        pos.getTitle()
+                ))
+                .toList();
+    }
+
+    public PositionDto getOnePosition(Long userId, Long positionId) {
+        PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(
+                getUserDetailsEntity(userId).getOrganization().getOrganizationId(), positionId)
+                .orElseThrow(() -> new NotFoundException("Position not found"));
+
+        List<String> authorities = Authorities.getNamesByValues(position.getAuthorities());
+
+        return new PositionDto(
+                positionId,
+                position.getTitle(),
+                position.getHierarchy(),
+                authorities
+        );
     }
 }

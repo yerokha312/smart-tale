@@ -3,6 +3,9 @@ package dev.yerokha.smarttale.util;
 
 import lombok.Getter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 public enum Authorities {
 
@@ -29,5 +32,16 @@ public enum Authorities {
             allBitmask |= authority.getBitmask();
         }
         return allBitmask; // 1023
+    }
+
+    public static List<String> getNamesByValues(int authorities) {
+        List<String> names = new ArrayList<>();
+        for (Authorities value : Authorities.values()) {
+            if ((value.bitmask & authorities) == value.bitmask) {
+                names.add(value.name());
+            }
+        }
+
+        return names;
     }
 }

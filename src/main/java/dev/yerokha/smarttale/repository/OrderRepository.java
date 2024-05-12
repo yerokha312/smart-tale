@@ -59,6 +59,8 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
             "AND ((:isActive = true AND o.completedAt IS NULL) " +
             "OR (:isActive = false AND o.completedAt IS NOT NULL))")
     Page<OrderEntity> findTasksByEmployeeId(Long employeeId, Long organizationId, boolean isActive, Pageable pageable);
+
+    Optional<OrderEntity> findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(Long organizationId, Long orderId);
 }
 
 

@@ -32,12 +32,14 @@ import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -372,12 +374,35 @@ class OrganizationControllerTest {
 
     @Test
     @Order(8)
-    void getPositions() throws Exception {
-        mockMvc.perform(get("/v1/organization/positions")
+    void getPositionsDropdown() throws Exception {
+        mockMvc.perform(get("/v1/organization/positions-dropdown")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$").isArray()
+                        jsonPath("$").isArray(),
+                        jsonPath("$", hasSize(2))
+                );
+    }
+
+    @Test
+    @Order(8)
+    void getAllPositions() throws Exception {
+        mockMvc.perform(get("/v1/organization/positions")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$", hasSize(4))
+                );
+    }
+
+    @Test
+    @Order(8)
+    void getOnePosition() throws Exception {
+        mockMvc.perform(get("/v1/organization/positions/100000")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.authorities", hasSize(4))
                 );
     }
 
@@ -488,18 +513,64 @@ class OrganizationControllerTest {
                 .andExpect(status().isCreated());
     }
 
-}/*
+    @Test
+    @Order(13)
+    void createPosition_Should403() throws Exception {
+        Position position = new Position(
+                null,
+                "Test position",
+                1,
+                List.of("CREATE_POSITION"),
+                100000L
+        );
 
-public record Position(
-        Long positionId,
-        @NotNull @Length(min = 2)
-        String title,
-        @NotNull @PositiveOrZero
-        Integer hierarchy,
-        @NotNull @Size(min = 1)
-        List<String> authorities,
-        @NotNull
-        Long organizationId
-) {
+        String json = objectMapper.writeValueAsString(position);
+
+        mockMvc.perform(post("/v1/organization/positions")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(14)
+    void updatePosition() throws Exception {
+        Position position = new Position(
+                1L,
+                "Test position update",
+                2,
+                List.of("CREATE_POSITION"),
+                1L
+        );
+
+        String json = objectMapper.writeValueAsString(position);
+
+        mockMvc.perform(put("/v1/organization/positions")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(14)
+    void updatePosition_Should403() throws Exception {
+        Position position = new Position(
+                100003L,
+                "Test position update",
+                3,
+                List.of("CREATE_POSITION"),
+                100000L
+        );
+
+        String json = objectMapper.writeValueAsString(position);
+
+        mockMvc.perform(put("/v1/organization/positions")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden());
+    }
+
 }
-*/

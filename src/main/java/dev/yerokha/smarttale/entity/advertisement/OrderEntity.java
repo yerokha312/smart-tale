@@ -69,4 +69,12 @@ public class OrderEntity extends Advertisement {
         this.acceptanceEntities.add(acceptance);
     }
 
+    public void addContractor(UserDetailsEntity contractor) {
+        if (this.contractors == null) {
+            this.contractors = new ArrayList<>();
+        }
+
+        this.contractors.add(contractor);
+    }
+
 }

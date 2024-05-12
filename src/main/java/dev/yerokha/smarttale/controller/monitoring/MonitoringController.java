@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.controller.monitoring;
 
+import dev.yerokha.smarttale.dto.AssignmentRequest;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderSummary;
@@ -11,9 +12,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -116,6 +119,16 @@ public class MonitoringController {
         return ResponseEntity.ok(organizationService.getOrders(
                 getUserIdFromAuthToken(authentication),
                 params));
+    }
+
+    @PutMapping
+    @PreAuthorize("hasPermission(request, 'ASSIGN_EMPLOYEES')")
+    public ResponseEntity<String> assignEmployeesToTask(Authentication authentication,
+                                                        @RequestBody @Valid AssignmentRequest request) {
+
+        organizationService.assignEmployees(getUserIdFromAuthToken(authentication), request);
+
+        return ResponseEntity.ok("Employees assigned");
     }
 
 
