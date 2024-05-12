@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -29,5 +30,5 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
     @Query(value = "UPDATE user_details SET active_orders_count = active_orders_count + :amount WHERE details_id = :userId", nativeQuery = true)
     void updateActiveOrdersCount(int amount, Long userId);
 
-//    Page<UserDetailsEntity> findAllByOrganizationOrganizationIdOrderByAssignedTasksCountDesc(Long organizationId, Pageable pageable);
+    List<UserDetailsEntity> findAllByOrganizationOrganizationIdAndUserIdIn(Long organizationId, List<Long> employeeIds);
 }

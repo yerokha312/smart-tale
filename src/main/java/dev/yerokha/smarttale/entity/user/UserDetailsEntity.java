@@ -136,4 +136,20 @@ public class UserDetailsEntity {
     public String getName() {
         return this.lastName == null ? null : this.lastName + " " + this.firstName + " " + this.middleName;
     }
+
+    public void addAssignedTask(OrderEntity task) {
+        if (this.assignedTasks == null) {
+            this.assignedTasks = new ArrayList<>();
+        }
+
+        this.assignedTasks.add(task);
+    }
+
+    public void removeAssignedTask(OrderEntity task) {
+        if (this.assignedTasks == null || this.assignedTasks.isEmpty()) {
+            throw new IllegalArgumentException("Assigned tasks list is empty");
+        }
+
+        this.assignedTasks.remove(task);
+    }
 }
