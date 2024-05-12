@@ -31,19 +31,19 @@ INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100008 );
 INSERT INTO organizations(organization_id, name, registered_at, owner_id) VALUES ( 100000, 'First Organization', '2024-01-01', 100003 );
 INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100001, 'Second Organization', '2024-01-01' );
 
-INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100000, 'Position 1', 100000, 15, 0 );
-INSERT INTO positions (position_id, title, organization_id, hierarchy) VALUES ( 100001, 'Position 2', 100000, 1 );
-INSERT INTO positions (position_id, title, organization_id, hierarchy) VALUES ( 100002, 'Position 3', 100000, 2 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'Position 4', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'Position 5', 100001 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'Position 6', 100001 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100000, 'Position 1', 100000, 1 + 2 + 8 + 16 + 32, 0 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100001, 'Position 2', 100000, 32, 1 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100002, 'Position 3', 100000, 6, 1 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100003, 'Position 4', 100000, 32, 2 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100004, 'Position 5', 100001, 1023, 0 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100005, 'Position 6', 100001, 8, 1 );
 
 UPDATE user_details SET organization_id = 100000, position_id = 100000 WHERE details_id = 100003;
 
 INSERT INTO user_details (details_id, last_name, first_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'existing@example.com', '+7999999999');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, is_subscribed) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567', true);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100002, 'Third', 'Existing', 'Profile', 'existing3@example.com', '+777712345690');
-INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100004, 'Fifth', 'Existing', 'Profile', 'existing5@example.com', '+777712345100', 100000, 100001, 3);
+INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100004, 'Fifth', 'Existing', 'Profile', 'existing5@example.com', '+777712345100', 100000, 100001, 4);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100005, 'Sixth', 'Existing', 'Profile', 'existing6@example.com', '+777712345200', 100000, 100002, 4);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100006, 'Seventh', 'Existing', 'Profile', 'existing7@example.com', '+777712345300', 100000, 100003, 5);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100007, 'ZEighth', 'Existing', 'Profile', 'existing8@example.com', '+777712345400', 100001, 100003, 4);

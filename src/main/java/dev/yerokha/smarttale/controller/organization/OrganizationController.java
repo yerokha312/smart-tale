@@ -8,6 +8,7 @@ import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
+import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -189,25 +190,89 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Positions", description = "Get all positions of organization. Drop down request",
-            tags = {"organization", "get", "position", "user", "account", "employee"},
+            summary = "Positions dropdown in invite", description = "Get a list of positions to which user can invite. " +
+            "Drop down request",
+            tags = {"organization", "get", "position", "account", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "No permission", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "User or organization not found", content = @Content)
+            }
+    )
+    @GetMapping("/positions-dropdown")
+    @PreAuthorize("hasPermission(#authentication, 'INVITE_EMPLOYEE')")
+    public ResponseEntity<List<PositionSummary>> getPositionsDropdown(Authentication authentication) {
+        return ResponseEntity.ok(organizationService.getPositionsDropdown(getUserIdFromAuthToken(authentication)));
+    }
+
+    @Operation(
+            summary = "All positions", description = "Get all positions of organization",
+            tags = {"organization", "get", "position", "employee"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "No permission", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User or organization not found", content = @Content)
             }
     )
     @GetMapping("/positions")
-    public ResponseEntity<List<PositionSummary>> getPositions(Authentication authentication) {
-        return ResponseEntity.ok(organizationService.getPositions(getUserIdFromAuthToken(authentication)));
+    public ResponseEntity<List<PositionSummary>> getAllPositions(Authentication authentication) {
+        return ResponseEntity.ok(organizationService.getAllPositions(getUserIdFromAuthToken(authentication)));
     }
 
+    @Operation(
+            summary = "Get position", description = "Get position by id",
+            tags = {"organization", "get", "position", "employee"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "No permission", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "User, position or organization not found", content = @Content)
+            }
+    )
+    @GetMapping("/positions/{positionId}")
+    public ResponseEntity<PositionDto> getOnePosition(Authentication authentication,
+                                                      @PathVariable Long positionId) {
+        return ResponseEntity.ok(organizationService.getOnePosition(getUserIdFromAuthToken(authentication), positionId));
+    }
+
+    @Operation(
+            summary = "Create position", description = "Evaluates hierarchy and authorities then creates",
+            tags = {"post", "position", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "User or org not found"),
+            }
+    )
     @PostMapping("/positions")
-    @PreAuthorize("isAuthenticated() && hasPermission(#position, 'CREATE_POSITION')")
+    @PreAuthorize("hasPermission(#position, 'CREATE_POSITION')")
     public ResponseEntity<String> createPosition(Authentication authentication, @Valid @RequestBody Position position) {
         organizationService.createPosition(getUserIdFromAuthToken(authentication), position);
 
         return new ResponseEntity<>("Position created", HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Update position", description = "Evaluates hierarchy and authorities then updates",
+            tags = {"put", "position", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "User, org or position not found"),
+            }
+    )
+    @PutMapping("/positions")
+    @PreAuthorize("hasPermission(#position, 'UPDATE_POSITION')")
+    public ResponseEntity<String> updatePosition(Authentication authentication, @Valid @RequestBody Position position) {
+        organizationService.updatePosition(getUserIdFromAuthToken(authentication), position);
+
+        return new ResponseEntity<>("Position updated", HttpStatus.OK);
     }
 
     @Operation(

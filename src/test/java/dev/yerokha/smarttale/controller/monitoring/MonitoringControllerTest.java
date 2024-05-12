@@ -2,12 +2,15 @@ package dev.yerokha.smarttale.controller.monitoring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import dev.yerokha.smarttale.dto.AssignmentRequest;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -26,7 +29,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -203,5 +208,101 @@ class MonitoringControllerTest {
             assert acceptedDates.get(i - 1).compareTo(acceptedDates.get(i)) >= 0;
         }
     }
+
+    @Test
+    @Order(10)
+    void getEmployee_BeforeAssignment() throws Exception {
+        mockMvc.perform(get("/v1/organization/employees/100004")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.tasks.content", hasSize(4))
+                );
+    }
+
+    @Test
+    @Order(10)
+    void checkActiveOrdersCount_BeforeAssignment() {
+        UserDetailsEntity user = userDetailsRepository.findById(100004L).get();
+        Assertions.assertEquals(4, user.getActiveOrdersCount());
+    }
+
+    @Test
+    @Order(11)
+    void assignEmployees() throws Exception {
+        AssignmentRequest request = new AssignmentRequest(
+                100014L,
+                List.of(
+                        100004L,
+                        100005L,
+                        100006L
+                )
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+        mockMvc.perform(put("/v1/monitoring")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(12)
+    void getEmployee_AfterAssignment() throws Exception {
+        mockMvc.perform(get("/v1/organization/employees/100004")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.tasks.content", hasSize(5))
+                );
+    }
+
+    @Test
+    @Order(13)
+    void checkActiveOrdersCount_AfterAssignment() {
+        UserDetailsEntity user = userDetailsRepository.findById(100004L).get();
+        Assertions.assertEquals(5, user.getActiveOrdersCount());
+    }
+
+    @Test
+    @Order(14)
+    void removeEmployeesFromTask() throws Exception {
+        AssignmentRequest request = new AssignmentRequest(
+                100014L,
+                List.of(
+                        100004L,
+                        100005L,
+                        100006L
+                )
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+
+        mockMvc.perform(delete("/v1/monitoring")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .content(json)
+                        .contentType(APP_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(15)
+    void getEmployee_AfterRemoval() throws Exception {
+        mockMvc.perform(get("/v1/organization/employees/100004")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.tasks.content", hasSize(4))
+                );
+    }
+
+    @Test
+    @Order(16)
+    void checkActiveOrdersCount_AfterRemoval() {
+        UserDetailsEntity user = userDetailsRepository.findById(100004L).get();
+        Assertions.assertEquals(4, user.getActiveOrdersCount());
+    }
+
 
 }
