@@ -98,9 +98,8 @@ public class MonitoringController {
             parameters = {
                     @Parameter(name = "active", description = "true, null or false"),
                     @Parameter(name = "dateType", description = "accepted, deadline, completed"),
-                    @Parameter(name = "startDate"),
-                    @Parameter(name = "endDate"),
-                    @Parameter(name = "date", description = "Exact date without date range"),
+                    @Parameter(name = "dateFrom", description = "If dateType is not null, then dateFrom is required"),
+                    @Parameter(name = "dateTo", description = "If dateType is not null, then dateTo is required"),
                     @Parameter(name = "page", description = "Page number. Default 0"),
                     @Parameter(name = "size", description = "Page size. Default 6"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +

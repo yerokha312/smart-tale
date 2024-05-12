@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.entity.RefreshToken;
+import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.enums.TokenType;
 import dev.yerokha.smarttale.exception.InvalidTokenException;
@@ -44,17 +45,17 @@ public class TokenService {
         this.tokenRepository = tokenRepository;
     }
 
-    public String generateAccessToken(UserEntity entity) {
-        String accessToken = generateToken(entity, ACCESS_TOKEN_EXPIRATION, TokenType.ACCESS);
-        setValue("access_token:" + entity.getUsername(),
+    public String generateAccessToken(UserEntity entity, PositionEntity position) {
+        String accessToken = generateToken(entity, ACCESS_TOKEN_EXPIRATION, TokenType.ACCESS, position);
+        setValue("access_token:" + entity.getEmail(),
                 encrypt(accessToken),
                 ACCESS_TOKEN_EXPIRATION,
                 TimeUnit.MINUTES);
         return accessToken;
     }
 
-    public String generateRefreshToken(UserEntity entity) {
-        String refreshToken = generateToken(entity, REFRESH_TOKEN_EXPIRATION, TokenType.REFRESH);
+    public String generateRefreshToken(UserEntity entity, PositionEntity position) {
+        String refreshToken = generateToken(entity, REFRESH_TOKEN_EXPIRATION, TokenType.REFRESH, position);
         String encryptedToken = encrypt("Bearer " + refreshToken);
         RefreshToken refreshTokenEntity = new RefreshToken(
                 encryptedToken,
@@ -66,15 +67,24 @@ public class TokenService {
         return refreshToken;
     }
 
-    private String generateToken(UserEntity entity, int expirationTime, TokenType tokenType) {
+    private String generateToken(UserEntity entity, int expirationTime, TokenType tokenType, PositionEntity position) {
         Instant now = Instant.now();
         String scopes = getScopes(entity);
 
-        JwtClaimsSet claims = getClaims(now,
+        int hierarchy = 0;
+        int authorities = 0;
+        if (position != null) {
+            hierarchy = position.getHierarchy();
+            authorities = position.getAuthorities();
+        }
+        JwtClaimsSet claims = getClaims(
+                now,
                 expirationTime,
-                entity.getUsername(),
+                entity.getEmail(),
                 entity.getUserId(),
                 scopes,
+                hierarchy,
+                authorities,
                 tokenType);
         return encodeToken(claims);
     }
@@ -85,13 +95,22 @@ public class TokenService {
                 .collect(Collectors.joining(" "));
     }
 
-    private JwtClaimsSet getClaims(Instant now, long expirationTime, String subject, Long userId, String scopes, TokenType tokenType) {
+    private JwtClaimsSet getClaims(Instant now,
+                                   int expirationTime,
+                                   String subject,
+                                   Long userId,
+                                   String roles,
+                                   int hierarchy,
+                                   int authorities,
+                                   TokenType tokenType) {
         return JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
                 .expiresAt(now.plus(expirationTime, ChronoUnit.MINUTES))
                 .subject(subject)
-                .claim("scopes", scopes)
+                .claim("roles", roles)
+                .claim("hierarchy", hierarchy)
+                .claim("authorities", authorities)
                 .claim("tokenType", tokenType)
                 .claim("userId", userId)
                 .build();
@@ -128,6 +147,24 @@ public class TokenService {
         return jwt.getClaim("userId");
     }
 
+    public static Integer getUserHierarchyFromToken(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        long hierarchyLong = jwt.getClaim("hierarchy");
+        return (int) hierarchyLong;
+    }
+
+    public static Integer getUserAuthoritiesFromToken(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        long authoritiesLong = jwt.getClaim("authorities");
+        return (int) authoritiesLong;
+    }
+
     public LoginResponse refreshAccessToken(String refreshToken) {
         Jwt decodedToken = decodeToken(refreshToken);
         String email = decodedToken.getSubject();
@@ -146,12 +183,18 @@ public class TokenService {
         Instant now = Instant.now();
         String subject = decodedToken.getSubject();
         Long userId = decodedToken.getClaim("userId");
-        String scopes = decodedToken.getClaim("scopes");
+        String scopes = decodedToken.getClaim("roles");
+        long hierarchyLong = decodedToken.getClaim("hierarchy");
+        int hierarchy = (int) hierarchyLong;
+        long authoritiesLong = decodedToken.getClaim("authorities");
+        int authorities = (int) authoritiesLong;
         JwtClaimsSet claims = getClaims(now,
                 ACCESS_TOKEN_EXPIRATION,
                 subject,
                 userId,
                 scopes,
+                hierarchy,
+                authorities,
                 TokenType.ACCESS);
         String token = encodeToken(claims);
         String key = "access_token:" + email;

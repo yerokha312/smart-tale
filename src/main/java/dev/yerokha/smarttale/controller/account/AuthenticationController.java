@@ -111,7 +111,6 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationService.login(email, code));
     }
 
-
     @Operation(
             summary = "Refresh", description = "Obtain a new access token using refresh token",
             tags = {"authentication", "post"},
@@ -120,7 +119,7 @@ public class AuthenticationController {
                     @ApiResponse(responseCode = "401", description = "Invalid token exception", content = @Content)
             }
     )
-    @PostMapping("/refresh-token")
+    @PostMapping(value = "/refresh-token", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<LoginResponse> refreshToken(@RequestBody String refreshToken) {
         return ResponseEntity.ok(authenticationService.refreshToken(refreshToken));
     }

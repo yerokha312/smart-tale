@@ -3,10 +3,13 @@ package dev.yerokha.smarttale.controller.account;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.yerokha.smarttale.dto.RegistrationRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.MailService;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -277,7 +280,7 @@ public class AuthenticationControllerTest {
     void refreshToken() throws Exception {
         Thread.sleep(1000);
         MvcResult result = mockMvc.perform(post("/v1/auth/refresh-token")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("Bearer " + refreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken", not(initialAccessToken)))
@@ -290,7 +293,7 @@ public class AuthenticationControllerTest {
     @Order(6)
     void refreshToken_InvalidToken() throws Exception {
         mockMvc.perform(post("/v1/auth/refresh-token")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("Bearer " + "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzZWxmIiwic3ViIjoiZXJib2xhdHRAbGl2ZS5jb20iLCJzY29wZXMiOiJVU0VSIiwiZXhwIjoxNzEwODQ1NTcyLCJ0b2tlblR5cGUiOiJSRUZSRVNIIiwiaWF0IjoxNzEwMjQwNzcyfQ.kkbdqPjcrut98KUWu2q6ah3LEflUiW7KLIHMjJsw9VLi6HVerIkIYwgm4c0qs4yPhiaW2YOU1e6u5afr18Iw5DsDdivHhLugEW83cC-lskruRrAmJKFbvyplL7bpxNFvKuEowlT_bLrNzjzKmutLr-5eYeEQahFap6YkEwm4XDo7MSeOfNtD3zvhsmZEQ05VKlxFnjL59-JuW_8tc8U4lHXIYIyCt4sJ8xozRYj2p2kco-ojNVZXXqKbEZpJ-81lqExxoC4VTVN7aamjqmpktNE58o2IakiA-IZVEs4riSBg3sB3VWp7fPLXDymqaMvHf2GOExM16KGUAg-K3X2NNA"))
                 .andExpect(status().isUnauthorized());
     }
@@ -320,7 +323,7 @@ public class AuthenticationControllerTest {
     void refreshToken_RevokedShouldFail() throws Exception {
         Thread.sleep(600);
         mockMvc.perform(post("/v1/auth/refresh-token")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("Bearer " + refreshToken))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("Token is revoked"));
@@ -341,6 +344,16 @@ public class AuthenticationControllerTest {
         );
 
         verificationCode = confirmationUrlCaptor.getValue();
+    }
+
+    @Test
+    @Order(9)
+    void doesUserHaveUserDetails() {
+        UserDetailsEntity user = userRepository.findByEmail("johndoe@example.com")
+                .orElseThrow(() -> new NotFoundException("John Doe not found"))
+                .getDetails();
+
+        Assertions.assertNotNull(user);
     }
 
     @Test

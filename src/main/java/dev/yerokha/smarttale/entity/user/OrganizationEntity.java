@@ -68,4 +68,14 @@ public class OrganizationEntity {
     @Column(name = "is_deleted", columnDefinition = "boolean default false")
     private boolean isDeleted = false;
 
+    public OrganizationEntity() {
+    }
+
+    public OrganizationEntity(String name, String description, Image image, LocalDate registeredAt, UserDetailsEntity owner) {
+        this.name = name;
+        this.description = description;
+        this.image = image;
+        this.registeredAt = registeredAt;
+        this.owner = owner;
+    }
 }

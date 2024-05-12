@@ -235,12 +235,12 @@ class MarketplaceControllerTest {
     @Order(8)
     void getOrders_Organization_BeforeAccept() throws Exception {
         login("existing4@example.com");
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?active=true")
+        MvcResult result = mockMvc.perform(get("/v1/organization/orders?active=true")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(21)
+                        jsonPath("$.totalElements").value(19)
                 )
                 .andReturn();
 
@@ -284,12 +284,12 @@ class MarketplaceControllerTest {
     void getOrders_Organization_AfterAccept() throws Exception {
         Thread.sleep(1000);
         login("existing4@example.com");
-        MvcResult result = mockMvc.perform(get("/v1/organizations/orders?active=true")
+        MvcResult result = mockMvc.perform(get("/v1/organization//orders?active=true")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(22)
+                        jsonPath("$.totalElements").value(20)
                 )
                 .andReturn();
 
@@ -303,7 +303,7 @@ class MarketplaceControllerTest {
     @Test
     @Order(12)
     void getEmployees_SortByOrders_AfterAccept() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/organizations/employees?orders=desc")
+        MvcResult result = mockMvc.perform(get("/v1/organization//employees?orders=desc")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
