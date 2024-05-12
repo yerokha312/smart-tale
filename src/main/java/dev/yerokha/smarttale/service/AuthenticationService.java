@@ -1,8 +1,11 @@
 package dev.yerokha.smarttale.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.dto.RegistrationRequest;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
+import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.Role;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
@@ -11,6 +14,7 @@ import dev.yerokha.smarttale.exception.MissedException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.RoleRepository;
+import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -33,22 +39,26 @@ import static dev.yerokha.smarttale.util.RedisUtil.setValue;
 public class AuthenticationService {
 
     private final UserRepository userRepository;
+    private final UserDetailsRepository userDetailsRepository;
     private final RoleRepository roleRepository;
     private final MailService mailService;
     private final TokenService tokenService;
     private final InvitationRepository invitationRepository;
+    private final ObjectMapper objectMapper;
     public static final int CODE_LENGTH = 4;
     private static final String CHARACTERS = "0123456789";
     private static final SecureRandom random = new SecureRandom();
 
-    public AuthenticationService(UserRepository userRepository,
+    public AuthenticationService(UserRepository userRepository, UserDetailsRepository userDetailsRepository,
                                  RoleRepository roleRepository, MailService mailService, TokenService tokenService,
-                                 InvitationRepository invitationRepository) {
+                                 InvitationRepository invitationRepository, ObjectMapper objectMapper) {
         this.userRepository = userRepository;
+        this.userDetailsRepository = userDetailsRepository;
         this.roleRepository = roleRepository;
         this.mailService = mailService;
         this.tokenService = tokenService;
         this.invitationRepository = invitationRepository;
+        this.objectMapper = objectMapper;
     }
 
     private String register(RegistrationRequest request) {
@@ -58,11 +68,8 @@ public class AuthenticationService {
             throw new AlreadyTakenException(String.format("Email %s already taken", email));
         }
 
-        UserEntity user = new UserEntity(
-                email,
-                getUserRole()
-        );
-
+        UserEntity user = new UserEntity();
+        user.setEmail(email);
         UserDetailsEntity details = new UserDetailsEntity(
                 request.firstName(),
                 request.lastName(),
@@ -82,8 +89,16 @@ public class AuthenticationService {
             details.setMiddleName(request.middleName());
         }
 
-        setValue(email, user, 5, TimeUnit.MINUTES);
-        setValue("details:" + email, details, 15, TimeUnit.MINUTES);
+        String userJson;
+        String detailsJson;
+        try {
+            userJson = objectMapper.writeValueAsString(user);
+            detailsJson = objectMapper.writeValueAsString(details);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize object");
+        }
+        setValue(email, userJson, 5, TimeUnit.MINUTES);
+        setValue("details:" + email, detailsJson, 15, TimeUnit.MINUTES);
 
         sendVerificationEmail(email);
 
@@ -95,10 +110,18 @@ public class AuthenticationService {
                 .orElseThrow(() -> new NotFoundException("Role USER not found")));
     }
 
-    public void sendVerificationEmail(String email) {
-        UserEntity user = (UserEntity) getValue(email);
+    public Set<Role> getUserAndEmployeeRole() {
+        List<Role> roleList = roleRepository.findAll();
+        roleList.remove(2);
+        return new HashSet<>(roleList);
+    }
 
-        if (user == null) {
+    public void sendVerificationEmail(String email) {
+        UserEntity user;
+
+        try {
+            user = objectMapper.readValue(getValue(email), UserEntity.class);
+        } catch (Exception e) {
             throw new NotFoundException(String.format("User with email %s not found", email));
         }
 
@@ -106,17 +129,23 @@ public class AuthenticationService {
             sendLoginEmail(email);
         } else {
             user.setVerificationCode(generateVerificationCode());
-            setValue(email, user, 15, TimeUnit.MINUTES);
+            String userJson;
+            try {
+                userJson = objectMapper.writeValueAsString(user);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Failed to serialize object");
+            }
+            setValue(email, userJson, 15, TimeUnit.MINUTES);
             mailService.sendEmailVerificationCode(email, user.getVerificationCode());
         }
     }
 
     public LoginResponse verifyEmail(String email, String code) {
-        UserEntity user = (UserEntity) getValue(email);
-        UserDetailsEntity details = (UserDetailsEntity) getValue("details:" + email);
-
-        if (user == null) {
-            throw new NotFoundException(String.format("User with email %s not found", email));
+        UserEntity user;
+        try {
+            user = objectMapper.readValue(getValue(email), UserEntity.class);
+        } catch (Exception e) {
+            throw new NotFoundException("User not found");
         }
 
         if (!user.getVerificationCode().equals(code)) {
@@ -125,17 +154,28 @@ public class AuthenticationService {
 
         if (!user.isEnabled()) {
             user.setEnabled(true);
-            if (user.getDetails() == null) {
-                details.setUser(user);
-                details.setRegisteredAt(LocalDateTime.now());
-                user.setDetails(details);
+            user.setAuthorities(getUserRole());
+            UserDetailsEntity details;
+            try {
+                details = objectMapper.readValue(getValue("details:" + email), UserDetailsEntity.class);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Failed to serialize object");
             }
+            details.setUser(user);
+            details.setRegisteredAt(LocalDateTime.now());
+            user.setDetails(details);
             userRepository.save(user);
         }
+
         deleteKey(email);
+        deleteKey("details:" + email);
+
+        UserDetailsEntity userDetails = userDetailsRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User details not found"));
+        PositionEntity position = userDetails.getPosition();
         return new LoginResponse(
-                tokenService.generateAccessToken(user),
-                tokenService.generateRefreshToken(user),
+                tokenService.generateAccessToken(user, position),
+                tokenService.generateRefreshToken(user, position),
                 user.getUserId()
         );
     }
@@ -174,9 +214,14 @@ public class AuthenticationService {
             throw new DisabledException("User is not enabled");
         }
 
-        user.setVerificationCode(generateVerificationCode());
+        String userJson;
+        try {
+            userJson = objectMapper.writeValueAsString(user);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize object");
+        }
 
-        setValue(email, user, 15, TimeUnit.MINUTES);
+        setValue(email, userJson, 15, TimeUnit.MINUTES);
 
         sendLoginEmail(email);
 
@@ -184,14 +229,22 @@ public class AuthenticationService {
     }
 
     private void sendLoginEmail(String email) {
-        UserEntity user = (UserEntity) getValue(email);
+        UserEntity user;
 
-        if (user == null) {
+        try {
+            user = objectMapper.readValue(getValue(email), UserEntity.class);
+        } catch (Exception e) {
             throw new NotFoundException(String.format("User with email %s not found", email));
         }
 
         user.setVerificationCode(generateVerificationCode());
-        setValue(email, user, 15, TimeUnit.MINUTES);
+        String userJson;
+        try {
+            userJson = objectMapper.writeValueAsString(user);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize object");
+        }
+        setValue(email, userJson, 15, TimeUnit.MINUTES);
 
         mailService.sendLoginCode(email, user.getVerificationCode());
     }
@@ -215,7 +268,7 @@ public class AuthenticationService {
             throw new MissedException("Invitation is expired");
         }
 
-        user.setAuthorities(getUserRole());
+        user.setAuthorities(getUserAndEmployeeRole());
         user.setEnabled(true);
         user.setInvited(false);
         details.setLastName(request.lastName());
@@ -255,6 +308,7 @@ public class AuthenticationService {
         details.getAssignedTasks().clear();
         details.setActiveOrdersCount(0);
 
+        user.setAuthorities(getUserAndEmployeeRole());
         userRepository.save(user);
         invitationRepository.deleteAll(details.getInvitations());
 
@@ -262,39 +316,17 @@ public class AuthenticationService {
             throw new DisabledException("User is not enabled");
         }
 
-        user.setVerificationCode(generateVerificationCode());
+        String userJson;
+        try {
+            userJson = objectMapper.writeValueAsString(user);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize object");
+        }
 
-        setValue(email, user, 15, TimeUnit.MINUTES);
+        setValue(email, userJson, 15, TimeUnit.MINUTES);
 
         sendLoginEmail(email);
 
         return String.format("Code generated, email sent to %s", email);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

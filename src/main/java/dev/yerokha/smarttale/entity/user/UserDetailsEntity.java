@@ -62,6 +62,7 @@ public class UserDetailsEntity {
     private PositionEntity position;
 
     @OneToMany(mappedBy = "invitee", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private Set<InvitationEntity> invitations;
 
     @JsonManagedReference
@@ -73,25 +74,30 @@ public class UserDetailsEntity {
     private UserEntity user;
 
     @OneToMany(mappedBy = "publishedBy")
+    @ToString.Exclude
     private List<OrderEntity> orders;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "publishedBy")
     private List<ProductEntity> products;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "purchasedBy")
     private List<PurchaseEntity> purchases = new ArrayList<>();
 
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
 
+    @ToString.Exclude
     @ManyToMany
     @JoinTable(
             name = "task_employee_junction",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "task_id")
     )
-    List<OrderEntity> assignedTasks;
+    private List<OrderEntity> assignedTasks;
 
     @Column(name = "active_orders_count", columnDefinition = "int default 0")
     private int activeOrdersCount;

@@ -89,7 +89,7 @@ class OrderControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(26)
+                        jsonPath("$.totalElements").value(24)
                 )
                 .andReturn();
 
@@ -110,7 +110,7 @@ class OrderControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.content", hasSize(4))
+                        jsonPath("$.content", hasSize(6))
                 )
                 .andReturn();
 

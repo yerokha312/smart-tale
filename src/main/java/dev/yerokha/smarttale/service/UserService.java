@@ -31,9 +31,9 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() ->
-                new NotFoundException("User not found"));
+        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
     }
+
 
     public Profile getProfileByUserId(Long userId) {
         UserDetailsEntity userDetails = getUserDetailsEntity(userId);

@@ -26,6 +26,7 @@ public class SmartTaleApplication {
             }
 
             roleRepository.save(new Role("USER"));
+            roleRepository.save(new Role("EMPLOYEE"));
             roleRepository.save(new Role("ADMIN"));
 
         };

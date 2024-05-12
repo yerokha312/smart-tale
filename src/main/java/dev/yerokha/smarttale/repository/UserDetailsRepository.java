@@ -22,10 +22,12 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
             "LEFT JOIN ud.invitations inv " +
             "LEFT JOIN ud.organization org " +
             "WHERE org.organizationId = :orgId OR (inv.organization.organizationId = :orgId " +
-            "AND DATEADD(DAY, 7, inv.invitedAt) >= CURRENT_DATE)")
+            "AND inv.invitedAt + 7 DAY >= CURRENT_DATE)")
     Page<UserDetailsEntity> findAllEmployeesAndInvitees(@Param("orgId") Long orgId, Pageable pageable);
 
     @Modifying
     @Query(value = "UPDATE user_details SET active_orders_count = active_orders_count + :amount WHERE details_id = :userId", nativeQuery = true)
     void updateActiveOrdersCount(int amount, Long userId);
+
+//    Page<UserDetailsEntity> findAllByOrganizationOrganizationIdOrderByAssignedTasksCountDesc(Long organizationId, Pageable pageable);
 }

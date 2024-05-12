@@ -1,10 +1,14 @@
 package dev.yerokha.smarttale.controller.organization;
 
+import dev.yerokha.smarttale.controller.account.AccountController;
+import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.Employee;
+import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
+import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,13 +20,18 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -31,7 +40,7 @@ import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Organization", description = "Organization controller EPs")
 @RestController
-@RequestMapping("/v1/organizations")
+@RequestMapping("/v1/organization")
 public class OrganizationController {
 
     private final OrganizationService organizationService;
@@ -44,13 +53,59 @@ public class OrganizationController {
             summary = "Get own Org", tags = {"get", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Org not found")
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Org not found", content = @Content)
             }
     )
     @GetMapping
     public ResponseEntity<Organization> getOrganization(Authentication authentication) {
         return ResponseEntity.ok(organizationService.getOrganization(getUserIdFromAuthToken(authentication)));
+    }
+
+    @Operation(
+            summary = "Create organization", tags = {"post", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "User is not subscribed or already in Organization"),
+                    @ApiResponse(responseCode = "404", description = "User not found")
+            }
+    )
+    @PostMapping
+    public ResponseEntity<String> createOrganization(@RequestPart("dto") @Valid CreateOrgRequest request,
+                                                     @RequestPart(value = "logo", required = false) MultipartFile file,
+                                                     Authentication authentication) {
+
+        if (file != null) {
+            AccountController.validateImage(file);
+        }
+
+        organizationService.createOrganization(request, file, getUserIdFromAuthToken(authentication));
+
+        return new ResponseEntity<>("Organization created", HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Update organization", tags = {"put", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "User is not an owner"),
+                    @ApiResponse(responseCode = "404", description = "Org not found")
+            }
+    )
+    @PutMapping
+    public ResponseEntity<String> updateOrganization(@RequestPart("dto") @Valid CreateOrgRequest request,
+                                                     @RequestPart(value = "logo", required = false) MultipartFile file,
+                                                     Authentication authentication) {
+
+        if (file != null) {
+            AccountController.validateImage(file);
+        }
+
+        organizationService.updateOrganization(request, file, getUserIdFromAuthToken(authentication));
+
+        return ResponseEntity.ok("Organization updated");
     }
 
 
@@ -66,9 +121,8 @@ public class OrganizationController {
             parameters = {
                     @Parameter(name = "active", description = "true, null or false"),
                     @Parameter(name = "dateType", description = "accepted, deadline, completed"),
-                    @Parameter(name = "startDate"),
-                    @Parameter(name = "endDate"),
-                    @Parameter(name = "date", description = "Exact date without date range"),
+                    @Parameter(name = "dateFrom", description = "If dateType is not null, then dateFrom is required"),
+                    @Parameter(name = "dateTo", description = "If dateType is not null, then dateTo is required"),
                     @Parameter(name = "page", description = "Page number. Default 0"),
                     @Parameter(name = "size", description = "Page size. Default 6"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +
@@ -95,7 +149,7 @@ public class OrganizationController {
             },
             parameters = {
                     @Parameter(name = "page", description = "Page number. Default 0"),
-                    @Parameter(name = "size", description = "Page size. Default 6"),
+                    @Parameter(name = "size", description = "Page size. Default 10"),
                     @Parameter(name = "name", description = "Sorts by name. name=asc/desc"),
                     @Parameter(name = "orders", description = "Sorts by active orders number"),
                     @Parameter(name = "status", description = "Not a property, needs front implementation"),
@@ -113,6 +167,28 @@ public class OrganizationController {
     }
 
     @Operation(
+            summary = "Get one employee", description = "Get employee and paged list of orders",
+            tags = {"get", "employee", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad param"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "404", description = "Employee not found")
+            },
+            parameters = {
+                    @Parameter(name = "page", description = "Page number. Default 0"),
+                    @Parameter(name = "size", description = "Page size. Default 10"),
+                    @Parameter(name = "active", description = "true or false, default true. Returns nested paged list of orders"),
+            }
+    )
+    @GetMapping("/employees/{employeeId}")
+    public ResponseEntity<EmployeeTasksResponse> getEmployee(@PathVariable Long employeeId,
+                                                             Authentication authentication,
+                                                             @RequestParam Map<String, String> params) {
+        return ResponseEntity.ok(organizationService.getEmployee(getUserIdFromAuthToken(authentication), employeeId, params));
+    }
+
+    @Operation(
             summary = "Positions", description = "Get all positions of organization. Drop down request",
             tags = {"organization", "get", "position", "user", "account", "employee"},
             responses = {
@@ -122,8 +198,16 @@ public class OrganizationController {
             }
     )
     @GetMapping("/positions")
-    public ResponseEntity<List<Position>> getPositions(Authentication authentication) {
+    public ResponseEntity<List<PositionSummary>> getPositions(Authentication authentication) {
         return ResponseEntity.ok(organizationService.getPositions(getUserIdFromAuthToken(authentication)));
+    }
+
+    @PostMapping("/positions")
+    @PreAuthorize("isAuthenticated() && hasPermission(#position, 'CREATE_POSITION')")
+    public ResponseEntity<String> createPosition(Authentication authentication, @Valid @RequestBody Position position) {
+        organizationService.createPosition(getUserIdFromAuthToken(authentication), position);
+
+        return new ResponseEntity<>("Position created", HttpStatus.CREATED);
     }
 
     @Operation(
@@ -138,9 +222,12 @@ public class OrganizationController {
             }
     )
     @PostMapping("/employees")
+    @PreAuthorize("isAuthenticated() && hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
     public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody @Valid InviteRequest request) {
         String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
 
         return new ResponseEntity<>(String.format("Invite sent to %s", email), HttpStatus.CREATED);
     }
+
+
 }

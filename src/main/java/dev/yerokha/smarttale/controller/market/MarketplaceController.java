@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -68,7 +69,7 @@ public class MarketplaceController {
             tags = {"get", "order", "product", "market", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
-                                    anyOf = {FullProductCard.class, FullOrderCard.class}))),
+                            anyOf = {FullProductCard.class, FullOrderCard.class}))),
                     @ApiResponse(responseCode = "404", description = "Ad not found", content = @Content)
             }
     )
@@ -107,6 +108,7 @@ public class MarketplaceController {
             }
     )
     @PutMapping("/{advertisementId}")
+    @PreAuthorize("hasRole('EMPLOYEE') && hasPermission(authentication, 'CREATE_ORDER')")
     public ResponseEntity<String> acceptOrder(@PathVariable Long advertisementId,
                                               Authentication authentication) {
 
@@ -127,7 +129,7 @@ public class MarketplaceController {
     )
     @PostMapping
     public ResponseEntity<String> placeAdvertisement(@RequestPart("dto") @Valid CreateAdRequest request,
-                                                     @RequestPart("images") List<MultipartFile> files,
+                                                     @RequestPart(value = "images", required = false) List<MultipartFile> files,
                                                      Authentication authentication) {
 
         if (files != null && !files.isEmpty()) {

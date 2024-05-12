@@ -21,7 +21,7 @@ public record RegistrationRequest(
         String middleName,
         @NotNull @Email @NotEmpty
         String email,
-        @NotNull
+        @NotNull(message = "Phone number must not be empty") @NotEmpty(message = "Phone number must not be empty")
         String phoneNumber
 ) {
     public boolean isValid() {

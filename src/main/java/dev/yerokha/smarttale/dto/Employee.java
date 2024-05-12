@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
+// used in paged list of employees
 public record Employee(
         @NotNull
         Long employeeId,

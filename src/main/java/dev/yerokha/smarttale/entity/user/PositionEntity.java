@@ -27,6 +27,9 @@ public class PositionEntity {
     @Column(name = "title")
     private String title;
 
+    @Column(name = "hierarchy", columnDefinition = "integer default 0")
+    private int hierarchy = 0;
+
     @Column(name = "authorities", columnDefinition = "integer default 0")
     private int authorities = 0;
 
@@ -36,6 +39,16 @@ public class PositionEntity {
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
+
+    public PositionEntity() {
+    }
+
+    public PositionEntity(String title, Integer hierarchy, Integer authorities, OrganizationEntity organization) {
+        this.title = title;
+        this.hierarchy = hierarchy;
+        this.authorities = authorities;
+        this.organization = organization;
+    }
 
     @Override
     public boolean equals(Object o) {

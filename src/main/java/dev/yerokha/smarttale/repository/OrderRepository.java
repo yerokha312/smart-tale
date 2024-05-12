@@ -29,33 +29,36 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNull(Long organizationId, Pageable pageable);
 
+    @Query("SELECT o FROM OrderEntity o " +
+            "WHERE o.acceptedBy.organizationId = :organizationId " +
+            "AND ((:isActive = true AND o.completedAt IS NULL) " +
+            "OR (:isActive = false AND o.completedAt IS NOT NULL))")
+    Page<OrderEntity> findByActiveStatus(Long organizationId, boolean isActive, Pageable pageable);
+
+    @Query("SELECT o " +
+            "FROM OrderEntity o " +
+            "WHERE o.acceptedBy.organizationId = :organizationId " +
+            "AND ((:isActive = true AND o.completedAt IS NULL) " +
+            "OR (:isActive = false AND o.completedAt IS NOT NULL)) " +
+            "AND ((:property = 'accepted' AND o.acceptedAt BETWEEN :dateFrom AND :dateTo) " +
+            "OR (:property = 'deadline' AND o.deadlineAt BETWEEN :dateFrom AND :dateTo) " +
+            "OR (:property = 'completed' AND o.completedAt BETWEEN :dateFrom AND :dateTo))")
+    Page<OrderEntity> findByDateRange(Long organizationId, boolean isActive, String property, LocalDate dateFrom, LocalDate dateTo, Pageable pageable);
+
     @Query("SELECT DISTINCT o FROM OrderEntity o " +
             "LEFT JOIN o.acceptanceEntities ae " +
             "LEFT JOIN o.acceptedBy org " +
             "WHERE (org.organizationId = :organizationId AND o.status != :orderStatus) " +
-            "OR (ae.organization.organizationId = :organizationId AND DATEADD(DAY, 7, ae.requestedAt) >= CURRENT_DATE)")
+            "OR (ae.organization.organizationId = :organizationId AND ae.requestedAt + 7 DAY >= CURRENT_DATE)")
     List<OrderEntity> findAllDashboardOrders(Long organizationId, OrderStatus orderStatus);
 
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndAcceptedAt(Long organizationId, LocalDate exactDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNullAndDeadlineAt(Long organizationId, LocalDate exactDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndAcceptedAt(Long organizationId, LocalDate exactDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNullAndDeadlineAt(Long organizationId, LocalDate exactDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtBetween(Long organizationId, LocalDate startDate, LocalDate endDate, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAt(Long organizationId, LocalDate exactDate, Pageable pageable);
-
+    @Query("SELECT o " +
+            "FROM OrderEntity o " +
+            "LEFT JOIN o.contractors co " +
+            "WHERE (o.acceptedBy.organizationId = :organizationId AND co.userId = :employeeId) " +
+            "AND ((:isActive = true AND o.completedAt IS NULL) " +
+            "OR (:isActive = false AND o.completedAt IS NOT NULL))")
+    Page<OrderEntity> findTasksByEmployeeId(Long employeeId, Long organizationId, boolean isActive, Pageable pageable);
 }
 
 

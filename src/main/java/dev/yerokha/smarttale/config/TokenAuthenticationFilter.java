@@ -58,7 +58,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                 String key = "access_token:" + email;
 
                 if (containsKey(key)) {
-                    String cachedToken = decrypt((String) getValue(key));
+                    String cachedToken = decrypt(getValue(key));
                     final String tokenValue = accessToken.substring(7);
 
                     if (tokenValue.equals(cachedToken)) {

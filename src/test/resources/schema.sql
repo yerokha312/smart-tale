@@ -33,6 +33,7 @@ create table positions
 (
     authorities     integer default 0,
     organization_id bigint,
+    hierarchy       integer default 0,
     position_id     bigserial,
     title           varchar(255),
     primary key (position_id),
