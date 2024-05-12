@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -121,15 +122,47 @@ public class MonitoringController {
                 params));
     }
 
+    @Operation(
+            summary = "Add employees to task", description = "Method for adding, not setting. Please send only " +
+            "new assigned employees' ids in List. Can not add to order with PENDING and COMPLETED status",
+            tags = {"put", "order", "monitoring", "organization", "employee"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "User, employee, org or task not found"),
+            }
+    )
     @PutMapping
-    @PreAuthorize("hasPermission(request, 'ASSIGN_EMPLOYEES')")
-    public ResponseEntity<String> assignEmployeesToTask(Authentication authentication,
-                                                        @RequestBody @Valid AssignmentRequest request) {
+    @PreAuthorize("hasPermission(#request, 'ASSIGN_EMPLOYEES')")
+    public ResponseEntity<String> addEmployeesToTask(Authentication authentication,
+                                                     @RequestBody @Valid AssignmentRequest request) {
 
-        organizationService.assignEmployees(getUserIdFromAuthToken(authentication), request);
+        organizationService.assignEmployeesToTask(getUserIdFromAuthToken(authentication), request);
 
         return ResponseEntity.ok("Employees assigned");
     }
 
+    @Operation(
+            summary = "Remove employees from task", description = "Method for removing. Please send only " +
+            "removed employees' ids in List",
+            tags = {"delete", "order", "monitoring", "organization", "employee"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "User, employee, org or task not found"),
+            }
+    )
+    @DeleteMapping
+    @PreAuthorize("hasPermission(#request, 'ASSIGN_EMPLOYEES')")
+    public ResponseEntity<String> removeEmployeesFromTask(Authentication authentication,
+                                                          @RequestBody @Valid AssignmentRequest request) {
 
+        organizationService.removeEmployeesFromTask(getUserIdFromAuthToken(authentication), request);
+
+        return ResponseEntity.ok("Employees removed from task");
+    }
 }

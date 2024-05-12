@@ -60,7 +60,6 @@ public class OrganizationService {
     private final PositionRepository positionRepository;
     private final OrganizationRepository organizationRepository;
     private final ImageService imageService;
-    private final RoleRepository roleRepository;
     private final AuthenticationService authenticationService;
 
 
@@ -71,7 +70,6 @@ public class OrganizationService {
                                PositionRepository positionRepository,
                                OrganizationRepository organizationRepository,
                                ImageService imageService,
-                               RoleRepository roleRepository,
                                AuthenticationService authenticationService) {
         this.orderRepository = orderRepository;
         this.mailService = mailService;
@@ -80,7 +78,6 @@ public class OrganizationService {
         this.positionRepository = positionRepository;
         this.organizationRepository = organizationRepository;
         this.imageService = imageService;
-        this.roleRepository = roleRepository;
         this.authenticationService = authenticationService;
     }
 
@@ -497,11 +494,11 @@ public class OrganizationService {
     }
 
     @Transactional
-    public void assignEmployees(Long userId, AssignmentRequest request) {
+    public void assignEmployeesToTask(Long userId, AssignmentRequest request) {
         UserDetailsEntity user = getUserDetailsEntity(userId);
         OrganizationEntity organization = user.getOrganization();
         OrderEntity order = orderRepository.findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(
-                organization.getOrganizationId(), request.taskId())
+                        organization.getOrganizationId(), request.taskId())
                 .orElseThrow(() -> new NotFoundException("Task not found"));
 
         List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
@@ -509,8 +506,29 @@ public class OrganizationService {
 
         for (UserDetailsEntity contractor : contractors) {
             order.addContractor(contractor);
-            user.addAssignedTask(order);
-            user.setActiveOrdersCount(user.getActiveOrdersCount() + 1);
+            contractor.addAssignedTask(order);
+            userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
+            userDetailsRepository.save(user);
+        }
+
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void removeEmployeesFromTask(Long userId, AssignmentRequest request) {
+        UserDetailsEntity user = getUserDetailsEntity(userId);
+        OrganizationEntity organization = user.getOrganization();
+        OrderEntity order = orderRepository.findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(
+                        organization.getOrganizationId(), request.taskId())
+                .orElseThrow(() -> new NotFoundException("Task not found"));
+
+        List<UserDetailsEntity> contractorsForRemoval = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
+                organization.getOrganizationId(), request.employeeIds());
+
+        for (UserDetailsEntity contractor : contractorsForRemoval) {
+            order.removeContractor(contractor);
+            contractor.removeAssignedTask(order);
+            userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
             userDetailsRepository.save(user);
         }
 
@@ -528,7 +546,7 @@ public class OrganizationService {
 
     public PositionDto getOnePosition(Long userId, Long positionId) {
         PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(
-                getUserDetailsEntity(userId).getOrganization().getOrganizationId(), positionId)
+                        getUserDetailsEntity(userId).getOrganization().getOrganizationId(), positionId)
                 .orElseThrow(() -> new NotFoundException("Position not found"));
 
         List<String> authorities = Authorities.getNamesByValues(position.getAuthorities());

@@ -77,4 +77,12 @@ public class OrderEntity extends Advertisement {
         this.contractors.add(contractor);
     }
 
+    public void removeContractor(UserDetailsEntity contractor) {
+        if (this.contractors == null || this.contractors.isEmpty()) {
+            throw new IllegalArgumentException("Contractors list is empty");
+        }
+
+        this.contractors.remove(contractor);
+    }
+
 }

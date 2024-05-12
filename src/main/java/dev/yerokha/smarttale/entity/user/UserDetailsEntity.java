@@ -144,4 +144,12 @@ public class UserDetailsEntity {
 
         this.assignedTasks.add(task);
     }
+
+    public void removeAssignedTask(OrderEntity task) {
+        if (this.assignedTasks == null || this.assignedTasks.isEmpty()) {
+            throw new IllegalArgumentException("Assigned tasks list is empty");
+        }
+
+        this.assignedTasks.remove(task);
+    }
 }

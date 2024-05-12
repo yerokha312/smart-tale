@@ -388,7 +388,7 @@ class OrganizationControllerTest {
     @Order(8)
     void getAllPositions() throws Exception {
         mockMvc.perform(get("/v1/organization/positions")
-                .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$", hasSize(4))
@@ -399,7 +399,7 @@ class OrganizationControllerTest {
     @Order(8)
     void getOnePosition() throws Exception {
         mockMvc.perform(get("/v1/organization/positions/100000")
-                .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.authorities", hasSize(4))
