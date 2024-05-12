@@ -7,6 +7,7 @@ import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
+import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -200,6 +202,14 @@ public class OrganizationController {
         return ResponseEntity.ok(organizationService.getPositions(getUserIdFromAuthToken(authentication)));
     }
 
+    @PostMapping("/positions")
+    @PreAuthorize("isAuthenticated() && hasPermission(#position, 'CREATE_POSITION')")
+    public ResponseEntity<String> createPosition(Authentication authentication, @Valid @RequestBody Position position) {
+        organizationService.createPosition(getUserIdFromAuthToken(authentication), position);
+
+        return new ResponseEntity<>("Position created", HttpStatus.CREATED);
+    }
+
     @Operation(
             summary = "Invite employee", description = "Sends email to invited person's address",
             tags = {"post", "account", "user", "employee", "organization"},
@@ -212,6 +222,7 @@ public class OrganizationController {
             }
     )
     @PostMapping("/employees")
+    @PreAuthorize("isAuthenticated() && hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
     public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody @Valid InviteRequest request) {
         String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
 

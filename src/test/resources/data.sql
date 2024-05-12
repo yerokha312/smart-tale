@@ -1,7 +1,8 @@
 
 INSERT INTO roles (role_id, authority)
 VALUES (1, 'USER'),
-       (2, 'ADMIN');
+       (2, 'EMPLOYEE'),
+       (3, 'ADMIN');
 
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100000, 'existing@example.com', true );
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100001, 'existing2@example.com', true);
@@ -14,12 +15,25 @@ INSERT INTO users (user_id, email, is_enabled) VALUES ( 100006, 'existing7@examp
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100007, 'existing8@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100008, 'invited1@example.com', true);
 
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 2, 100003 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 2, 100004 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 2, 100005 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 2, 100006 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 2, 100007 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 2, 100008 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100003 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100004 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100005 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100006 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100007 );
+INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100008 );
+
 INSERT INTO organizations(organization_id, name, registered_at, owner_id) VALUES ( 100000, 'First Organization', '2024-01-01', 100003 );
 INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100001, 'Second Organization', '2024-01-01' );
 
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100000, 'Position 1', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100001, 'Position 2', 100000 );
-INSERT INTO positions (position_id, title, organization_id) VALUES ( 100002, 'Position 3', 100000 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100000, 'Position 1', 100000, 15, 0 );
+INSERT INTO positions (position_id, title, organization_id, hierarchy) VALUES ( 100001, 'Position 2', 100000, 1 );
+INSERT INTO positions (position_id, title, organization_id, hierarchy) VALUES ( 100002, 'Position 3', 100000, 2 );
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100003, 'Position 4', 100000 );
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100004, 'Position 5', 100001 );
 INSERT INTO positions (position_id, title, organization_id) VALUES ( 100005, 'Position 6', 100001 );

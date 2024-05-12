@@ -8,6 +8,7 @@ import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.OrganizationSummary;
+import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
@@ -22,7 +23,9 @@ import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
+import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
+import dev.yerokha.smarttale.util.Authorities;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -53,9 +56,11 @@ public class OrganizationService {
     private final PositionRepository positionRepository;
     private final OrganizationRepository organizationRepository;
     private final ImageService imageService;
+    private final RoleRepository roleRepository;
+    private final AuthenticationService authenticationService;
 
 
-    public OrganizationService(OrderRepository orderRepository, MailService mailService, InvitationRepository invitationRepository, UserDetailsRepository userDetailsRepository, PositionRepository positionRepository, OrganizationRepository organizationRepository, ImageService imageService) {
+    public OrganizationService(OrderRepository orderRepository, MailService mailService, InvitationRepository invitationRepository, UserDetailsRepository userDetailsRepository, PositionRepository positionRepository, OrganizationRepository organizationRepository, ImageService imageService, RoleRepository roleRepository, AuthenticationService authenticationService) {
         this.orderRepository = orderRepository;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
@@ -63,6 +68,8 @@ public class OrganizationService {
         this.positionRepository = positionRepository;
         this.organizationRepository = organizationRepository;
         this.imageService = imageService;
+        this.roleRepository = roleRepository;
+        this.authenticationService = authenticationService;
     }
 
     public Page<OrderSummary> getOrders(Long employeeId, Map<String, String> params) {
@@ -73,8 +80,7 @@ public class OrganizationService {
                 sort.equals(Sort.unsorted()) ?
                         Sort.by(Sort.Direction.DESC, "acceptedAt") : sort);
 
-        Long organizationId = userDetailsRepository.findById(employeeId)
-                .orElseThrow(() -> new NotFoundException("User not found"))
+        Long organizationId = getUserDetailsEntity(employeeId)
                 .getOrganization()
                 .getOrganizationId();
 
@@ -146,8 +152,7 @@ public class OrganizationService {
     }
 
     private OrganizationEntity getOrganizationByEmployeeId(Long employeeId) {
-        OrganizationEntity organization = userDetailsRepository.findById(employeeId)
-                .orElseThrow(() -> new NotFoundException("User not found"))
+        OrganizationEntity organization = getUserDetailsEntity(employeeId)
                 .getOrganization();
 
         if (organization == null) {
@@ -252,8 +257,7 @@ public class OrganizationService {
     }
 
     public String inviteEmployee(Long inviterId, InviteRequest request) {
-        UserDetailsEntity inviter = userDetailsRepository.findById(inviterId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        UserDetailsEntity inviter = getUserDetailsEntity(inviterId);
 
         OrganizationEntity organization = inviter.getOrganization();
         PositionEntity position = positionRepository.findById(request.positionId())
@@ -313,8 +317,7 @@ public class OrganizationService {
     }
 
     public List<PositionSummary> getPositions(Long userId) {
-        return userDetailsRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"))
+        return getUserDetailsEntity(userId)
                 .getOrganization()
                 .getPositions().stream()
                 .sorted(Comparator.comparing(PositionEntity::getTitle))
@@ -368,8 +371,7 @@ public class OrganizationService {
     }
 
     public void createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
-        UserDetailsEntity user = userDetailsRepository.findById(userId).orElseThrow(
-                () -> new NotFoundException("User not found"));
+        UserDetailsEntity user = getUserDetailsEntity(userId);
 
         if (!user.isSubscribed() || user.getOrganization() != null) {
             throw new ForbiddenException("User is not subscribed or already has an organization");
@@ -383,14 +385,24 @@ public class OrganizationService {
                 user
         );
 
-        user.setOrganization(organization);
         organizationRepository.save(organization);
+
+        PositionEntity position = new PositionEntity(
+                "Owner", 0, Authorities.allAuthorities(), organization
+        );
+
+        positionRepository.save(position);
+
+        user.setPosition(position);
+        user.setOrganization(organization);
+
+        user.getUser().setAuthorities(authenticationService.getUserAndEmployeeRole());
+
         userDetailsRepository.save(user);
     }
 
     public void updateOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
-        UserDetailsEntity user = userDetailsRepository.findById(userId).orElseThrow(
-                () -> new NotFoundException("User not found"));
+        UserDetailsEntity user = getUserDetailsEntity(userId);
 
         OrganizationEntity organization = user.getOrganization();
         boolean isOwner = organization.getOwner().getUserId().equals(userId);
@@ -404,5 +416,37 @@ public class OrganizationService {
         organization.setImage(imageService.processImage(file));
 
         organizationRepository.save(organization);
+    }
+
+    public void createPosition(Long userId, Position position) {
+        UserDetailsEntity user = getUserDetailsEntity(userId);
+
+        OrganizationEntity organization = user.getOrganization();
+
+        if (!organization.getOrganizationId().equals(position.organizationId())) {
+            throw new ForbiddenException("It is not your organization");
+        }
+
+        int authorities = 0;
+
+        List<String> authoritiesList = position.authorities();
+
+        for (String authority : authoritiesList) {
+            authorities |= Authorities.valueOf(authority).getBitmask();
+        }
+
+        PositionEntity positionEntity = new PositionEntity(
+                position.title(),
+                position.hierarchy(),
+                authorities,
+                organization
+        );
+
+        positionRepository.save(positionEntity);
+    }
+
+    private UserDetailsEntity getUserDetailsEntity(Long userId) {
+        return userDetailsRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 }

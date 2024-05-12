@@ -5,7 +5,9 @@ import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
@@ -56,6 +58,9 @@ class OrganizationControllerTest {
     ImageService imageService;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    PositionRepository positionRepository;
+
     final String APP_JSON = "application/json";
     public static String accessToken;
 
@@ -461,4 +466,40 @@ class OrganizationControllerTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    @Order(13)
+    void createPosition() throws Exception {
+        Thread.sleep(1000);
+        login("existing2@example.com");
+        Position position = new Position(
+                null,
+                "Test position",
+                1,
+                List.of("CREATE_POSITION"),
+                1L
+        );
+
+        String json = objectMapper.writeValueAsString(position);
+
+        mockMvc.perform(post("/v1/organization/positions")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isCreated());
+    }
+
+}/*
+
+public record Position(
+        Long positionId,
+        @NotNull @Length(min = 2)
+        String title,
+        @NotNull @PositiveOrZero
+        Integer hierarchy,
+        @NotNull @Size(min = 1)
+        List<String> authorities,
+        @NotNull
+        Long organizationId
+) {
 }
+*/

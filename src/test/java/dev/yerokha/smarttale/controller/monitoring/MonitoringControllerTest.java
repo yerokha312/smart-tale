@@ -148,11 +148,11 @@ class MonitoringControllerTest {
     @Test
     @Order(6)
     void changeStatus_Should403() throws Exception {
-        mockMvc.perform(put("/v1/monitoring/100022")
+        mockMvc.perform(put("/v1/monitoring/100020")
                         .contentType(MediaType.TEXT_PLAIN)
                         .content("dispatched")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
     }
 
     @Test
