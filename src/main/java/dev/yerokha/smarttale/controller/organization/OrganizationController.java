@@ -240,7 +240,8 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Create position", description = "Evaluates hierarchy and authorities then creates",
+            summary = "Create position", description = "Evaluates hierarchy and authorities then creates. " +
+            "Position id should be empty or 0",
             tags = {"post", "position", "organization"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Success"),
@@ -259,7 +260,8 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Update position", description = "Evaluates hierarchy and authorities then updates",
+            summary = "Update position", description = "Evaluates hierarchy and authorities then updates," +
+            "positionId shouldn't be null",
             tags = {"put", "position", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -316,6 +318,15 @@ public class OrganizationController {
 
     }
 
+    @Operation(
+            summary = "Delete position", tags = {"delete", "position", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "Position not found")
+            }
+    )
     @DeleteMapping("/positions/{positionId}")
     @PreAuthorize("hasPermission(#positionId, 'PositionEntity', 'DELETE_POSITION')")
     public ResponseEntity<String> deletePosition(Authentication authentication,
@@ -325,6 +336,15 @@ public class OrganizationController {
         return ResponseEntity.ok("Position deleted");
     }
 
+    @Operation(
+            summary = "Change employee position", tags = {"put", "position", "organization", "employee"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "Employee or Position not found")
+            }
+    )
     @PutMapping(value = "/employees")
     @PreAuthorize("hasPermission(#request.employeeId(), #request.positionId(), 'UPDATE_EMPLOYEE')")
     public ResponseEntity<String> updateEmployeePosition(Authentication authentication,

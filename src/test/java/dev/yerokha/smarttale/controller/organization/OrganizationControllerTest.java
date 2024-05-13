@@ -25,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -68,6 +69,8 @@ class OrganizationControllerTest {
 
     final String APP_JSON = "application/json";
     public static String accessToken;
+    public static String refreshToken;
+
 
     private void login(String email) throws Exception {
         mockMvc.perform(post("/v1/auth/login")
@@ -96,6 +99,7 @@ class OrganizationControllerTest {
 
         String responseContent = result.getResponse().getContentAsString();
         accessToken = extractToken(responseContent, "accessToken");
+        refreshToken = extractToken(responseContent, "refreshToken");
     }
 
     @Test
@@ -587,7 +591,14 @@ class OrganizationControllerTest {
     @Order(30)
     void createPosition() throws Exception {
         Thread.sleep(1000);
-        login("existing2@example.com");
+        MvcResult result = mockMvc.perform(post("/v1/auth/refresh-token")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("Bearer " + refreshToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        accessToken = extractToken(result.getResponse().getContentAsString(), "accessToken");
+
         Position position = new Position(
                 null,
                 "Test position",
@@ -627,9 +638,29 @@ class OrganizationControllerTest {
 
     @Test
     @Order(32)
-    void updatePosition() throws Exception {
+    void updatePosition_Should403_Hierarchy() throws Exception {
         Position position = new Position(
                 1L,
+                "Test position update",
+                2,
+                List.of("CREATE_POSITION"),
+                1L
+        );
+
+        String json = objectMapper.writeValueAsString(position);
+
+        mockMvc.perform(put("/v1/organization/positions")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(32)
+    void updatePosition() throws Exception {
+        Position position = new Position(
+                2L,
                 "Test position update",
                 2,
                 List.of("CREATE_POSITION"),

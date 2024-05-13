@@ -52,11 +52,27 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         // INVITE_EMPLOYEE duplicated cause this is for positions dropdown, second one is for invite itself
         return switch (permission.toString()) {
             case "INVITE_EMPLOYEE", "CREATE_ORDER", "DELETE_ORDER" -> true;
-            case "CREATE_POSITION", "UPDATE_POSITION" -> {
+            case "CREATE_POSITION" -> {
                 Position position = (Position) targetDomainObject;
                 int positionAuthorities = position.authorities().stream()
                         .map(authString -> valueOf(authString).getBitmask())
                         .reduce(0, (acc, bitmask) -> acc | bitmask);
+                yield ((positionAuthorities & userAuthorities) == positionAuthorities)
+                        && (userHierarchy < position.hierarchy());
+            }
+            case "UPDATE_POSITION" -> {
+                Position position = (Position) targetDomainObject;
+                Long positionId = position.positionId();
+                PositionEntity positionEntity = getPosition(positionId);
+                if (positionEntity.getHierarchy() <= userHierarchy) {
+                    yield false;
+                }
+                int positionAuthorities = position.authorities().stream()
+                        .map(authString -> valueOf(authString).getBitmask())
+                        .reduce(0, (acc, bitmask) -> acc | bitmask);
+                if ((positionAuthorities & userAuthorities) != positionAuthorities) {
+                    yield false;
+                }
                 yield ((positionAuthorities & userAuthorities) == positionAuthorities)
                         && (userHierarchy < position.hierarchy());
             }
@@ -119,20 +135,21 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                 int updatePositionBitmask = UPDATE_POSITION.getBitmask();
                 int inviteEmployeeBitmask = INVITE_EMPLOYEE.getBitmask();
                 int deleteEmployeeBitmask = DELETE_EMPLOYEE.getBitmask();
-                if ((userAuthorities & createPositionBitmask) != createPositionBitmask
-                        && ((userAuthorities & updatePositionBitmask) != updatePositionBitmask)
-                        && ((userAuthorities & inviteEmployeeBitmask) != inviteEmployeeBitmask)
-                        && ((userAuthorities & deleteEmployeeBitmask) != deleteEmployeeBitmask)) {
+                int requiredPermissionsBitmask = createPositionBitmask | updatePositionBitmask | inviteEmployeeBitmask | deleteEmployeeBitmask;
+
+                boolean hasRequiredPermissions = (userAuthorities & requiredPermissionsBitmask) != 0;
+
+                if (!hasRequiredPermissions) {
                     yield false;
                 }
                 Long employeeId = (Long) targetId;
                 Long positionId = Long.valueOf(targetType);
                 UserDetailsEntity employee = getEmployee(employeeId);
-                if (userHierarchy > employee.getPosition().getHierarchy()) {
+                if (userHierarchy >= employee.getPosition().getHierarchy()) {
                     yield false;
                 }
                 PositionEntity position = getPosition(positionId);
-                if (userHierarchy > position.getHierarchy()) {
+                if (userHierarchy >= position.getHierarchy()) {
                     yield false;
                 }
                 yield ((userAuthorities & position.getAuthorities()) == position.getAuthorities());

@@ -59,7 +59,6 @@ public class OrganizationService {
     private final MailService mailService;
     private final InvitationRepository invitationRepository;
     private final UserDetailsRepository userDetailsRepository;
-    private final UserRepository userRepository;
     private final PositionRepository positionRepository;
     private final OrganizationRepository organizationRepository;
     private final ImageService imageService;
@@ -69,7 +68,7 @@ public class OrganizationService {
     public OrganizationService(OrderRepository orderRepository,
                                MailService mailService,
                                InvitationRepository invitationRepository,
-                               UserDetailsRepository userDetailsRepository, UserRepository userRepository,
+                               UserDetailsRepository userDetailsRepository,
                                PositionRepository positionRepository,
                                OrganizationRepository organizationRepository,
                                ImageService imageService,
@@ -78,7 +77,6 @@ public class OrganizationService {
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
         this.userDetailsRepository = userDetailsRepository;
-        this.userRepository = userRepository;
         this.positionRepository = positionRepository;
         this.organizationRepository = organizationRepository;
         this.imageService = imageService;
@@ -396,13 +394,12 @@ public class OrganizationService {
                 () -> new NotFoundException("Organization not found")));
     }
 
-    public void createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
+    @Transactional
+    public String createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
         UserDetailsEntity user = getUserDetailsEntity(userId);
-
         if (!user.isSubscribed() || user.getOrganization() != null) {
             throw new ForbiddenException("User is not subscribed or already has an organization");
         }
-
         OrganizationEntity organization = new OrganizationEntity(
                 request.name(),
                 request.description(),
@@ -410,21 +407,16 @@ public class OrganizationService {
                 LocalDate.now(),
                 user
         );
-
         organizationRepository.save(organization);
-
         PositionEntity position = new PositionEntity(
                 "Owner", 0, Authorities.allAuthorities(), organization
         );
-
         positionRepository.save(position);
-
         user.setPosition(position);
         user.setOrganization(organization);
-
         user.getUser().setAuthorities(authenticationService.getUserAndEmployeeRole());
-
         userDetailsRepository.save(user);
+        return user.getEmail();
     }
 
     public void updateOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
@@ -471,7 +463,7 @@ public class OrganizationService {
         positionRepository.save(positionEntity);
     }
 
-    public void updatePosition(Long userId, Position position) {
+    public PositionEntity updatePosition(Long userId, Position position) {
         PositionEntity positionEntity = positionRepository.findById(position.positionId())
                 .orElseThrow(() -> new NotFoundException("Position not found"));
         boolean userIsEmployeeOfPositionOrganization = positionEntity.getOrganization().getEmployees().stream()
@@ -489,7 +481,7 @@ public class OrganizationService {
         positionEntity.setHierarchy(hierarchy);
         positionEntity.setAuthorities(authorities);
 
-        positionRepository.save(positionEntity);
+        return positionRepository.save(positionEntity);
     }
 
     private UserDetailsEntity getUserDetailsEntity(Long userId) {
@@ -564,7 +556,7 @@ public class OrganizationService {
     }
 
     @Transactional
-    public void deleteEmployee(Long userId, Long employeeId) {
+    public String deleteEmployee(Long userId, Long employeeId) {
         OrganizationEntity organization = getOrganizationByEmployeeId(userId);
 
         Set<UserDetailsEntity> employees = organization.getEmployees();
@@ -578,14 +570,14 @@ public class OrganizationService {
         employee.setPosition(null);
         employee.setAssignedTasks(null);
         employee.setActiveOrdersCount(0);
-        Set<Role> roles = (Set<Role>) employee.getUser().getAuthorities();
+        Set<Role> roles = employee.getUser().getAuthorities();
         roles.stream()
                 .filter(role -> role.getAuthority().equals("EMPLOYEE"))
                 .findFirst().ifPresent(roles::remove);
 
-        // Save the modified user
         userDetailsRepository.save(employee);
 
+        return employee.getEmail();
     }
 
     public void deletePosition(Long userId, Long positionId) {
@@ -602,7 +594,7 @@ public class OrganizationService {
         positionRepository.delete(position);
     }
 
-    public void updateEmployee(Long userId, Long employeeId, Long positionId) {
+    public String updateEmployee(Long userId, Long employeeId, Long positionId) {
         OrganizationEntity organization = getOrganizationByEmployeeId(userId);
         UserDetailsEntity employee = organization.getEmployees().stream()
                 .filter(e -> e.getUserId().equals(employeeId))
@@ -614,5 +606,7 @@ public class OrganizationService {
                 .orElseThrow(() -> new NotFoundException("Position not found")));
 
         userDetailsRepository.save(employee);
+
+        return employee.getEmail();
     }
 }
