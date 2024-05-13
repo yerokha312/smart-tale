@@ -16,6 +16,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,19 +53,19 @@ public class OrganizationEntity {
     private UserDetailsEntity owner;
 
     @OneToMany(mappedBy = "organization")
-    private Set<UserDetailsEntity> employees;
+    private Set<UserDetailsEntity> employees = new HashSet<>();
 
     @OneToMany(mappedBy = "acceptedBy")
-    private List<OrderEntity> acceptedOrders;
+    private List<OrderEntity> acceptedOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "organization")
-    private List<AcceptanceEntity> acceptanceEntities;
+    private List<AcceptanceEntity> acceptanceEntities = new ArrayList<>();
 
     @OneToMany(mappedBy = "organization")
-    private List<PositionEntity> positions;
+    private List<PositionEntity> positions = new ArrayList<>();
 
     @OneToMany(mappedBy = "organization")
-    private Set<InvitationEntity> invitations;
+    private Set<InvitationEntity> invitations = new HashSet<>();
 
     @Column(name = "is_deleted", columnDefinition = "boolean default false")
     private boolean isDeleted = false;

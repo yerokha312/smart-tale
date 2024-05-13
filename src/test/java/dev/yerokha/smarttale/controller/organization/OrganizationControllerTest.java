@@ -6,7 +6,9 @@ import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Position;
+import dev.yerokha.smarttale.dto.UpdateEmployeeRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
@@ -36,6 +38,7 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -44,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Order(6)
+@Order(9)
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -116,6 +119,7 @@ class OrganizationControllerTest {
     @Test
     @Order(1)
     void getOrders_NoParam() throws Exception {
+        Thread.sleep(1000);
         login("existing4@example.com");
         MvcResult result = mockMvc.perform(get("/v1/organization/orders")
                         .header("Authorization", "Bearer " + accessToken))
@@ -349,12 +353,12 @@ class OrganizationControllerTest {
     @Test
     @Order(7)
     void getEmployee_ActiveOrders() throws Exception {
-        mockMvc.perform(get("/v1/organization/employees/100005")
+        mockMvc.perform(get("/v1/organization/employees/100006")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.employee.name").value("Sixth Existing Profile"),
-                        jsonPath("$.tasks.totalElements").value(4)
+                        jsonPath("$.employee.name").value("Seventh Existing Profile"),
+                        jsonPath("$.tasks.totalElements").value(5)
                 );
 
     }
@@ -380,7 +384,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$").isArray(),
-                        jsonPath("$", hasSize(2))
+                        jsonPath("$", hasSize(3))
                 );
     }
 
@@ -391,7 +395,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$", hasSize(4))
+                        jsonPath("$", hasSize(5))
                 );
     }
 
@@ -402,7 +406,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.authorities", hasSize(5))
+                        jsonPath("$.authorities", hasSize(9))
                 );
     }
 
@@ -423,30 +427,6 @@ class OrganizationControllerTest {
     void getOrganization_Should401() throws Exception {
         mockMvc.perform(get("/v1/organization"))
                 .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @Order(11)
-    void createOrganization() throws Exception {
-        Thread.sleep(1000);
-        login("existing2@example.com");
-        CreateOrgRequest request = new CreateOrgRequest(
-                "Third Organization",
-                "No description"
-        );
-
-        MockMultipartFile textPart = new MockMultipartFile(
-                "dto", null, APP_JSON, objectMapper.writeValueAsBytes(request)
-        );
-
-        mockMvc.perform(multipart("/v1/organization")
-                        .file(textPart)
-                        .header("Authorization", "Bearer " + accessToken)
-                )
-                .andExpectAll(
-                        status().isCreated(),
-                        content().string("Organization created")
-                );
     }
 
     @Test
@@ -492,7 +472,119 @@ class OrganizationControllerTest {
     }
 
     @Test
-    @Order(13)
+    @Order(12)
+    void getEmployees_BeforeDeletion() throws Exception {
+        mockMvc.perform(get("/v1/organization/employees")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.totalElements").value(6)
+                );
+    }
+
+    @Test
+    @Order(15)
+    void deleteEmployee() throws Exception {
+        mockMvc.perform(delete("/v1/organization/employees/100004")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(16)
+    void getEmployees_AfterDeletion() throws Exception {
+        mockMvc.perform(get("/v1/organization/employees")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.totalElements").value(5)
+                );
+    }
+
+    @Test
+    @Order(16)
+    void checkFormerEmployeeRoles() {
+        UserEntity user = userRepository.findById(100004L).get();
+
+        assertEquals(1, user.getAuthorities().size());
+    }
+
+    @Test
+    @Order(17)
+    void deletePosition() throws Exception {
+        mockMvc.perform(delete("/v1/organization/positions/100006")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(17)
+    void deletePosition_Should403() throws Exception {
+        mockMvc.perform(delete("/v1/organization/positions/100002")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(17)
+    void deletePosition_DeleteNotOwnPosition_Should404() throws Exception {
+        mockMvc.perform(delete("/v1/organization/positions/100005")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Order(18)
+    void getAllPositions_AfterDeletion() throws Exception {
+        mockMvc.perform(get("/v1/organization/positions")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$", hasSize(4))
+                );
+    }
+
+    @Test
+    @Order(19)
+    void updateEmployeePosition() throws Exception {
+        UpdateEmployeeRequest request = new UpdateEmployeeRequest(
+                100005L,
+                100003L
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+        mockMvc.perform(put("/v1/organization/employees")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(29)
+    void createOrganization() throws Exception {
+        login("existing2@example.com");
+        CreateOrgRequest request = new CreateOrgRequest(
+                "Third Organization",
+                "No description"
+        );
+
+        MockMultipartFile textPart = new MockMultipartFile(
+                "dto", null, APP_JSON, objectMapper.writeValueAsBytes(request)
+        );
+
+        mockMvc.perform(multipart("/v1/organization")
+                        .file(textPart)
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpectAll(
+                        status().isCreated(),
+                        content().string("Organization created")
+                );
+    }
+
+    @Test
+    @Order(30)
     void createPosition() throws Exception {
         Thread.sleep(1000);
         login("existing2@example.com");
@@ -514,7 +606,7 @@ class OrganizationControllerTest {
     }
 
     @Test
-    @Order(13)
+    @Order(31)
     void createPosition_Should403() throws Exception {
         Position position = new Position(
                 null,
@@ -534,7 +626,7 @@ class OrganizationControllerTest {
     }
 
     @Test
-    @Order(14)
+    @Order(32)
     void updatePosition() throws Exception {
         Position position = new Position(
                 1L,
@@ -554,7 +646,7 @@ class OrganizationControllerTest {
     }
 
     @Test
-    @Order(14)
+    @Order(33)
     void updatePosition_Should403() throws Exception {
         Position position = new Position(
                 100003L,

@@ -12,15 +12,19 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
+@ToString
 @Entity
 @Table(name = "orders")
 public class OrderEntity extends Advertisement {
@@ -39,7 +43,7 @@ public class OrderEntity extends Advertisement {
     private OrganizationEntity acceptedBy;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<AcceptanceEntity> acceptanceEntities;
+    private Set<AcceptanceEntity> acceptanceEntities;
 
     @Column(name = "accepted_at")
     private LocalDate acceptedAt; //sort
@@ -63,7 +67,7 @@ public class OrderEntity extends Advertisement {
 
     public void addAcceptanceRequest(AcceptanceEntity acceptance) {
         if (this.acceptanceEntities == null) {
-            this.acceptanceEntities = new ArrayList<>();
+            this.acceptanceEntities = new HashSet<>();
         }
 
         this.acceptanceEntities.add(acceptance);

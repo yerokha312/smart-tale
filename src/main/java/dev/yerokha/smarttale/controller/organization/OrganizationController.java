@@ -10,6 +10,7 @@ import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
+import dev.yerokha.smarttale.dto.UpdateEmployeeRequest;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -287,11 +289,50 @@ public class OrganizationController {
             }
     )
     @PostMapping("/employees")
-    @PreAuthorize("isAuthenticated() && hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
+    @PreAuthorize("hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
     public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody @Valid InviteRequest request) {
         String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
 
         return new ResponseEntity<>(String.format("Invite sent to %s", email), HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Delete employee", tags = {"delete", "organization", "employee"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "Employee not found")
+            }
+    )
+    @DeleteMapping("/employees/{employeeId}")
+    @PreAuthorize("hasPermission(#employeeId, 'Employee', 'DELETE_EMPLOYEE')")
+    public ResponseEntity<String> deleteEmployee(Authentication authentication,
+                                                 @PathVariable Long employeeId) {
+
+        organizationService.deleteEmployee(getUserIdFromAuthToken(authentication), employeeId);
+
+        return ResponseEntity.ok("Employee deleted from organization");
+
+    }
+
+    @DeleteMapping("/positions/{positionId}")
+    @PreAuthorize("hasPermission(#positionId, 'PositionEntity', 'DELETE_POSITION')")
+    public ResponseEntity<String> deletePosition(Authentication authentication,
+                                                 @PathVariable Long positionId) {
+        organizationService.deletePosition(getUserIdFromAuthToken(authentication), positionId);
+
+        return ResponseEntity.ok("Position deleted");
+    }
+
+    @PutMapping(value = "/employees")
+    @PreAuthorize("hasPermission(#request.employeeId(), #request.positionId(), 'UPDATE_EMPLOYEE')")
+    public ResponseEntity<String> updateEmployeePosition(Authentication authentication,
+                                                         @RequestBody @Valid UpdateEmployeeRequest request) {
+
+        organizationService.updateEmployee(getUserIdFromAuthToken(authentication), request.employeeId(), request.positionId());
+
+        return ResponseEntity.ok("Employee position updated");
     }
 
 

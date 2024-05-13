@@ -105,7 +105,7 @@ public class AuthenticationService {
         return email;
     }
 
-    private Set<Role> getUserRole() {
+    public Set<Role> getUserRole() {
         return Set.of(roleRepository.findByAuthority("USER")
                 .orElseThrow(() -> new NotFoundException("Role USER not found")));
     }

@@ -266,6 +266,7 @@ class MarketplaceControllerTest {
         );
 
         code = captor.getValue();
+        assert code != null;
 
     }
 
