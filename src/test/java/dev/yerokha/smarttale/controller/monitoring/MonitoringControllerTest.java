@@ -97,7 +97,9 @@ class MonitoringControllerTest {
 
         MvcResult result = mockMvc.perform(get("/v1/monitoring")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$", hasSize(20)))
                 .andReturn();
 
         List<DashboardOrder> orders = Arrays.asList(objectMapper
@@ -304,5 +306,50 @@ class MonitoringControllerTest {
         Assertions.assertEquals(4, user.getActiveOrdersCount());
     }
 
+    @Test
+    @Order(17)
+    void getDashboard_BeforeTaskDeletion() throws Exception {
+        mockMvc.perform(get("/v1/monitoring")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$", hasSize(20))
+                );
+    }
+
+    @Test
+    @Order(17)
+    void checkActiveOrdersCount_BeforeTaskDeletion() {
+        UserDetailsEntity user1 = userDetailsRepository.findById(100005L).get();
+        Assertions.assertEquals(4, user1.getActiveOrdersCount());
+    }
+
+    @Test
+    @Order(18)
+    void deleteTask() throws Exception {
+        mockMvc.perform(delete("/v1/monitoring/100026")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk()
+                );
+    }
+
+    @Test
+    @Order(19)
+    void getDashboard_AfterTaskDeletion() throws Exception {
+        mockMvc.perform(get("/v1/monitoring")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$", hasSize(19))
+                );
+    }
+
+    @Test
+    @Order(20)
+    void checkActiveOrdersCount_AfterTaskDeletion() {
+        UserDetailsEntity user1 = userDetailsRepository.findById(100005L).get();
+        Assertions.assertEquals(3, user1.getActiveOrdersCount());
+    }
 
 }

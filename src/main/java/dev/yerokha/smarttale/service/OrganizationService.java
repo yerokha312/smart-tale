@@ -17,6 +17,7 @@ import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
+import dev.yerokha.smarttale.entity.user.Role;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.ForbiddenException;
@@ -26,8 +27,8 @@ import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
-import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
+import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.util.Authorities;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.data.domain.Page;
@@ -44,6 +45,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static java.lang.Integer.parseInt;
 import static java.time.LocalDate.parse;
@@ -392,13 +394,12 @@ public class OrganizationService {
                 () -> new NotFoundException("Organization not found")));
     }
 
-    public void createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
+    @Transactional
+    public String createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
         UserDetailsEntity user = getUserDetailsEntity(userId);
-
         if (!user.isSubscribed() || user.getOrganization() != null) {
             throw new ForbiddenException("User is not subscribed or already has an organization");
         }
-
         OrganizationEntity organization = new OrganizationEntity(
                 request.name(),
                 request.description(),
@@ -406,21 +407,16 @@ public class OrganizationService {
                 LocalDate.now(),
                 user
         );
-
         organizationRepository.save(organization);
-
         PositionEntity position = new PositionEntity(
                 "Owner", 0, Authorities.allAuthorities(), organization
         );
-
         positionRepository.save(position);
-
         user.setPosition(position);
         user.setOrganization(organization);
-
         user.getUser().setAuthorities(authenticationService.getUserAndEmployeeRole());
-
         userDetailsRepository.save(user);
+        return user.getEmail();
     }
 
     public void updateOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
@@ -467,7 +463,7 @@ public class OrganizationService {
         positionRepository.save(positionEntity);
     }
 
-    public void updatePosition(Long userId, Position position) {
+    public PositionEntity updatePosition(Long userId, Position position) {
         PositionEntity positionEntity = positionRepository.findById(position.positionId())
                 .orElseThrow(() -> new NotFoundException("Position not found"));
         boolean userIsEmployeeOfPositionOrganization = positionEntity.getOrganization().getEmployees().stream()
@@ -485,7 +481,7 @@ public class OrganizationService {
         positionEntity.setHierarchy(hierarchy);
         positionEntity.setAuthorities(authorities);
 
-        positionRepository.save(positionEntity);
+        return positionRepository.save(positionEntity);
     }
 
     private UserDetailsEntity getUserDetailsEntity(Long userId) {
@@ -557,5 +553,60 @@ public class OrganizationService {
                 position.getHierarchy(),
                 authorities
         );
+    }
+
+    @Transactional
+    public String deleteEmployee(Long userId, Long employeeId) {
+        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
+
+        Set<UserDetailsEntity> employees = organization.getEmployees();
+        UserDetailsEntity employee = employees.stream()
+                .filter(e -> e.getUserId().equals(employeeId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Employee not found"));
+
+        employees.remove(employee);
+        employee.setOrganization(null);
+        employee.setPosition(null);
+        employee.setAssignedTasks(null);
+        employee.setActiveOrdersCount(0);
+        Set<Role> roles = employee.getUser().getAuthorities();
+        roles.stream()
+                .filter(role -> role.getAuthority().equals("EMPLOYEE"))
+                .findFirst().ifPresent(roles::remove);
+
+        userDetailsRepository.save(employee);
+
+        return employee.getEmail();
+    }
+
+    public void deletePosition(Long userId, Long positionId) {
+        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
+        PositionEntity position = organization.getPositions().stream()
+                .filter(p -> p.getPositionId().equals(positionId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Position not found"));
+
+        if (!position.getEmployees().isEmpty()) {
+            throw new ForbiddenException("Reassign user positions first");
+        }
+
+        positionRepository.delete(position);
+    }
+
+    public String updateEmployee(Long userId, Long employeeId, Long positionId) {
+        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
+        UserDetailsEntity employee = organization.getEmployees().stream()
+                .filter(e -> e.getUserId().equals(employeeId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Employee not found"));
+        employee.setPosition(organization.getPositions().stream()
+                .filter(p -> p.getPositionId().equals(positionId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Position not found")));
+
+        userDetailsRepository.save(employee);
+
+        return employee.getEmail();
     }
 }

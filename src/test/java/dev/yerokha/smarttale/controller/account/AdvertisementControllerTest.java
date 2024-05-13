@@ -26,7 +26,6 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
@@ -181,11 +180,13 @@ class AdvertisementControllerTest {
     @Test
     @Order(5)
     void updateAd() throws Exception {
-        List<ImageOperation> imageOperationList = new ArrayList<>();
-        imageOperationList.add(new ImageOperation(0, 0, Action.ADD, 0));
-        imageOperationList.add(new ImageOperation(0, 1, Action.ADD, 1));
-        imageOperationList.add(new ImageOperation(0, 2, Action.ADD, 2));
-        imageOperationList.add(new ImageOperation(0, 3, Action.ADD, 3));
+        List<ImageOperation> imageOperationList = List.of(
+                new ImageOperation(0, 0, Action.ADD, 0),
+                new ImageOperation(0, 1, Action.ADD, 1),
+                new ImageOperation(0, 2, Action.ADD, 2),
+                new ImageOperation(0, 3, Action.ADD, 3)
+        );
+
         UpdateAdRequest request = new UpdateAdRequest(
                 100010L,
                 "Updated Title",

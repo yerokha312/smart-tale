@@ -24,11 +24,13 @@ import dev.yerokha.smarttale.exception.ForbiddenException;
 import dev.yerokha.smarttale.exception.MissedException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
+import dev.yerokha.smarttale.repository.AcceptanceRepository;
 import dev.yerokha.smarttale.repository.AdvertisementRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.ProductRepository;
 import dev.yerokha.smarttale.repository.PurchaseRepository;
+import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,6 +47,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static dev.yerokha.smarttale.enums.OrderStatus.CHECKING;
 import static dev.yerokha.smarttale.enums.OrderStatus.COMPLETED;
@@ -69,6 +72,8 @@ public class AdvertisementService {
     private final PurchaseRepository purchaseRepository;
     private final TaskKeyGeneratorService taskKeyGeneratorService;
     private final OrganizationRepository organizationRepository;
+    private final AcceptanceRepository acceptanceRepository;
+    private final UserDetailsRepository userDetailsRepository;
 
     private static final byte CLOSE = 1;
     private static final byte DISCLOSE = 2;
@@ -83,7 +88,7 @@ public class AdvertisementService {
                                 MailService mailService,
                                 PurchaseRepository purchaseRepository,
                                 TaskKeyGeneratorService taskKeyGeneratorService,
-                                OrganizationRepository organizationRepository) {
+                                OrganizationRepository organizationRepository, AcceptanceRepository acceptanceRepository, UserDetailsRepository userDetailsRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
@@ -93,6 +98,8 @@ public class AdvertisementService {
         this.purchaseRepository = purchaseRepository;
         this.taskKeyGeneratorService = taskKeyGeneratorService;
         this.organizationRepository = organizationRepository;
+        this.acceptanceRepository = acceptanceRepository;
+        this.userDetailsRepository = userDetailsRepository;
     }
 
     // get Ads in Personal account -> My advertisements
@@ -377,7 +384,6 @@ public class AdvertisementService {
             throw new MissedException("You are late!");
         }
 
-        //TODO check permissions
         UserDetailsEntity user = userService.getUserDetailsEntity(userId);
 
         OrganizationEntity organization = user.getOrganization();
@@ -390,11 +396,14 @@ public class AdvertisementService {
         order.addAcceptanceRequest(acceptanceEntity);
         orderRepository.save(order);
 
-        sendAcceptanceRequest(advertisementId, order, organization);
+        acceptanceRepository.save(acceptanceEntity);
+        sendAcceptanceRequest(acceptanceEntity);
     }
 
-    private void sendAcceptanceRequest(Long advertisementId, OrderEntity order, OrganizationEntity organization) {
+    private void sendAcceptanceRequest(AcceptanceEntity acceptance) {
+        OrderEntity order = acceptance.getOrder();
         String price = order.getPrice() == null ? null : order.getPrice().toString();
+        OrganizationEntity organization = acceptance.getOrganization();
         Image image = organization.getImage();
         String imageUrl = image == null ? null : image.getImageUrl();
         AcceptanceRequest request = new AcceptanceRequest(
@@ -406,8 +415,7 @@ public class AdvertisementService {
                 imageUrl
         );
 
-        String code = organization.getOrganizationId() + " " + advertisementId + " " + LocalDate.now();
-        String encryptedCode = "?code=" + EncryptionUtil.encrypt(code);
+        String encryptedCode = "?code=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
         mailService.sendAcceptanceRequest(order.getPublishedBy().getEmail(), request, encryptedCode);
     }
 
@@ -467,22 +475,23 @@ public class AdvertisementService {
 
     @Transactional
     public void confirmOrder(String code, Long userId) {
-        String[] decryptedCode = EncryptionUtil.decrypt(code).split(" ");
+        AcceptanceEntity acceptance = acceptanceRepository.findById(
+                        Long.valueOf(EncryptionUtil.decrypt(code)))
+                .orElseThrow(() -> new NotFoundException("Acceptance not found"));
 
-        LocalDate requestDate = LocalDate.parse(decryptedCode[2]);
+        LocalDate requestDate = acceptance.getRequestedAt();
 
         if (requestDate.plusDays(7).isBefore(LocalDate.now())) {
             throw new MissedException("Request is expired");
         }
 
-        OrderEntity order = getOrderEntity(Long.valueOf(decryptedCode[1]));
+        OrderEntity order = acceptance.getOrder();
 
         if (!order.getPublishedBy().getUserId().equals(userId)) {
             throw new ForbiddenException("It is not your order");
         }
 
-        OrganizationEntity organization = organizationRepository.findById(Long.valueOf(decryptedCode[0]))
-                .orElseThrow(() -> new NotFoundException("Organization not found"));
+        OrganizationEntity organization = acceptance.getOrganization();
 
         order.setAcceptedBy(organization);
         order.setAcceptedAt(LocalDate.now());
@@ -491,6 +500,7 @@ public class AdvertisementService {
         order.getAcceptanceEntities().clear();
 
         orderRepository.save(order);
+        acceptanceRepository.deleteAll(order.getAcceptanceEntities());
     }
 
     @Transactional
@@ -534,9 +544,6 @@ public class AdvertisementService {
             return;
         }
 
-        //TODO implement permissions
-        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
-
         boolean isValidTransition = switch (newStatus) {
             case NEW, DISPATCHED -> oldStatus.equals(CHECKING);
             case IN_PROGRESS -> oldStatus.equals(NEW) || oldStatus.equals(CHECKING);
@@ -556,5 +563,42 @@ public class AdvertisementService {
     private OrderEntity getOrderEntity(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+    }
+
+    @Transactional
+    public void deleteTask(Long userId, Long orderId) {
+        OrderEntity order = getOrderEntity(orderId);
+        OrganizationEntity organization = userService.getUserDetailsEntity(userId).getOrganization();
+        if (order.getAcceptedBy() == null || !Objects.equals(order.getAcceptedBy().getOrganizationId(),
+                organization.getOrganizationId())) {
+            deleteUnacceptedOrderTask(orderId, organization);
+        } else {
+            List<UserDetailsEntity> contractors = order.getContractors();
+            order.setAcceptedBy(null);
+            order.setAcceptedAt(null);
+            order.setStatus(null);
+            order.setTaskKey(null);
+            order.setComment(null);
+            for (UserDetailsEntity contractor : contractors) {
+                contractor.removeAssignedTask(order);
+                userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
+                userDetailsRepository.save(contractor);
+            }
+            order.setContractors(null);
+            orderRepository.save(order);
+            organization.getAcceptedOrders().removeIf(o -> o.getAdvertisementId().equals(orderId));
+            organizationRepository.save(organization);
+        }
+
+    }
+
+    private void deleteUnacceptedOrderTask(Long orderId, OrganizationEntity organization) {
+        AcceptanceEntity acceptance = organization.getAcceptanceEntities().stream()
+                .filter(a -> a.getOrder().getAdvertisementId().equals(orderId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Acceptance not found"));
+
+        organization.getAcceptanceEntities().remove(acceptance);
+        acceptanceRepository.delete(acceptance);
     }
 }

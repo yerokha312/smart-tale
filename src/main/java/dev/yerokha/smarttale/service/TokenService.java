@@ -3,10 +3,16 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.entity.RefreshToken;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
+import dev.yerokha.smarttale.entity.user.Role;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.enums.TokenType;
 import dev.yerokha.smarttale.exception.InvalidTokenException;
+import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.TokenRepository;
+import dev.yerokha.smarttale.repository.UserDetailsRepository;
+import dev.yerokha.smarttale.repository.UserRepository;
+import dev.yerokha.smarttale.util.Authorities;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -18,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +35,7 @@ import static dev.yerokha.smarttale.util.EncryptionUtil.encrypt;
 import static dev.yerokha.smarttale.util.RedisUtil.containsKey;
 import static dev.yerokha.smarttale.util.RedisUtil.deleteKey;
 import static dev.yerokha.smarttale.util.RedisUtil.setValue;
+import static org.aspectj.runtime.internal.Conversions.intValue;
 
 @Service
 public class TokenService {
@@ -35,14 +43,18 @@ public class TokenService {
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
     private final TokenRepository tokenRepository;
+    private final UserRepository userRepository;
+    private final UserDetailsRepository userDetailsRepository;
 
     private static final int ACCESS_TOKEN_EXPIRATION = 15;
     private static final int REFRESH_TOKEN_EXPIRATION = ACCESS_TOKEN_EXPIRATION * 4 * 24 * 7;
 
-    public TokenService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRepository tokenRepository) {
+    public TokenService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRepository tokenRepository, UserRepository userRepository, UserDetailsRepository userDetailsRepository) {
         this.jwtEncoder = jwtEncoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRepository = tokenRepository;
+        this.userRepository = userRepository;
+        this.userDetailsRepository = userDetailsRepository;
     }
 
     public String generateAccessToken(UserEntity entity, PositionEntity position) {
@@ -152,8 +164,7 @@ public class TokenService {
             return null;
         }
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        long hierarchyLong = jwt.getClaim("hierarchy");
-        return (int) hierarchyLong;
+        return intValue(jwt.getClaim("hierarchy"));
     }
 
     public static Integer getUserAuthoritiesFromToken(Authentication authentication) {
@@ -161,8 +172,7 @@ public class TokenService {
             return null;
         }
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        long authoritiesLong = jwt.getClaim("authorities");
-        return (int) authoritiesLong;
+        return intValue(jwt.getClaim("authorities"));
     }
 
     public LoginResponse refreshAccessToken(String refreshToken) {
@@ -177,22 +187,74 @@ public class TokenService {
         }
 
         if (isRevoked(refreshToken, email)) {
-            throw new InvalidTokenException("Token is revoked");
+            return newTokenPair(decodedToken, email);
         }
 
+        return newAccessToken(refreshToken, decodedToken, email);
+
+    }
+
+    private LoginResponse newTokenPair(Jwt decodedToken, String email) {
+        int tokenAuthorities = intValue(decodedToken.getClaim("authorities"));
+        int tokenHierarchy = intValue(decodedToken.getClaim("hierarchy"));
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        UserDetailsEntity userDetails = userDetailsRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        PositionEntity position = userDetails.getPosition();
+        if (position == null) { // case employee was deleted from organization
+            if (tokenAuthorities > 0) {
+                PositionEntity emptyPosition = new PositionEntity(null, 0, 0, null);
+                return new LoginResponse(
+                        generateAccessToken(user, emptyPosition),
+                        generateRefreshToken(user, emptyPosition),
+                        user.getUserId(),
+                        0,
+                        Collections.emptyList());
+            } else { // case user (not employee) logged out and using old refresh
+                throw new InvalidTokenException("Token is revoked");
+            }
+        }
+        int hierarchy = position.getHierarchy();
+        int authorities = position.getAuthorities();
+
+        if (!decodedToken.getClaim("roles").equals(getRolesString(user)) ||
+                tokenHierarchy != hierarchy ||
+                tokenAuthorities != authorities) {
+
+            return generateNewTokenPair(user, new PositionEntity(null, hierarchy, authorities, null));
+        }
+
+        throw new InvalidTokenException("Token is revoked");
+    }
+
+    private String getRolesString(UserEntity user) {
+        return user.getAuthorities().stream()
+                .map(Role::getAuthority)
+                .collect(Collectors.joining(" "));
+    }
+
+    private LoginResponse generateNewTokenPair(UserEntity user, PositionEntity position) {
+        String accessToken = generateAccessToken(user, position);
+        String refreshToken = generateRefreshToken(user, position);
+
+        return new LoginResponse(accessToken, refreshToken, user.getUserId(), position.getHierarchy(),
+                Authorities.getNamesByValues(position.getAuthorities()));
+    }
+
+    private LoginResponse newAccessToken(String refreshToken, Jwt decodedToken, String email) {
         Instant now = Instant.now();
         String subject = decodedToken.getSubject();
         Long userId = decodedToken.getClaim("userId");
-        String scopes = decodedToken.getClaim("roles");
-        long hierarchyLong = decodedToken.getClaim("hierarchy");
-        int hierarchy = (int) hierarchyLong;
-        long authoritiesLong = decodedToken.getClaim("authorities");
-        int authorities = (int) authoritiesLong;
+        String roles = decodedToken.getClaim("roles");
+        int hierarchy = intValue(decodedToken.getClaim("hierarchy"));
+        int authorities = intValue(decodedToken.getClaim("authorities"));
         JwtClaimsSet claims = getClaims(now,
                 ACCESS_TOKEN_EXPIRATION,
                 subject,
                 userId,
-                scopes,
+                roles,
                 hierarchy,
                 authorities,
                 TokenType.ACCESS);
@@ -202,10 +264,10 @@ public class TokenService {
         return new LoginResponse(
                 token,
                 refreshToken.substring(7),
-                userId
-
+                userId,
+                hierarchy,
+                Authorities.getNamesByValues(authorities)
         );
-
     }
 
     private boolean isRevoked(String refreshToken, String email) {

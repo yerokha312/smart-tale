@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Data
 @Entity
@@ -41,5 +42,18 @@ public class AcceptanceEntity {
         this.order = order;
         this.organization = organization;
         this.requestedAt = requestedAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AcceptanceEntity that = (AcceptanceEntity) o;
+        return Objects.equals(order, that.order) && Objects.equals(organization, that.organization);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(order, organization);
     }
 }

@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Objects;
 import java.util.Set;
@@ -33,6 +34,7 @@ public class PositionEntity {
     @Column(name = "authorities", columnDefinition = "integer default 0")
     private int authorities = 0;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "position")
     private Set<UserDetailsEntity> employees;
 

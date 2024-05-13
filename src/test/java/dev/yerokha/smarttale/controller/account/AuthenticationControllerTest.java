@@ -359,6 +359,7 @@ public class AuthenticationControllerTest {
     @Test
     @Order(10)
     void verify_Login() throws Exception {
+        Thread.sleep(1000);
         VerificationRequest request = new VerificationRequest(
                 "johndoe@example.com",
                 verificationCode

@@ -20,10 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -70,11 +68,6 @@ public class UserEntity implements UserDetails {
 
 
     public UserEntity() {
-    }
-
-
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.authorities;
     }
 
     @Override

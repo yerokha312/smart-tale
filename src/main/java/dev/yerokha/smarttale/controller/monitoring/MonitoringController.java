@@ -82,6 +82,7 @@ public class MonitoringController {
             }
     )
     @PutMapping(value = "/{orderId}", consumes = MediaType.TEXT_PLAIN_VALUE)
+    @PreAuthorize("hasPermission(#orderId, #status, 'UPDATE_STATUS')")
     public ResponseEntity<String> changeStatus(Authentication authentication,
                                                @PathVariable Long orderId,
                                                @RequestBody String status) {
@@ -164,5 +165,25 @@ public class MonitoringController {
         organizationService.removeEmployeesFromTask(getUserIdFromAuthToken(authentication), request);
 
         return ResponseEntity.ok("Employees removed from task");
+    }
+
+    @Operation(
+            summary = "Delete task", description = "Deletes task (order) by id if user has permission",
+            tags = {"delete", "order", "task", "monitoring", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "Task not found")
+            }
+    )
+    @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasPermission(#authentication, 'DELETE_ORDER')")
+    public ResponseEntity<String> deleteTask(Authentication authentication,
+                                             @PathVariable Long orderId) {
+
+        advertisementService.deleteTask(getUserIdFromAuthToken(authentication), orderId);
+
+        return ResponseEntity.ok("Task deleted");
     }
 }

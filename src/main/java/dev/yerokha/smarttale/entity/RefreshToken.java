@@ -36,7 +36,7 @@ public class RefreshToken {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
-    @Column(name = "is_revoked")
+    @Column(name = "is_revoked", columnDefinition = "boolean default false")
     private boolean isRevoked = false;
 
     public RefreshToken() {
