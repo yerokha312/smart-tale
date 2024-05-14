@@ -415,7 +415,7 @@ public class AdvertisementService {
                 imageUrl
         );
 
-        String encryptedCode = "?code=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
+        String encryptedCode = "?c=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
         mailService.sendAcceptanceRequest(order.getPublishedBy().getEmail(), request, encryptedCode);
     }
 

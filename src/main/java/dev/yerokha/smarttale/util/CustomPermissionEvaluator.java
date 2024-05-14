@@ -1,7 +1,7 @@
 package dev.yerokha.smarttale.util;
 
-import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.Position;
+import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;

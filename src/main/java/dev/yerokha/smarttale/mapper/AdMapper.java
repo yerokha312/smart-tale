@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.mapper;
 
+import dev.yerokha.smarttale.dto.AcceptanceRequestDto;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.AssignedEmployee;
 import dev.yerokha.smarttale.dto.Card;
@@ -16,17 +17,21 @@ import dev.yerokha.smarttale.dto.Product;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.util.EncryptionUtil;
+import org.hibernate.Hibernate;
 
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
 
 public class AdMapper {
 
@@ -34,14 +39,16 @@ public class AdMapper {
         String description = advertisement.getDescription();
         String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         List<Image> images = advertisement.getImages();
-        if (advertisement instanceof OrderEntity) {
+        if (advertisement instanceof OrderEntity order) {
+            int acceptancesCount = Hibernate.size(order.getAcceptanceEntities());
             return new Order(
-                    advertisement.getAdvertisementId(),
-                    advertisement.getTitle(),
+                    order.getAdvertisementId(),
+                    order.getTitle(),
                     truncatedDescription,
-                    advertisement.getPrice(),
+                    order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
                     images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
-                    advertisement.getPublishedAt()
+                    order.getPublishedAt(),
+                    acceptancesCount
             );
         }
 
@@ -80,6 +87,7 @@ public class AdMapper {
                 order.getPublishedAt(),
                 order.getAcceptedAt(),
                 isAccepted ? order.getAcceptedBy().getOrganizationId() : 0,
+                order.getAcceptanceEntities() == null ? emptyList() : mapToAcceptanceDto(order.getAcceptanceEntities()),
                 isAccepted ? order.getAcceptedBy().getName() : "",
                 isAccepted ? getImageUrl(order.getAcceptedBy().getImage()) : "",
                 order.getTitle(),
@@ -92,6 +100,19 @@ public class AdMapper {
                 order.isDeleted(),
                 order.isClosed()
         );
+    }
+
+    private static List<AcceptanceRequestDto> mapToAcceptanceDto(Set<AcceptanceEntity> entities) {
+        return entities.stream().map(e -> {
+                    OrganizationEntity organization = e.getOrganization();
+                    return new AcceptanceRequestDto(
+                            organization.getOrganizationId(),
+                            organization.getName(),
+                            getImageUrl(organization.getImage()),
+                            EncryptionUtil.encrypt(String.valueOf(e.getAcceptanceId()))
+                    );
+                })
+                .toList();
     }
 
     private static FullProduct mapToFullProduct(ProductEntity product, List<String> imageUrls) {
