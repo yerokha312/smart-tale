@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
@@ -13,6 +12,7 @@ import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.dto.Task;
+import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
@@ -454,8 +454,8 @@ public class OrganizationService {
         }
 
         if (((authorities & Authorities.UPDATE_POSITION.getBitmask()) > 0
-        || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
-        && (authorities & Authorities.CREATE_POSITION.getBitmask()) <= 0)) {
+                || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
+                && (authorities & Authorities.CREATE_POSITION.getBitmask()) <= 0)) {
             throw new ForbiddenException("If were chosen either update or invite, you have to choose create");
         }
 

@@ -13,10 +13,13 @@ public record Order(
         String title,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
         @NotNull
         String imageUrl,
         @NotNull
-        LocalDateTime publishedAt
+        LocalDateTime publishedAt,
+        @NotNull
+        int acceptancesCount
 ) implements AdvertisementInterface {
 }

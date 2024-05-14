@@ -76,10 +76,11 @@ public class OrderController {
                     @ApiResponse(responseCode = "403", description = "It's not user's order", content = @Content),
                     @ApiResponse(responseCode = "404", description = "Order or org not found", content = @Content),
                     @ApiResponse(responseCode = "410", description = "Link is expired", content = @Content)
-            }
+            },
+            parameters = @Parameter(name = "c", description = "Code for confirming acceptance request", required = true)
     )
     @PostMapping
-    public ResponseEntity<String> confirmOrder(Authentication authentication, @RequestParam("code") String code) {
+    public ResponseEntity<String> confirmOrder(Authentication authentication, @RequestParam("c") String code) {
         advertisementService.confirmOrder(code, getUserIdFromAuthToken(authentication));
 
         return ResponseEntity.ok("Order confirmed");

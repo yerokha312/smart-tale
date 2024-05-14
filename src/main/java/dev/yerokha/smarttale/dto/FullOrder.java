@@ -17,6 +17,8 @@ public record FullOrder(
         @NotNull
         Long acceptedBy,
         @NotNull
+        List<AcceptanceRequestDto> acceptanceRequests,
+        @NotNull
         String organizationName,
         @NotNull
         String organizationLogoUrl,
