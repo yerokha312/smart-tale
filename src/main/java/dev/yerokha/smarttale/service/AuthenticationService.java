@@ -69,6 +69,10 @@ public class AuthenticationService {
         if (!isEmailAvailable(email) && !userIsInvited) {
             throw new AlreadyTakenException(String.format("Email %s already taken", email));
         }
+        if (!isPhoneAvailable(request.phoneNumber()) && !userIsInvited) {
+            throw new AlreadyTakenException(String.format("Phone number %s already taken", request.phoneNumber()));
+        }
+
 
         UserEntity user = new UserEntity();
         user.setEmail(email);
@@ -105,6 +109,10 @@ public class AuthenticationService {
         sendVerificationEmail(email);
 
         return email;
+    }
+
+    public boolean isPhoneAvailable(String phoneNumber) {
+        return userDetailsRepository.findByPhoneNumber(phoneNumber).isEmpty();
     }
 
     public Set<Role> getUserRole() {

@@ -8,6 +8,7 @@ public record EmployeeDto(
         Long employeeId,
         @NotNull
         String name,
+        @NotNull
         String avatarUrl,
         @NotNull
         String email,

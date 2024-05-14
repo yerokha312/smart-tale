@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 public record EmployeeTasksResponse(
         @NotNull
         EmployeeDto employee,
+        @NotNull
         Page<Task> tasks
 ) {
 }

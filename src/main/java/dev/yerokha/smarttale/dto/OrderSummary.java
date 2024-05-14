@@ -10,12 +10,15 @@ import java.time.LocalDate;
 public record OrderSummary(
         @NotNull
         Long orderId,
+        @NotNull
         String key,
         @NotNull
         String title,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
+        @NotNull
         String imageUrl,
         @NotNull
         OrderStatus status,

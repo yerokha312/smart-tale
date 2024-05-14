@@ -13,6 +13,7 @@ public record AcceptanceRequest(
         String organizationUrl,
         @NotNull
         String organizationName,
+        @NotNull
         String organizationLogo
 ) {
 }

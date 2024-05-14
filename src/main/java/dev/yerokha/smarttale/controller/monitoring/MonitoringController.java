@@ -1,9 +1,9 @@
 package dev.yerokha.smarttale.controller.monitoring;
 
-import dev.yerokha.smarttale.dto.AssignmentRequest;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -124,8 +124,9 @@ public class MonitoringController {
     }
 
     @Operation(
-            summary = "Add employees to task", description = "Method for adding, not setting. Please send only " +
-            "new assigned employees' ids in List. Can not add to order with PENDING and COMPLETED status",
+            summary = "Update task", description = "Method for adding, removing employees from task and comment editing. " +
+            "Please send only new added or deleted employees' ids in List. Can not add to order with PENDING and COMPLETED status. " +
+            "Send empty list if just updating comment",
             tags = {"put", "order", "monitoring", "organization", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -137,34 +138,12 @@ public class MonitoringController {
     )
     @PutMapping
     @PreAuthorize("hasPermission(#request, 'ASSIGN_EMPLOYEES')")
-    public ResponseEntity<String> addEmployeesToTask(Authentication authentication,
-                                                     @RequestBody @Valid AssignmentRequest request) {
+    public ResponseEntity<String> updateTask(Authentication authentication,
+                                             @RequestBody @Valid UpdateTaskRequest request) {
 
-        organizationService.assignEmployeesToTask(getUserIdFromAuthToken(authentication), request);
+        organizationService.updateTask(getUserIdFromAuthToken(authentication), request);
 
         return ResponseEntity.ok("Employees assigned");
-    }
-
-    @Operation(
-            summary = "Remove employees from task", description = "Method for removing. Please send only " +
-            "removed employees' ids in List",
-            tags = {"delete", "order", "monitoring", "organization", "employee"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Bad request"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "403", description = "No permission"),
-                    @ApiResponse(responseCode = "404", description = "User, employee, org or task not found"),
-            }
-    )
-    @DeleteMapping
-    @PreAuthorize("hasPermission(#request, 'ASSIGN_EMPLOYEES')")
-    public ResponseEntity<String> removeEmployeesFromTask(Authentication authentication,
-                                                          @RequestBody @Valid AssignmentRequest request) {
-
-        organizationService.removeEmployeesFromTask(getUserIdFromAuthToken(authentication), request);
-
-        return ResponseEntity.ok("Employees removed from task");
     }
 
     @Operation(

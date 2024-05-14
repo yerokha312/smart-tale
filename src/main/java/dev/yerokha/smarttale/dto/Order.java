@@ -14,6 +14,7 @@ public record Order(
         @NotNull
         String description,
         BigDecimal price,
+        @NotNull
         String imageUrl,
         @NotNull
         LocalDateTime publishedAt

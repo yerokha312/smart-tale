@@ -12,6 +12,7 @@ public record SmallOrder(
         Long orderId,
         @NotNull
         String title,
+        @NotNull
         BigDecimal price,
         @NotNull
         LocalDate acceptedAt,

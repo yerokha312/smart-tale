@@ -16,13 +16,17 @@ public record FullOrderCard(
         @NotNull
         String description,
         BigDecimal price,
+        @NotNull
         List<String> imageUrls,
         String size,
         @NotNull
         LocalDateTime publishedAt,
         LocalDate deadlineAt,
+        @NotNull
         Long acceptedBy,
+        @NotNull
         String organizationName,
+        @NotNull
         String organizationLogoUrl,
         @NotNull
         Long publishedBy,

@@ -19,7 +19,9 @@ public record Task(
         String key,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
+        @NotNull
         String comment,
         @NotNull
         LocalDate date,
@@ -29,6 +31,7 @@ public record Task(
         Long publisherId,
         @NotNull
         String publisherName,
+        @NotNull
         String publisherAvatarUrl,
         @NotNull
         String publisherPhoneNumber

@@ -201,7 +201,7 @@ class AccountControllerTest {
                         jsonPath("$.middleName").value("Profile"),
                         jsonPath("$.email").value("updatetest@example.com"),
                         jsonPath("$.phoneNumber").value("+7999999999"),
-                        jsonPath("$.avatarUrl").value(nullValue()),
+                        jsonPath("$.avatarUrl").value(""),
                         jsonPath("$.subscriptionEndDate").value(nullValue())
                 );
     }

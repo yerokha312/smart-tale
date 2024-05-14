@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.util;
 
-import dev.yerokha.smarttale.dto.AssignmentRequest;
+import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
@@ -77,8 +77,8 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                         && (userHierarchy < position.hierarchy());
             }
             case "ASSIGN_EMPLOYEES" -> {
-                AssignmentRequest request = (AssignmentRequest) targetDomainObject;
-                List<UserDetailsEntity> contractors = userDetailsRepository.findAllById(request.employeeIds());
+                UpdateTaskRequest request = (UpdateTaskRequest) targetDomainObject;
+                List<UserDetailsEntity> contractors = userDetailsRepository.findAllById(request.addEmployees());
                 yield contractors.stream()
                         .map(UserDetailsEntity::getPosition)
                         .allMatch(contractorPosition -> contractorPosition.getHierarchy() > userHierarchy);

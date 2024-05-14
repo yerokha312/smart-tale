@@ -17,17 +17,21 @@ public record OrderDto(
         String title,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
+        @NotNull
         String size,
         @NotNull
         Long acceptedBy,
         @NotNull
         String organizationName,
+        @NotNull
         String organizationLogoUrl,
         @NotNull
         LocalDate acceptedAt,
         LocalDate deadlineAt,
         LocalDate completedAt,
+        @NotNull
         List<String> imageUrls
 
 ) {

@@ -10,12 +10,15 @@ public record Organization(
         Long organizationId,
         @NotNull
         String name,
+        @NotNull
         String description,
+        @NotNull
         String logoUrl,
         @NotNull
         Long ownerId,
         @NotNull
         String ownerName,
+        @NotNull
         String ownerAvatarUrl,
         @NotNull
         LocalDate registeredAt

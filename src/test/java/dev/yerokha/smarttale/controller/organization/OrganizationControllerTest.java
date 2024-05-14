@@ -696,4 +696,26 @@ class OrganizationControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+
+    @Test
+    @Order(31)
+    void createPosition_Should403_CannotChoose() throws Exception {
+        Position position = new Position(
+                null,
+                "Position for update position without create position permission",
+                1,
+                List.of("UPDATE_POSITION"),
+                1L
+        );
+
+        String json = objectMapper.writeValueAsString(position);
+
+        mockMvc.perform(post("/v1/organization/positions")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden());
+    }
+
+
 }

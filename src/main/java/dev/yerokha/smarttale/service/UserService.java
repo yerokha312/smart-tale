@@ -85,7 +85,7 @@ public class UserService implements UserDetailsService {
                 userDetails.getMiddleName(),
                 userDetails.getEmail(),
                 userDetails.getPhoneNumber(),
-                avatar == null ? null : avatar.getImageUrl(),
+                avatar == null ? "" : avatar.getImageUrl(),
                 userDetails.isSubscribed() ? userDetails.getSubscriptionEndDate() : null
         );
     }

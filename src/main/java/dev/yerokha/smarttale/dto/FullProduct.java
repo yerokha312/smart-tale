@@ -17,6 +17,7 @@ public record FullProduct(
         @NotNull
         String description,
         BigDecimal price,
+        @NotNull
         List<String> imageUrls,
         @NotNull
         long views,
