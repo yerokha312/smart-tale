@@ -161,7 +161,7 @@ public class TokenService {
 
     public static Integer getUserHierarchyFromToken(Authentication authentication) {
         if (authentication == null) {
-            return null;
+            return Integer.MAX_VALUE;
         }
         Jwt jwt = (Jwt) authentication.getPrincipal();
         return intValue(jwt.getClaim("hierarchy"));
@@ -169,7 +169,7 @@ public class TokenService {
 
     public static Integer getUserAuthoritiesFromToken(Authentication authentication) {
         if (authentication == null) {
-            return null;
+            return 0;
         }
         Jwt jwt = (Jwt) authentication.getPrincipal();
         return intValue(jwt.getClaim("authorities"));
@@ -219,9 +219,9 @@ public class TokenService {
         int hierarchy = position.getHierarchy();
         int authorities = position.getAuthorities();
 
-        if (!decodedToken.getClaim("roles").equals(getRolesString(user)) ||
-                tokenHierarchy != hierarchy ||
-                tokenAuthorities != authorities) {
+        if (!decodedToken.getClaim("roles").equals(getRolesString(user))
+                || tokenHierarchy != hierarchy
+                || tokenAuthorities != authorities) {
 
             return generateNewTokenPair(user, new PositionEntity(null, hierarchy, authorities, null));
         }

@@ -10,6 +10,7 @@ public record AssignedEmployee(
         Long userId,
         @NotNull
         String name,
+        @NotNull
         String avatarUrl,
         BigDecimal reward
 ) {

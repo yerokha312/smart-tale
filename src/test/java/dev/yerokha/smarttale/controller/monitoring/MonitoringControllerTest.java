@@ -2,7 +2,7 @@ package dev.yerokha.smarttale.controller.monitoring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import dev.yerokha.smarttale.dto.AssignmentRequest;
+import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
@@ -231,14 +232,34 @@ class MonitoringControllerTest {
 
     @Test
     @Order(11)
-    void assignEmployees() throws Exception {
-        AssignmentRequest request = new AssignmentRequest(
+    void addEmployees() throws Exception {
+        UpdateTaskRequest request = new UpdateTaskRequest(
                 100014L,
                 List.of(
                         100004L,
                         100005L,
                         100006L
-                )
+                ),
+                Collections.emptyList(),
+                null
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+        mockMvc.perform(put("/v1/monitoring")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(APP_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(11)
+    void addEmployees_EmptyList() throws Exception {
+        UpdateTaskRequest request = new UpdateTaskRequest(
+                100014L,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                "RANDOM COMMENT"
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -270,18 +291,20 @@ class MonitoringControllerTest {
     @Test
     @Order(14)
     void removeEmployeesFromTask() throws Exception {
-        AssignmentRequest request = new AssignmentRequest(
+        UpdateTaskRequest request = new UpdateTaskRequest(
                 100014L,
+                Collections.emptyList(),
                 List.of(
                         100004L,
                         100005L,
                         100006L
-                )
+                ),
+                "RANDOM COMMENT"
         );
 
         String json = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(delete("/v1/monitoring")
+        mockMvc.perform(put("/v1/monitoring")
                         .header("Authorization", "Bearer " + accessToken)
                         .content(json)
                         .contentType(APP_JSON))

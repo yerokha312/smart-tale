@@ -13,7 +13,9 @@ public record Product(
         String title,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
+        @NotNull
         String imageUrl,
         @NotNull
         LocalDateTime publishedAt

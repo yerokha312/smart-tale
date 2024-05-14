@@ -8,6 +8,7 @@ public record OrganizationSummary(
         Long organizationId,
         @NotNull
         String name,
+        @NotNull
         String logoUrl
 ) {
 }

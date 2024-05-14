@@ -52,7 +52,7 @@ public class AuthenticationController {
     }
 
     @Operation(
-            summary = "Check availability",
+            summary = "Check email availability",
             description = "Endpoint for pre-submit checking of available email. True if available",
             tags = {"authentication", "post"},
             responses = {
@@ -60,9 +60,23 @@ public class AuthenticationController {
             }
     )
     @PostMapping("/email-available")
-    public ResponseEntity<Boolean> checkAvailable(@RequestBody @Valid @Email String email) {
+    public ResponseEntity<Boolean> isEmailAvailable(@RequestBody @Valid @Email String email) {
         boolean emailAvailable = authenticationService.isEmailAvailable(email);
         return ResponseEntity.ok(emailAvailable);
+    }
+
+    @Operation(
+            summary = "Check phone availability",
+            description = "Endpoint for pre-submit checking of available phone. True if available",
+            tags = {"authentication", "post"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Returns true or false")
+            }
+    )
+    @PostMapping("/phone-available")
+    public ResponseEntity<Boolean> isPhoneAvailable(@RequestBody String phoneNumber) {
+        boolean phoneAvailable = authenticationService.isPhoneAvailable(phoneNumber);
+        return ResponseEntity.ok(phoneAvailable);
     }
 
     @Operation(

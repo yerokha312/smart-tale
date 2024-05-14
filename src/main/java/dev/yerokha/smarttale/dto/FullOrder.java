@@ -14,8 +14,11 @@ public record FullOrder(
         @NotNull
         LocalDateTime publishedAt,
         LocalDate acceptedAt,
+        @NotNull
         Long acceptedBy,
+        @NotNull
         String organizationName,
+        @NotNull
         String organizationLogoUrl,
         @NotNull
         String title,
@@ -24,6 +27,7 @@ public record FullOrder(
         BigDecimal price,
         String size,
         LocalDate deadlineAt,
+        @NotNull
         List<String> imageUrls,
         @NotNull
         long views,

@@ -165,7 +165,7 @@ public class AuthenticationControllerTest {
 
     @Test
     @Order(2)
-    void checkAvailable_True() throws Exception {
+    void isEmailAvailable_True() throws Exception {
         mockMvc.perform(post("/v1/auth/email-available")
                         .contentType(APP_JSON)
                         .content("available@example.com"))
@@ -175,10 +175,30 @@ public class AuthenticationControllerTest {
 
     @Test
     @Order(2)
-    void checkAvailable_False() throws Exception {
+    void isEmailAvailable_False() throws Exception {
         mockMvc.perform(post("/v1/auth/email-available")
                         .contentType(APP_JSON)
                         .content("existing@example.com"))
+                .andExpect(content().string("false"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(2)
+    void isPhoneAvailable_True() throws Exception {
+        mockMvc.perform(post("/v1/auth/phone-available")
+                        .contentType(APP_JSON)
+                        .content("+9962348710211"))
+                .andExpect(content().string("true"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(2)
+    void isPhoneAvailable_False() throws Exception {
+        mockMvc.perform(post("/v1/auth/phone-available")
+                        .contentType(APP_JSON)
+                        .content("+777712345100"))
                 .andExpect(content().string("false"))
                 .andExpect(status().isOk());
     }
@@ -267,7 +287,7 @@ public class AuthenticationControllerTest {
 
     @Test
     @Order(5)
-    void checkAvailable_False2() throws Exception {
+    void isEmailAvailable_False2() throws Exception {
         mockMvc.perform(post("/v1/auth/email-available")
                         .contentType(APP_JSON)
                         .content("johndoe@example.com"))

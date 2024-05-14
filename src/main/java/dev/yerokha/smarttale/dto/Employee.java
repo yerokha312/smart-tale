@@ -12,6 +12,7 @@ public record Employee(
         String name,
         @NotNull
         String email,
+        @NotNull
         List<OrderSummary> orderList,
         @NotNull
         String position,

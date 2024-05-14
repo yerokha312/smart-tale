@@ -22,7 +22,11 @@ import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.*;
 
 public class AdMapper {
 
@@ -36,7 +40,7 @@ public class AdMapper {
                     advertisement.getTitle(),
                     truncatedDescription,
                     advertisement.getPrice(),
-                    images == null || images.isEmpty() ? null : getImageUrl(images.get(0)),
+                    images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
                     advertisement.getPublishedAt()
             );
         }
@@ -45,8 +49,8 @@ public class AdMapper {
                 advertisement.getAdvertisementId(),
                 advertisement.getTitle(),
                 truncatedDescription,
-                advertisement.getPrice(),
-                images == null || images.isEmpty() ? null : getImageUrl(images.get(0)),
+                advertisement.getPrice() == null ? BigDecimal.ZERO : advertisement.getPrice(),
+                images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
                 advertisement.getPublishedAt()
         );
     }
@@ -56,6 +60,9 @@ public class AdMapper {
                 .map(Image::getImageUrl)
                 .toList();
 
+        if (imageUrls.isEmpty()) {
+            imageUrls = Collections.emptyList();
+        }
 
         if (advertisement instanceof OrderEntity order) {
             return mapToFullOrder(order, imageUrls);
@@ -67,13 +74,14 @@ public class AdMapper {
     }
 
     private static FullOrder mapToFullOrder(OrderEntity order, List<String> imageUrls) {
+        boolean isAccepted = order.getAcceptedBy() != null;
         return new FullOrder(
                 order.getAdvertisementId(),
                 order.getPublishedAt(),
                 order.getAcceptedAt(),
-                order.getAcceptedBy().getOrganizationId(),
-                order.getAcceptedBy().getName(),
-                order.getAcceptedBy().getImage() == null ? null : order.getAcceptedBy().getImage().getImageUrl(),
+                isAccepted ? order.getAcceptedBy().getOrganizationId() : 0,
+                isAccepted ? order.getAcceptedBy().getName() : "",
+                isAccepted ? getImageUrl(order.getAcceptedBy().getImage()) : "",
                 order.getTitle(),
                 order.getDescription(),
                 order.getPrice(),
@@ -112,7 +120,7 @@ public class AdMapper {
                 advertisement.getTitle(),
                 truncatedDescription,
                 advertisement.getPrice(),
-                images == null || images.isEmpty() ? null : getImageUrl(advertisement.getImages().get(0)),
+                images == null || images.isEmpty() ? "" : getImageUrl(advertisement.getImages().get(0)),
                 publishedBy.getUserId(),
                 publishedBy.getName(),
                 avatarUrl
@@ -134,14 +142,14 @@ public class AdMapper {
                     order.getSize(),
                     order.getPublishedAt(),
                     order.getDeadlineAt(),
-                    isAccepted ? acceptedBy.getOrganizationId() : null,
-                    isAccepted ? acceptedBy.getName() : null,
-                    isAccepted ? getImageUrl(acceptedBy.getImage()) : null,
+                    isAccepted ? acceptedBy.getOrganizationId() : 0,
+                    isAccepted ? acceptedBy.getName() : "",
+                    isAccepted ? getImageUrl(acceptedBy.getImage()) : "",
                     result.user().getUserId(),
                     result.publisherName(),
                     result.avatarUrl(),
-                    contact.contains("PHONE") ? result.user().getPhoneNumber() : null,
-                    contact.contains("EMAIL") ? result.user().getEmail() : null,
+                    contact.contains("PHONE") ? result.user().getPhoneNumber() : "",
+                    contact.contains("EMAIL") ? result.user().getEmail() : "",
                     order.getViews()
             );
         }
@@ -158,8 +166,8 @@ public class AdMapper {
                     result.user().getUserId(),
                     result.publisherName(),
                     result.avatarUrl(),
-                    contact.contains("PHONE") ? result.user().getPhoneNumber() : null,
-                    contact.contains("EMAIL") ? result.user().getEmail() : null,
+                    contact.contains("PHONE") ? result.user().getPhoneNumber() : "",
+                    contact.contains("EMAIL") ? result.user().getEmail() : "",
                     product.getViews()
             );
         }
@@ -172,7 +180,7 @@ public class AdMapper {
         return new SmallOrder(
                 order.getAdvertisementId(),
                 order.getTitle(),
-                order.getPrice(),
+                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
                 order.getAcceptedAt(),
                 order.getDeadlineAt(),
                 order.getCompletedAt(),
@@ -189,8 +197,8 @@ public class AdMapper {
                 entity.getStatus(),
                 entity.getTitle(),
                 entity.getDescription(),
-                entity.getPrice(),
-                entity.getSize(),
+                entity.getPrice() == null ? BigDecimal.ZERO : entity.getPrice(),
+                entity.getSize() == null ? "" : entity.getSize(),
                 acceptedOrganization.getOrganizationId(),
                 acceptedOrganization.getName(),
                 logoUrl,
@@ -206,6 +214,9 @@ public class AdMapper {
                 .map(AdMapper::getImageUrl)
                 .toList();
 
+        if (imageUrls.isEmpty()) {
+            imageUrls = emptyList();
+        }
         UserDetailsEntity user = entity.getPublishedBy();
         String avatarUrl = getImageUrl(user.getImage());
         String publisherName = user.getLastName() + " " + user.getFirstName() + " " + user.getMiddleName();
@@ -235,22 +246,25 @@ public class AdMapper {
     public static MonitoringOrder mapToMonitoringOrder(OrderEntity order) {
         UserDetailsEntity author = order.getPublishedBy();
         String contact = order.getContactInfo().toString();
+        List<String> list = order.getImages() != null ?
+                order.getImages().stream().map(AdMapper::getImageUrl).toList() :
+                Collections.emptyList();
         return new MonitoringOrder(
                 order.getAdvertisementId(),
                 order.getPublishedAt(),
                 order.getAcceptedAt(),
                 order.getDeadlineAt(),
-                order.getTaskKey(),
+                order.getTaskKey() == null ? "" : order.getTaskKey(),
                 order.getTitle(),
                 order.getDescription(),
-                order.getSize(),
-                order.getImages().stream().map(AdMapper::getImageUrl).toList(),
+                order.getSize() == null ? "" : order.getSize(),
+                list,
                 order.getStatus(),
                 author.getUserId(),
                 getImageUrl(author.getImage()),
-                contact.contains("EMAIL") ? author.getEmail() : null,
-                contact.contains("PHONE") ? author.getPhoneNumber() : null,
-                order.getContractors() == null ? null : order.getContractors().stream()
+                contact.contains("EMAIL") ? author.getEmail() : "",
+                contact.contains("PHONE") ? author.getPhoneNumber() : "",
+                order.getContractors() == null ? emptyList() : order.getContractors().stream()
                         .map(emp -> new AssignedEmployee(
                                 emp.getUserId(),
                                 emp.getName(),
@@ -267,10 +281,10 @@ public class AdMapper {
                 order.getAdvertisementId(),
                 order.getStatus(),
                 order.getTitle(),
-                order.getTaskKey(),
+                order.getTaskKey() == null ? "" : order.getTaskKey(),
                 order.getDescription(),
-                order.getPrice(),
-                order.getComment(),
+                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
+                order.getComment() == null ? "" : order.getComment(),
                 order.getCompletedAt() == null ? order.getAcceptedAt() : order.getCompletedAt(),
                 order.getContractors().stream()
                         .map(emp -> new AssignedEmployee(
@@ -291,7 +305,7 @@ public class AdMapper {
         if (image != null) {
             return image.getImageUrl();
         } else {
-            return null;
+            return "";
         }
     }
 
@@ -301,11 +315,11 @@ public class AdMapper {
         String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
         return new OrderSummary(
                 order.getAdvertisementId(),
-                order.getTaskKey(),
+                order.getTaskKey() == null ? "" : order.getTaskKey(),
                 order.getTitle(),
                 truncatedDescription,
-                order.getPrice(),
-                images == null || images.isEmpty() ? null : getImageUrl(images.get(0)),
+                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
+                images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
                 order.getStatus(),
                 order.getAcceptedAt(),
                 order.getDeadlineAt(),

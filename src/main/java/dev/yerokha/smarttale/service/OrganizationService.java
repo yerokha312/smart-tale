@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.dto.AssignmentRequest;
+import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
@@ -28,7 +28,6 @@ import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
-import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.util.Authorities;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.data.domain.Page;
@@ -41,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +161,7 @@ public class OrganizationService {
                 user.getUserId(),
                 name,
                 user.getEmail(),
-                orders,
+                orders == null ? Collections.emptyList() : orders,
                 position,
                 status
         );
@@ -230,7 +230,7 @@ public class OrganizationService {
         OrganizationEntity organization = employee.getOrganization();
 
         if ((organization == null) || !organization.getOrganizationId().equals(organizationId)) {
-            return null;
+            return Page.empty();
         }
 
         boolean isActive = Boolean.parseBoolean(params.getOrDefault("active", "true"));
@@ -360,12 +360,12 @@ public class OrganizationService {
 
     private static Organization mapToOrganization(OrganizationEntity organization) {
         UserDetailsEntity owner = organization.getOwner();
-        String avatarUrl = owner.getImage() == null ? null : owner.getImage().getImageUrl();
-        String logoUrl = organization.getImage() == null ? null : organization.getImage().getImageUrl();
+        String avatarUrl = owner.getImage() == null ? "" : owner.getImage().getImageUrl();
+        String logoUrl = organization.getImage() == null ? "" : organization.getImage().getImageUrl();
         return new Organization(
                 organization.getOrganizationId(),
                 organization.getName(),
-                organization.getDescription(),
+                organization.getDescription() == null ? "" : organization.getDescription(),
                 logoUrl,
                 owner.getUserId(),
                 owner.getName(),
@@ -385,7 +385,7 @@ public class OrganizationService {
         return new OrganizationSummary(
                 organization.getOrganizationId(),
                 organization.getName(),
-                organization.getImage() == null ? null : organization.getImage().getImageUrl()
+                organization.getImage() == null ? "" : organization.getImage().getImageUrl()
         );
     }
 
@@ -453,6 +453,12 @@ public class OrganizationService {
             authorities |= Authorities.valueOf(authority).getBitmask();
         }
 
+        if (((authorities & Authorities.UPDATE_POSITION.getBitmask()) > 0
+        || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
+        && (authorities & Authorities.CREATE_POSITION.getBitmask()) <= 0)) {
+            throw new ForbiddenException("If were chosen either update or invite, you have to choose create");
+        }
+
         PositionEntity positionEntity = new PositionEntity(
                 position.title(),
                 position.hierarchy(),
@@ -478,6 +484,13 @@ public class OrganizationService {
         for (String authority : authoritiesList) {
             authorities |= Authorities.valueOf(authority).getBitmask();
         }
+
+        if (((authorities & Authorities.UPDATE_POSITION.getBitmask()) > 0
+                || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
+                && (authorities & Authorities.CREATE_POSITION.getBitmask()) == 0)) {
+            throw new ForbiddenException("If were chosen either update or invite, you have to choose create");
+        }
+
         positionEntity.setHierarchy(hierarchy);
         positionEntity.setAuthorities(authorities);
 
@@ -490,44 +503,39 @@ public class OrganizationService {
     }
 
     @Transactional
-    public void assignEmployeesToTask(Long userId, AssignmentRequest request) {
-        UserDetailsEntity user = getUserDetailsEntity(userId);
-        OrganizationEntity organization = user.getOrganization();
+    public void updateTask(Long userId, UpdateTaskRequest request) {
+        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
         OrderEntity order = orderRepository.findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(
                         organization.getOrganizationId(), request.taskId())
                 .orElseThrow(() -> new NotFoundException("Task not found"));
 
-        List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
-                organization.getOrganizationId(), request.employeeIds());
+        if (!request.addEmployees().isEmpty()) {
+            List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
+                    organization.getOrganizationId(), request.addEmployees());
 
-        for (UserDetailsEntity contractor : contractors) {
-            order.addContractor(contractor);
-            contractor.addAssignedTask(order);
-            userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
-            userDetailsRepository.save(user);
+            for (UserDetailsEntity contractor : contractors) {
+                order.addContractor(contractor);
+                contractor.addAssignedTask(order);
+                userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
+                userDetailsRepository.save(contractor);
+            }
         }
 
-        orderRepository.save(order);
-    }
+        if (!request.removeEmployees().isEmpty()) {
+            List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
+                    organization.getOrganizationId(), request.removeEmployees());
 
-    @Transactional
-    public void removeEmployeesFromTask(Long userId, AssignmentRequest request) {
-        UserDetailsEntity user = getUserDetailsEntity(userId);
-        OrganizationEntity organization = user.getOrganization();
-        OrderEntity order = orderRepository.findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(
-                        organization.getOrganizationId(), request.taskId())
-                .orElseThrow(() -> new NotFoundException("Task not found"));
-
-        List<UserDetailsEntity> contractorsForRemoval = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
-                organization.getOrganizationId(), request.employeeIds());
-
-        for (UserDetailsEntity contractor : contractorsForRemoval) {
-            order.removeContractor(contractor);
-            contractor.removeAssignedTask(order);
-            userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
-            userDetailsRepository.save(user);
+            for (UserDetailsEntity contractor : contractors) {
+                order.removeContractor(contractor);
+                contractor.removeAssignedTask(order);
+                userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
+                userDetailsRepository.save(contractor);
+            }
         }
 
+        if (request.comment() != null && !request.comment().isEmpty()) {
+            order.setComment(request.comment());
+        }
         orderRepository.save(order);
     }
 

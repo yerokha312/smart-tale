@@ -15,20 +15,27 @@ public record MonitoringOrder(
         LocalDateTime publishedAt,
         LocalDate acceptedAt,
         LocalDate deadlineAt,
+        @NotNull
         String key,
         @NotNull
         String title,
         @NotNull
         String description,
+        @NotNull
         String size,
+        @NotNull
         List<String> imageUrls,
         @NotNull
         OrderStatus status,
         @NotNull
         Long publisherId,
+        @NotNull
         String publisherAvatarUrl,
+        @NotNull
         String publisherEmail,
+        @NotNull
         String publisherPhone,
+        @NotNull
         List<AssignedEmployee> employees,
         @NotNull
         long views

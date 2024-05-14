@@ -16,6 +16,7 @@ public record Profile(
         String email,
         @NotNull
         String phoneNumber,
+        @NotNull
         String avatarUrl,
         LocalDate subscriptionEndDate
 ) {

@@ -16,11 +16,13 @@ public record Card(
         @NotNull
         String description,
         BigDecimal price,
+        @NotNull
         String imageUrl,
         @NotNull
         Long publishedBy,
         @NotNull
         String publisherName,
+        @NotNull
         String publisherAvatarUrl
 ) {
 }

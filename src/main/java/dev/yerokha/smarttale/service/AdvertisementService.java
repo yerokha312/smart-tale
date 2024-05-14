@@ -405,7 +405,7 @@ public class AdvertisementService {
         String price = order.getPrice() == null ? null : order.getPrice().toString();
         OrganizationEntity organization = acceptance.getOrganization();
         Image image = organization.getImage();
-        String imageUrl = image == null ? null : image.getImageUrl();
+        String imageUrl = image == null ? "" : image.getImageUrl();
         AcceptanceRequest request = new AcceptanceRequest(
                 order.getTitle(),
                 order.getDescription(),

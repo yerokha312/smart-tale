@@ -17,6 +17,7 @@ public record FullProductCard(
         String description,
         @NotNull
         BigDecimal price,
+        @NotNull
         List<String> imageUrls,
         @NotNull
         LocalDateTime publishedAt,

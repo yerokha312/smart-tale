@@ -8,6 +8,7 @@ public record PurchaseRequest(
         String title,
         @NotNull
         String description,
+        @NotNull
         String price,
         @NotNull
         String buyerEmail,
