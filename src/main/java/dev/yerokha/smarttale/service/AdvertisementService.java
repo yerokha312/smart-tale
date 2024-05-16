@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
@@ -45,6 +46,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -373,7 +375,7 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public void acceptOrder(Long advertisementId, Long userId) {
+    public PushNotification acceptOrder(Long advertisementId, Long userId) {
         OrderEntity order = (OrderEntity) getAdById(advertisementId);
 
         if (order.isClosed() || order.isDeleted()) {
@@ -388,19 +390,32 @@ public class AdvertisementService {
 
         OrganizationEntity organization = user.getOrganization();
 
-        AcceptanceEntity acceptanceEntity = new AcceptanceEntity(
+        AcceptanceEntity acceptance = new AcceptanceEntity(
                 order, organization, LocalDate.now()
         );
 
         order.setStatus(PENDING);
-        order.addAcceptanceRequest(acceptanceEntity);
+        order.addAcceptanceRequest(acceptance);
         orderRepository.save(order);
 
-        acceptanceRepository.save(acceptanceEntity);
-        sendAcceptanceRequest(acceptanceEntity);
+        acceptanceRepository.save(acceptance);
+        String encryptedCode = "?code=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
+        sendAcceptanceRequest(acceptance, encryptedCode);
+
+        Map<String, String> data = new HashMap<>();
+        data.put("sub", "Запрос о принятии заказа");
+        data.put("id", organization.getOrganizationId().toString());
+        data.put("name", organization.getName());
+        data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
+        data.put("code", encryptedCode);
+
+        return new PushNotification(
+                order.getPublishedBy().getUserId(),
+                data
+        );
     }
 
-    private void sendAcceptanceRequest(AcceptanceEntity acceptance) {
+    private void sendAcceptanceRequest(AcceptanceEntity acceptance, String encryptedCode) {
         OrderEntity order = acceptance.getOrder();
         String price = order.getPrice() == null ? null : order.getPrice().toString();
         OrganizationEntity organization = acceptance.getOrganization();
@@ -415,13 +430,14 @@ public class AdvertisementService {
                 imageUrl
         );
 
-        String encryptedCode = "?c=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
         mailService.sendAcceptanceRequest(order.getPublishedBy().getEmail(), request, encryptedCode);
+
+
     }
 
     @Transactional
     public void createAd(CreateAdRequest request, List<MultipartFile> files, Long userId) {
-        if (request.type().equals("order")) {
+        if (request.type().equalsIgnoreCase("order")) {
             createOrder(request, files, userId);
             return;
         }

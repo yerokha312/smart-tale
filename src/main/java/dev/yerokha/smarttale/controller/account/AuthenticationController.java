@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +61,7 @@ public class AuthenticationController {
                     @ApiResponse(responseCode = "200", description = "Returns true or false")
             }
     )
-    @PostMapping("/email-available")
+    @PostMapping(value = "/email-available", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<Boolean> isEmailAvailable(@RequestBody @Valid @Email String email) {
         boolean emailAvailable = authenticationService.isEmailAvailable(email);
         return ResponseEntity.ok(emailAvailable);
@@ -73,8 +75,8 @@ public class AuthenticationController {
                     @ApiResponse(responseCode = "200", description = "Returns true or false")
             }
     )
-    @PostMapping("/phone-available")
-    public ResponseEntity<Boolean> isPhoneAvailable(@RequestBody String phoneNumber) {
+    @PostMapping(value = "/phone-available", consumes = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<Boolean> isPhoneAvailable(@RequestBody @Valid @NotNull @NotEmpty String phoneNumber) {
         boolean phoneAvailable = authenticationService.isPhoneAvailable(phoneNumber);
         return ResponseEntity.ok(phoneAvailable);
     }
@@ -119,7 +121,7 @@ public class AuthenticationController {
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
             }
     )
-    @PostMapping("/login")
+    @PostMapping(value = "/login", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> login(@RequestBody @Valid @Email String email,
                                         @RequestParam(name = "code", required = false) String code) {
         return ResponseEntity.ok(authenticationService.login(email, code));
@@ -148,7 +150,7 @@ public class AuthenticationController {
                     @ApiResponse(responseCode = "401", description = "Invalid token")
             }
     )
-    @PostMapping("/logout")
+    @PostMapping(value = "/logout", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> revoke(@RequestBody String refreshToken, HttpServletRequest request) {
         authenticationService.revoke(refreshToken, request);
         return ResponseEntity.ok("Logout success");

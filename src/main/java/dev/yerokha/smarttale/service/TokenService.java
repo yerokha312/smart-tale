@@ -187,14 +187,14 @@ public class TokenService {
         }
 
         if (isRevoked(refreshToken, email)) {
-            return newTokenPair(decodedToken, email);
+            return getNewTokenPair(decodedToken, email);
         }
 
-        return newAccessToken(refreshToken, decodedToken, email);
+        return getNewAccessToken(refreshToken, decodedToken, email);
 
     }
 
-    private LoginResponse newTokenPair(Jwt decodedToken, String email) {
+    private LoginResponse getNewTokenPair(Jwt decodedToken, String email) {
         int tokenAuthorities = intValue(decodedToken.getClaim("authorities"));
         int tokenHierarchy = intValue(decodedToken.getClaim("hierarchy"));
         UserEntity user = userRepository.findByEmail(email)
@@ -243,7 +243,7 @@ public class TokenService {
                 Authorities.getNamesByValues(position.getAuthorities()));
     }
 
-    private LoginResponse newAccessToken(String refreshToken, Jwt decodedToken, String email) {
+    private LoginResponse getNewAccessToken(String refreshToken, Jwt decodedToken, String email) {
         Instant now = Instant.now();
         String subject = decodedToken.getSubject();
         Long userId = decodedToken.getClaim("userId");

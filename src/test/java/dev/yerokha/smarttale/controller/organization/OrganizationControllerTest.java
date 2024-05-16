@@ -37,6 +37,7 @@ import static dev.yerokha.smarttale.controller.account.AuthenticationControllerT
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -74,7 +75,7 @@ class OrganizationControllerTest {
 
     private void login(String email) throws Exception {
         mockMvc.perform(post("/v1/auth/login")
-                .contentType(APP_JSON)
+                .contentType(MediaType.TEXT_PLAIN)
                 .content(email));
 
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
@@ -260,8 +261,8 @@ class OrganizationControllerTest {
         ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendInvitation(
                 eq("test@example.com"),
-                eq(null),
-                eq("First Organization"),
+                eq("Fourth Existing Profile"),
+                any(),
                 eq("Position 2"),
                 linkCaptor.capture());
     }
@@ -292,8 +293,8 @@ class OrganizationControllerTest {
         ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendInvitation(
                 eq("existing8@example.com"),
-                eq("ZEighth Existing Profile"),
-                eq("First Organization"),
+                eq("Fourth Existing Profile"),
+                any(),
                 eq("Position 2"),
                 linkCaptor.capture());
 
@@ -716,6 +717,5 @@ class OrganizationControllerTest {
                         .content(json))
                 .andExpect(status().isForbidden());
     }
-
 
 }

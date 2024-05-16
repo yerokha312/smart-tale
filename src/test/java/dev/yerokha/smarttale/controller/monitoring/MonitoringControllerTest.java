@@ -63,7 +63,7 @@ class MonitoringControllerTest {
 
     private void login(String email) throws Exception {
         mockMvc.perform(post("/v1/auth/login")
-                .contentType(APP_JSON)
+                .contentType(MediaType.TEXT_PLAIN)
                 .content(email));
 
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);

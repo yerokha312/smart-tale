@@ -116,7 +116,7 @@ public class MonitoringController {
     )
     @GetMapping("/orders")
     public ResponseEntity<Page<OrderSummary>> getOrdersHistory(Authentication authentication,
-                                                               @RequestParam Map<String, String> params) {
+                                                               @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(organizationService.getOrders(
                 getUserIdFromAuthToken(authentication),

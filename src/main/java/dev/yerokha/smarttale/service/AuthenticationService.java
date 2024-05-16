@@ -73,7 +73,6 @@ public class AuthenticationService {
             throw new AlreadyTakenException(String.format("Phone number %s already taken", request.phoneNumber()));
         }
 
-
         UserEntity user = new UserEntity();
         user.setEmail(email);
         UserDetailsEntity details = new UserDetailsEntity(
@@ -103,7 +102,7 @@ public class AuthenticationService {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Failed to serialize object");
         }
-        setValue(email, userJson, 5, TimeUnit.MINUTES);
+        setValue(email, userJson, 15, TimeUnit.MINUTES);
         setValue("details:" + email, detailsJson, 15, TimeUnit.MINUTES);
 
         sendVerificationEmail(email);
