@@ -15,6 +15,7 @@ public record Card(
         String title,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
         @NotNull
         String imageUrl,

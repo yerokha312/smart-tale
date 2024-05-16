@@ -11,6 +11,7 @@ import dev.yerokha.smarttale.dto.OrganizationSummary;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
@@ -42,6 +43,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -272,7 +274,7 @@ public class OrganizationService {
                 .toList();
     }
 
-    public String inviteEmployee(Long inviterId, InviteRequest request) {
+    public PushNotification inviteEmployee(Long inviterId, InviteRequest request) {
         UserDetailsEntity inviter = getUserDetailsEntity(inviterId);
 
         OrganizationEntity organization = inviter.getOrganization();
@@ -292,13 +294,23 @@ public class OrganizationService {
         }
 
         mailService.sendInvitation(request.email(),
-                name,
-                organization.getName(),
+                inviter.getName(),
+                organization,
                 position.getTitle(),
                 link);
 
-        return request.email();
+        Map<String, String> data = new HashMap<>();
+        data.put("email", invitee.getEmail());
+        data.put("sub", "Приглашение на работу");
+        data.put("id", organization.getOrganizationId().toString());
+        data.put("name", organization.getName());
+        data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
+//        data.put("code", encryptedCode);
 
+        return new PushNotification(
+                invitee.getUserId(),
+                data
+        );
     }
 
     private UserDetailsEntity getInvitee(InviteRequest request) {

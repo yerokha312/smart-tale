@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
+import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.service.interfaces.NotificationService;
 import jakarta.mail.MessagingException;
@@ -72,12 +73,14 @@ public class MailService implements NotificationService {
         send(ADMIN_EMAIL, "Запрос на подписку", emailBody);
     }
 
-    public void sendInvitation(String to, String name, String organization, String position, String link) {
+    public void sendInvitation(String to, String name, OrganizationEntity organization, String position, String link) {
         Context context = new Context();
         context.setVariables(Map.of(
                 "name", name,
                 "email", to,
-                "organization", organization,
+                "organizationUrl", organization.getOrganizationId(),
+                "organizationName", organization.getName(),
+                "organizationLogo", organization.getImage() == null ? "" : organization.getImage(),
                 "position", position,
                 "link", link));
 

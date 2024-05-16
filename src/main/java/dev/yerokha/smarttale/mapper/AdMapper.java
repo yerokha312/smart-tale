@@ -92,8 +92,8 @@ public class AdMapper {
                 isAccepted ? getImageUrl(order.getAcceptedBy().getImage()) : "",
                 order.getTitle(),
                 order.getDescription(),
-                order.getPrice(),
-                order.getSize(),
+                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
+                order.getSize() == null ? "" : order.getSize(),
                 order.getDeadlineAt(),
                 imageUrls,
                 order.getViews(),
@@ -121,7 +121,7 @@ public class AdMapper {
                 product.getPublishedAt(),
                 product.getTitle(),
                 product.getDescription(),
-                product.getPrice(),
+                product.getPrice() == null ? BigDecimal.ZERO : product.getPrice(),
                 imageUrls,
                 product.getViews(),
                 product.isDeleted(),
@@ -140,7 +140,7 @@ public class AdMapper {
                 advertisement.getPublishedAt(),
                 advertisement.getTitle(),
                 truncatedDescription,
-                advertisement.getPrice(),
+                advertisement.getPrice() == null ? BigDecimal.ZERO : advertisement.getPrice(),
                 images == null || images.isEmpty() ? "" : getImageUrl(advertisement.getImages().get(0)),
                 publishedBy.getUserId(),
                 publishedBy.getName(),
@@ -158,9 +158,9 @@ public class AdMapper {
                     order.getAdvertisementId(),
                     order.getTitle(),
                     order.getDescription(),
-                    order.getPrice(),
+                    order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
                     result.imageUrls(),
-                    order.getSize(),
+                    order.getSize() == null ? "" : order.getSize(),
                     order.getPublishedAt(),
                     order.getDeadlineAt(),
                     isAccepted ? acceptedBy.getOrganizationId() : 0,
@@ -258,7 +258,7 @@ public class AdMapper {
                 order.getAdvertisementId(),
                 order.getStatus(),
                 order.getTitle(),
-                order.getTaskKey(),
+                order.getTaskKey() == null ? "" : order.getTaskKey(),
                 comment,
                 order.getDeadlineAt()
         );
@@ -290,7 +290,7 @@ public class AdMapper {
                                 emp.getUserId(),
                                 emp.getName(),
                                 getImageUrl(emp.getImage()),
-                                order.getPrice()
+                                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice()
                         ))
                         .toList(),
                 order.getViews()

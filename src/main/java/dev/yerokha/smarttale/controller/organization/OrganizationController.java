@@ -137,7 +137,7 @@ public class OrganizationController {
     )
     @GetMapping("/orders")
     public ResponseEntity<Page<OrderSummary>> getOrders(Authentication authentication,
-                                                        @RequestParam Map<String, String> params) {
+                                                        @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getOrders(getUserIdFromAuthToken(authentication), params));
     }
 
@@ -163,7 +163,7 @@ public class OrganizationController {
     )
     @GetMapping("/employees")
     public ResponseEntity<Page<Employee>> getEmployees(Authentication authentication,
-                                                       @RequestParam Map<String, String> params) {
+                                                       @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getEmployees(
                 getUserIdFromAuthToken(authentication),
                 params));
@@ -187,13 +187,13 @@ public class OrganizationController {
     @GetMapping("/employees/{employeeId}")
     public ResponseEntity<EmployeeTasksResponse> getEmployee(@PathVariable Long employeeId,
                                                              Authentication authentication,
-                                                             @RequestParam Map<String, String> params) {
+                                                             @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getEmployee(getUserIdFromAuthToken(authentication), employeeId, params));
     }
 
     @Operation(
             summary = "Positions dropdown in invite", description = "Get a list of positions to which user can invite. " +
-            "Drop down request",
+            "Drop down request. Evaluates requesting user's permissions",
             tags = {"organization", "get", "position", "account", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -293,7 +293,8 @@ public class OrganizationController {
     @PostMapping("/employees")
     @PreAuthorize("hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
     public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody @Valid InviteRequest request) {
-        String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
+        String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request)
+                .data().get("email");
 
         return new ResponseEntity<>(String.format("Invite sent to %s", email), HttpStatus.CREATED);
     }

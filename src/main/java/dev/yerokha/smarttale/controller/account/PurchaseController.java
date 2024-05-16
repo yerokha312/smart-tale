@@ -61,7 +61,7 @@ public class PurchaseController {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(
                             schema = @Schema(implementation = FullProductCard.class))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Purchase not found", content = @Content),
             }
     )
     @GetMapping("/{productId}")

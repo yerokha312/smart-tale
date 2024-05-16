@@ -59,7 +59,7 @@ public class MarketplaceController {
             }
     )
     @GetMapping
-    public ResponseEntity<Page<Card>> getAds(@RequestParam Map<String, String> params) {
+    public ResponseEntity<Page<Card>> getAds(@RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(advertisementService.getAds(params));
     }

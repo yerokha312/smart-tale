@@ -123,8 +123,7 @@ public class AdvertisementController {
     @PutMapping
     public ResponseEntity<String> updateAd(Authentication authentication,
                                            @RequestPart("dto") @Valid UpdateAdRequest request,
-                                           @RequestPart(value = "images",
-                                                   required = false) List<MultipartFile> files) {
+                                           @RequestPart(value = "images", required = false) List<MultipartFile> files) {
 
         if (files != null && !files.isEmpty()) {
             if (files.size() > 5) {

@@ -51,7 +51,7 @@ public class OrderController {
     )
     @GetMapping
     public ResponseEntity<Page<SmallOrder>> getOrders(Authentication authentication,
-                                                      @RequestParam Map<String, String> params) {
+                                                      @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(advertisementService.getOrders(getUserIdFromAuthToken(authentication), params));
     }
 
@@ -77,10 +77,10 @@ public class OrderController {
                     @ApiResponse(responseCode = "404", description = "Order or org not found", content = @Content),
                     @ApiResponse(responseCode = "410", description = "Link is expired", content = @Content)
             },
-            parameters = @Parameter(name = "c", description = "Code for confirming acceptance request", required = true)
+            parameters = @Parameter(name = "code", description = "Code for confirming acceptance request", required = true)
     )
     @PostMapping
-    public ResponseEntity<String> confirmOrder(Authentication authentication, @RequestParam("c") String code) {
+    public ResponseEntity<String> confirmOrder(Authentication authentication, @RequestParam("code") String code) {
         advertisementService.confirmOrder(code, getUserIdFromAuthToken(authentication));
 
         return ResponseEntity.ok("Order confirmed");

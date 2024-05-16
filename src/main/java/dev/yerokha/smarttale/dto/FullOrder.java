@@ -26,7 +26,9 @@ public record FullOrder(
         String title,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
+        @NotNull
         String size,
         LocalDate deadlineAt,
         @NotNull

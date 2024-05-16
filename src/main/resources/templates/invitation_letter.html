@@ -178,10 +178,12 @@
                     </p>
                     <p>
                       Организация:
-                      <span
-                        style="margin: 0; color: #b67600"
-                        th:text="${organization}"
-                      ></span>
+                      <br>
+                      <a th:href="${organizationUrl}" target="_blank" style="color: #b67600; text-decoration: none;">
+                        <img src="#" th:src="${organizationLogo}" alt="Organization Logo" style="max-width: 100px;">
+                        <span th:text="${organizationName}" style="margin-left: 10px;"></span>
+                      </a>
+                      <br><br/>
                     </p>
                     <p>
                       Должность:

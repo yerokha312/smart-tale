@@ -15,9 +15,11 @@ public record FullOrderCard(
         String title,
         @NotNull
         String description,
+        @NotNull
         BigDecimal price,
         @NotNull
         List<String> imageUrls,
+        @NotNull
         String size,
         @NotNull
         LocalDateTime publishedAt,

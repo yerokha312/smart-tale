@@ -13,7 +13,9 @@ public record DashboardOrder(
         OrderStatus status,
         @NotNull
         String title,
+        @NotNull
         String key,
+        @NotNull
         String comment,
         LocalDate deadlineAt
 

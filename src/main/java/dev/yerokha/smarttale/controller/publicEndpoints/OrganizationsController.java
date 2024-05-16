@@ -38,7 +38,8 @@ public class OrganizationsController {
             }
     )
     @GetMapping
-    public ResponseEntity<Page<OrganizationSummary>> getAllOrganizations(@RequestParam Map<String, String> params) {
+    public ResponseEntity<Page<OrganizationSummary>> getAllOrganizations(@RequestParam(required = false)
+                                                                             Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getAllOrganizations(params));
     }
 

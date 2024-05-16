@@ -167,7 +167,7 @@ public class AuthenticationControllerTest {
     @Order(2)
     void isEmailAvailable_True() throws Exception {
         mockMvc.perform(post("/v1/auth/email-available")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("available@example.com"))
                 .andExpect(content().string("true"))
                 .andExpect(status().isOk());
@@ -177,7 +177,7 @@ public class AuthenticationControllerTest {
     @Order(2)
     void isEmailAvailable_False() throws Exception {
         mockMvc.perform(post("/v1/auth/email-available")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("existing@example.com"))
                 .andExpect(content().string("false"))
                 .andExpect(status().isOk());
@@ -187,7 +187,7 @@ public class AuthenticationControllerTest {
     @Order(2)
     void isPhoneAvailable_True() throws Exception {
         mockMvc.perform(post("/v1/auth/phone-available")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("+9962348710211"))
                 .andExpect(content().string("true"))
                 .andExpect(status().isOk());
@@ -197,7 +197,7 @@ public class AuthenticationControllerTest {
     @Order(2)
     void isPhoneAvailable_False() throws Exception {
         mockMvc.perform(post("/v1/auth/phone-available")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("+777712345100"))
                 .andExpect(content().string("false"))
                 .andExpect(status().isOk());
@@ -289,7 +289,7 @@ public class AuthenticationControllerTest {
     @Order(5)
     void isEmailAvailable_False2() throws Exception {
         mockMvc.perform(post("/v1/auth/email-available")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("johndoe@example.com"))
                 .andExpect(content().string("false"))
                 .andExpect(status().isOk());
@@ -322,7 +322,7 @@ public class AuthenticationControllerTest {
     @Order(7)
     void revoke() throws Exception {
         mockMvc.perform(post("/v1/auth/logout")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("Bearer " + refreshToken)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
@@ -353,7 +353,7 @@ public class AuthenticationControllerTest {
     @Order(9)
     void login() throws Exception {
         mockMvc.perform(post("/v1/auth/login")
-                        .contentType(APP_JSON)
+                        .contentType(MediaType.TEXT_PLAIN)
                         .content("johndoe@example.com"))
                 .andExpect(status().isOk());
 
