@@ -6,8 +6,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// in get my purchases/id
-// in get market/id
+// in get my purchases/recipientId
+// in get market/recipientId
 public record FullProductCard(
         @NotNull
         Long advertisementId,

@@ -35,7 +35,7 @@ public class PurchaseController {
     }
 
     @Operation(
-            summary = "All purchases", description = "Returns products purchased by user, id of product replaced by purchase id",
+            summary = "All purchases", description = "Returns products purchased by user, recipientId of product replaced by purchase recipientId",
             tags = {"purchase", "user", "get", "account", "product"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -54,7 +54,7 @@ public class PurchaseController {
     }
 
     @Operation(
-            summary = "One purchase", description = "Get one product ad by unique id of purchase",
+            summary = "One purchase", description = "Get one product ad by unique recipientId of purchase",
             tags = {"purchase", "user", "get", "account", "product"},
             responses = {
 

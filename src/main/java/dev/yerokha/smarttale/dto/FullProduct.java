@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// get my advertisements/id
+// get my advertisements/recipientId
 public record FullProduct(
         @NotNull
         Long productId,

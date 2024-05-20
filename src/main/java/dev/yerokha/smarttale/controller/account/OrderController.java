@@ -35,7 +35,7 @@ public class OrderController {
 
     @Operation(
             summary = "Get orders", description = "Retrieve all active or completed orders of author. " +
-            "Sort by fields of object. Default sorting by deadlineAt",
+                                                  "Sort by fields of object. Default sorting by deadlineAt",
             tags = {"get", "account", "order"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -56,7 +56,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "Get order", description = "Retrieve one order by id", tags = {"get", "order", "account"},
+            summary = "Get order", description = "Retrieve one order by recipientId", tags = {"get", "order", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),

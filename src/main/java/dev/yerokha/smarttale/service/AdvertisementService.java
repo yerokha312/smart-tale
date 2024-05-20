@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
@@ -10,6 +9,7 @@ import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -151,7 +152,7 @@ public class AdvertisementService {
             case DISCLOSE -> discloseAd(userId, advertisementId);
             case DELETE -> deleteAd(userId, advertisementId);
             case RESTORE -> restoreAd(userId, advertisementId);
-            default -> throw new IllegalArgumentException("Unsupported action id");
+            default -> throw new IllegalArgumentException("Unsupported action recipientId");
         };
     }
 
@@ -401,13 +402,18 @@ public class AdvertisementService {
         acceptanceRepository.save(acceptance);
         String encryptedCode = "?code=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
         sendAcceptanceRequest(acceptance, encryptedCode);
+        String imageUrl = order.getImages() == null || order.getImages().isEmpty() ? "" : order.getImages().get(0).getImageUrl();
 
         Map<String, String> data = new HashMap<>();
         data.put("sub", "Запрос о принятии заказа");
-        data.put("id", organization.getOrganizationId().toString());
-        data.put("name", organization.getName());
+        data.put("orderId", order.getAdvertisementId().toString());
+        data.put("orderImg", imageUrl);
+        data.put("title", order.getTitle());
+        data.put("orgId", organization.getOrganizationId().toString());
+        data.put("orgName", organization.getName());
         data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
         data.put("code", encryptedCode);
+        data.put("timestamp", Instant.now().toString());
 
         return new PushNotification(
                 order.getPublishedBy().getUserId(),
@@ -490,7 +496,7 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public void confirmOrder(String code, Long userId) {
+    public PushNotification confirmOrder(String code, Long userId) {
         AcceptanceEntity acceptance = acceptanceRepository.findById(
                         Long.valueOf(EncryptionUtil.decrypt(code)))
                 .orElseThrow(() -> new NotFoundException("Acceptance not found"));
@@ -517,6 +523,21 @@ public class AdvertisementService {
 
         orderRepository.save(order);
         acceptanceRepository.deleteAll(order.getAcceptanceEntities());
+
+        Map<String, String> data = new HashMap<>();
+        data.put("sub", "Подтвержден заказ");
+        data.put("orderId", order.getAdvertisementId().toString());
+        data.put("title", order.getTitle());
+        data.put("key", order.getTaskKey());
+        data.put("authorId", userId.toString());
+        data.put("authorName", order.getPublishedBy().getName());
+        Image authorAvatar = order.getPublishedBy().getImage();
+        data.put("authorAvatar", authorAvatar == null ? "" : authorAvatar.getImageUrl());
+        data.put("timestamp", Instant.now().toString());
+        return new PushNotification(
+                organization.getOrganizationId(),
+                data
+        );
     }
 
     @Transactional
@@ -546,8 +567,9 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public void changeStatus(Long userId, Long orderId, String status) {
+    public PushNotification updateStatus(Long userId, Long orderId, String status) {
         OrderEntity order = getOrderEntity(orderId);
+        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
 
         if (order.getAcceptedBy().getEmployees().stream().noneMatch(emp -> emp.getUserId().equals(userId))) {
             throw new NotFoundException("Order not found");
@@ -557,7 +579,7 @@ public class AdvertisementService {
         OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
 
         if (newStatus.equals(oldStatus)) {
-            return;
+            return null;
         }
 
         boolean isValidTransition = switch (newStatus) {
@@ -574,7 +596,25 @@ public class AdvertisementService {
         }
 
         orderRepository.save(order);
+
+        String avatarUrl = user.getImage() == null ? "" : user.getImage().getImageUrl();
+        Map<String, String> data = new HashMap<>();
+        data.put("sub", "Статус заказа обновлен");
+        data.put("employeeId", userId.toString());
+        data.put("employeeName", user.getName());
+        data.put("employeeAvatar", avatarUrl);
+        data.put("taskId", order.getAdvertisementId().toString());
+        data.put("key", order.getTaskKey());
+        data.put("title", order.getTitle());
+        data.put("oldStatus", oldStatus.name());
+        data.put("newStatus", newStatus.name());
+        data.put("timestamp", Instant.now().toString());
+        return new PushNotification(
+                order.getAcceptedBy().getOrganizationId(),
+                data
+        );
     }
+
 
     private OrderEntity getOrderEntity(Long orderId) {
         return orderRepository.findById(orderId)

@@ -45,16 +45,18 @@ public class TokenService {
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final UserDetailsRepository userDetailsRepository;
+    private final UserService userService;
 
-    private static final int ACCESS_TOKEN_EXPIRATION = 15;
-    private static final int REFRESH_TOKEN_EXPIRATION = ACCESS_TOKEN_EXPIRATION * 4 * 24 * 7;
+    private static final int ACCESS_TOKEN_EXPIRATION = 60;
+    private static final int REFRESH_TOKEN_EXPIRATION = ACCESS_TOKEN_EXPIRATION * 24 * 7;
 
-    public TokenService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRepository tokenRepository, UserRepository userRepository, UserDetailsRepository userDetailsRepository) {
+    public TokenService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRepository tokenRepository, UserRepository userRepository, UserDetailsRepository userDetailsRepository, UserService userService) {
         this.jwtEncoder = jwtEncoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
         this.userDetailsRepository = userDetailsRepository;
+        this.userService = userService;
     }
 
     public String generateAccessToken(UserEntity entity, PositionEntity position) {
@@ -81,7 +83,7 @@ public class TokenService {
 
     private String generateToken(UserEntity entity, int expirationTime, TokenType tokenType, PositionEntity position) {
         Instant now = Instant.now();
-        String scopes = getScopes(entity);
+        String roles = getRoles(entity);
 
         int hierarchy = 0;
         int authorities = 0;
@@ -94,14 +96,14 @@ public class TokenService {
                 expirationTime,
                 entity.getEmail(),
                 entity.getUserId(),
-                scopes,
+                roles,
                 hierarchy,
                 authorities,
                 tokenType);
         return encodeToken(claims);
     }
 
-    private String getScopes(UserEntity entity) {
+    private String getRoles(UserEntity entity) {
         return entity.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
@@ -220,8 +222,8 @@ public class TokenService {
         int authorities = position.getAuthorities();
 
         if (!decodedToken.getClaim("roles").equals(getRolesString(user))
-                || tokenHierarchy != hierarchy
-                || tokenAuthorities != authorities) {
+            || tokenHierarchy != hierarchy
+            || tokenAuthorities != authorities) {
 
             return generateNewTokenPair(user, new PositionEntity(null, hierarchy, authorities, null));
         }
@@ -312,5 +314,23 @@ public class TokenService {
         notRevokedByUsername.forEach(token -> token.setRevoked(true));
         tokenRepository.saveAll(notRevokedByUsername);
     }
+//
+//    public boolean validateToken(String token) {
+//        try {
+//            jwtDecoder.decode(token);
+//            return true;
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
+//
+//    public Authentication getAuthentication(String token) {
+//        Jwt decodedToken = jwtDecoder.decode(token);
+//        String username = decodedToken.getSubject();
+//
+//        UserDetails userDetails = userService.loadUserByUsername(username);
+//
+//        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+//    }
 }
 

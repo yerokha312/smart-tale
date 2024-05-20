@@ -142,8 +142,8 @@ public class AuthenticationController {
 
     @Operation(
             summary = "Logout", description = "Accepts \"Bearer \" + \"refreshToken\" string in body and " +
-            "\"Bearer \" + \"accessToken\" via headers " +
-            "for further revocation and logging out",
+                                              "\"Bearer \" + \"accessToken\" via headers " +
+                                              "for further revocation and logging out",
             tags = {"authentication", "post"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Revocation and logout success"),

@@ -18,7 +18,7 @@ public class TaskKeyGeneratorService {
 
     @Transactional
     public String generateTaskKey(OrganizationEntity organization) {
-        String prefix = "T-";
+        String prefix = "T";
 
         LocalDate registeredDate = organization.getRegisteredAt();
         LocalDate currentDate = LocalDate.now();

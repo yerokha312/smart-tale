@@ -20,11 +20,11 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 
 @Configuration
 @EnableMethodSecurity
-public class WebSecurityConfig {
+public class SecurityConfig {
 
     private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
-    public WebSecurityConfig(TokenAuthenticationFilter tokenAuthenticationFilter) {
+    public SecurityConfig(TokenAuthenticationFilter tokenAuthenticationFilter) {
         this.tokenAuthenticationFilter = tokenAuthenticationFilter;
     }
 
@@ -46,15 +46,24 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer -> corsConfigurationSource())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v1/auth/**").permitAll()
                         .requestMatchers(GET, "/v1/market/**").permitAll()
-                        .requestMatchers("/v1/market/**").authenticated()
-                        .requestMatchers("/v1/account/**").authenticated()
-                        .requestMatchers("/v1/organization").authenticated()
-                        .requestMatchers("/v1/organizations/**").permitAll()
                         .requestMatchers(
+                                "/v1/auth/**",
+                                "/v1/organizations/**",
                                 "/swagger-ui/**",
-                                "/v3/**").permitAll()
+                                "/v3/**",
+                                "/",
+                                "/index.html",
+                                "/ws/**",
+                                "/main.js",
+                                "/ws-documentation"
+                        )
+                        .permitAll()
+                        .requestMatchers(
+                                "/v1/market/**",
+                                "/v1/account/**",
+                                "/v1/organization")
+                        .authenticated()
                         .anyRequest().hasRole("EMPLOYEE"))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(converter())))

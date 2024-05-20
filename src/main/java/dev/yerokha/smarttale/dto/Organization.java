@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
-// in get organizations/id
+// in get organizations/recipientId
 public record Organization(
         @NotNull
         Long organizationId,

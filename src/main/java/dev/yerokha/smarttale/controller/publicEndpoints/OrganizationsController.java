@@ -39,12 +39,12 @@ public class OrganizationsController {
     )
     @GetMapping
     public ResponseEntity<Page<OrganizationSummary>> getAllOrganizations(@RequestParam(required = false)
-                                                                             Map<String, String> params) {
+                                                                         Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getAllOrganizations(params));
     }
 
     @Operation(
-            summary = "Get organization by id", description = "Public endpoint", tags = {"get", "organization"},
+            summary = "Get organization by recipientId", description = "Public endpoint", tags = {"get", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "404", description = "Not found", content = @Content)

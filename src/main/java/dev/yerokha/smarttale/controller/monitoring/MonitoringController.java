@@ -73,7 +73,7 @@ public class MonitoringController {
     }
 
     @Operation(
-            summary = "Change status", tags = {"put", "order", "organization", "monitoring"},
+            summary = "Update status", tags = {"put", "order", "organization", "monitoring"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
@@ -86,7 +86,7 @@ public class MonitoringController {
     public ResponseEntity<String> changeStatus(Authentication authentication,
                                                @PathVariable Long orderId,
                                                @RequestBody String status) {
-        advertisementService.changeStatus(getUserIdFromAuthToken(authentication), orderId, status);
+        advertisementService.updateStatus(getUserIdFromAuthToken(authentication), orderId, status);
 
         return ResponseEntity.ok("Status changed");
     }
@@ -108,7 +108,7 @@ public class MonitoringController {
                     @Parameter(name = "page", description = "Page number. Default 0"),
                     @Parameter(name = "size", description = "Page size. Default 6"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +
-                            "sorting properties. Default \"acceptedAt\"",
+                                                              "sorting properties. Default \"acceptedAt\"",
                             examples = {
                                     @ExampleObject(name = "deadlineAt", value = "asc", description = "\"sorting param=asc/desc\"")
                             })
@@ -125,8 +125,8 @@ public class MonitoringController {
 
     @Operation(
             summary = "Update task", description = "Method for adding, removing employees from task and comment editing. " +
-            "Please send only new added or deleted employees' ids in List. Can not add to order with PENDING and COMPLETED status. " +
-            "Send empty list if just updating comment",
+                                                   "Please send only new added or deleted employees' ids in List. Can not add to order with PENDING and COMPLETED status. " +
+                                                   "Send empty list if just updating comment",
             tags = {"put", "order", "monitoring", "organization", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -143,11 +143,11 @@ public class MonitoringController {
 
         organizationService.updateTask(getUserIdFromAuthToken(authentication), request);
 
-        return ResponseEntity.ok("Employees assigned");
+        return ResponseEntity.ok("Task updated");
     }
 
     @Operation(
-            summary = "Delete task", description = "Deletes task (order) by id if user has permission",
+            summary = "Delete task", description = "Deletes task (order) by recipientId if user has permission",
             tags = {"delete", "order", "task", "monitoring", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
