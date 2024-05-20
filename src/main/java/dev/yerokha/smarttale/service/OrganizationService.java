@@ -549,7 +549,8 @@ public class OrganizationService {
             contractor.removeAssignedTask(order);
             userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
             userDetailsRepository.save(contractor);
-            String imageUrl = order.getImages() == null ? "" : order.getImages().get(0).getImageUrl();
+            String imageUrl = order.getImages() == null || order.getImages().isEmpty()
+                    ? "" : order.getImages().get(0).getImageUrl();
             Map<String, String> data = Map.of(
                     "sub", "Вас отстранили от заказа",
                     "orderId", order.getAdvertisementId().toString(),
@@ -580,7 +581,8 @@ public class OrganizationService {
             contractor.addAssignedTask(order);
             userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
             userDetailsRepository.save(contractor);
-            String imageUrl = order.getImages() == null ? "" : order.getImages().get(0).getImageUrl();
+            String imageUrl = order.getImages() == null || order.getImages().isEmpty()
+                    ? "" : order.getImages().get(0).getImageUrl();
             Map<String, String> data = Map.of(
                     "sub", "Вас назначили на заказ",
                     "orderId", order.getAdvertisementId().toString(),
