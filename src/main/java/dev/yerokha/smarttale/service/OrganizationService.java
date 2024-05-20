@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -154,7 +155,7 @@ public class OrganizationService {
     }
 
     private Employee mapToEmployee(UserDetailsEntity user, Long organizationId) {
-        String name = user.getName() == null ? "" : user.getName();
+        String name = user.getName();
         List<OrderSummary> orders = getCurrentOrders(user, organizationId);
         String position = getPosition(user, organizationId);
         String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
@@ -301,11 +302,12 @@ public class OrganizationService {
 
         Map<String, String> data = new HashMap<>();
         data.put("email", invitee.getEmail());
-        data.put("sub", "Приглашение на работу");
-        data.put("id", organization.getOrganizationId().toString());
-        data.put("name", organization.getName());
+        data.put("sub", "Приглашение в организацию");
+        data.put("orgId", organization.getOrganizationId().toString());
+        data.put("orgName", organization.getName());
         data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
-//        data.put("code", encryptedCode);
+        data.put("code", code);
+        data.put("timestamp", Instant.now().toString());
 
         return new PushNotification(
                 invitee.getUserId(),
@@ -503,6 +505,7 @@ public class OrganizationService {
             throw new ForbiddenException("If were chosen either update or invite, you have to choose create");
         }
 
+        positionEntity.setTitle(position.title());
         positionEntity.setHierarchy(hierarchy);
         positionEntity.setAuthorities(authorities);
 
@@ -521,34 +524,80 @@ public class OrganizationService {
                         organization.getOrganizationId(), request.taskId())
                 .orElseThrow(() -> new NotFoundException("Task not found"));
 
-        if (!request.addEmployees().isEmpty()) {
-            List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
-                    organization.getOrganizationId(), request.addEmployees());
-
-            for (UserDetailsEntity contractor : contractors) {
-                order.addContractor(contractor);
-                contractor.addAssignedTask(order);
-                userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
-                userDetailsRepository.save(contractor);
-            }
+        if (!request.addedEmployees().isEmpty()) {
+            assignContractors(request, organization, order);
         }
 
-        if (!request.removeEmployees().isEmpty()) {
-            List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
-                    organization.getOrganizationId(), request.removeEmployees());
-
-            for (UserDetailsEntity contractor : contractors) {
-                order.removeContractor(contractor);
-                contractor.removeAssignedTask(order);
-                userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
-                userDetailsRepository.save(contractor);
-            }
+        if (!request.removedEmployees().isEmpty()) {
+            removeContractors(request, organization, order);
         }
 
         if (request.comment() != null && !request.comment().isEmpty()) {
             order.setComment(request.comment());
         }
+
         orderRepository.save(order);
+    }
+
+    public List<PushNotification> removeContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
+        List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
+                organization.getOrganizationId(), request.removedEmployees());
+
+        List<PushNotification> notifications = new ArrayList<>();
+        for (UserDetailsEntity contractor : contractors) {
+            order.removeContractor(contractor);
+            contractor.removeAssignedTask(order);
+            userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
+            userDetailsRepository.save(contractor);
+            String imageUrl = order.getImages() == null ? "" : order.getImages().get(0).getImageUrl();
+            Map<String, String> data = Map.of(
+                    "sub", "Вас отстранили от заказа",
+                    "orderId", order.getAdvertisementId().toString(),
+                    "title", order.getTitle(),
+                    "key", order.getTaskKey(),
+                    "image", imageUrl,
+                    "status", order.getStatus().name(),
+                    "timestamp", Instant.now().toString()
+            );
+            PushNotification notification = new PushNotification(
+                    contractor.getUserId(),
+                    data
+            );
+            notifications.add(notification);
+        }
+
+        return notifications;
+
+    }
+
+    public List<PushNotification> assignContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
+        List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
+                organization.getOrganizationId(), request.addedEmployees());
+
+        List<PushNotification> notifications = new ArrayList<>();
+        for (UserDetailsEntity contractor : contractors) {
+            order.addContractor(contractor);
+            contractor.addAssignedTask(order);
+            userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
+            userDetailsRepository.save(contractor);
+            String imageUrl = order.getImages() == null ? "" : order.getImages().get(0).getImageUrl();
+            Map<String, String> data = Map.of(
+                    "sub", "Вас назначили на заказ",
+                    "orderId", order.getAdvertisementId().toString(),
+                    "title", order.getTitle(),
+                    "key", order.getTaskKey(),
+                    "image", imageUrl,
+                    "status", order.getStatus().name(),
+                    "timestamp", Instant.now().toString()
+            );
+            PushNotification notification = new PushNotification(
+                    contractor.getUserId(),
+                    data
+            );
+            notifications.add(notification);
+        }
+
+        return notifications;
     }
 
     public List<PositionSummary> getAllPositions(Long userId) {
@@ -576,7 +625,7 @@ public class OrganizationService {
     }
 
     @Transactional
-    public String deleteEmployee(Long userId, Long employeeId) {
+    public PushNotification deleteEmployee(Long userId, Long employeeId) {
         OrganizationEntity organization = getOrganizationByEmployeeId(userId);
 
         Set<UserDetailsEntity> employees = organization.getEmployees();
@@ -597,7 +646,15 @@ public class OrganizationService {
 
         userDetailsRepository.save(employee);
 
-        return employee.getEmail();
+        Map<String, String> data = Map.of(
+                "sub", "Вас исключили из организации",
+                "timestamp", Instant.now().toString(),
+                "email", employee.getEmail()
+        );
+        return new PushNotification(
+                employeeId,
+                data
+        );
     }
 
     public void deletePosition(Long userId, Long positionId) {
@@ -614,19 +671,30 @@ public class OrganizationService {
         positionRepository.delete(position);
     }
 
-    public String updateEmployee(Long userId, Long employeeId, Long positionId) {
+    public PushNotification updateEmployee(Long userId, Long employeeId, Long positionId) {
         OrganizationEntity organization = getOrganizationByEmployeeId(userId);
         UserDetailsEntity employee = organization.getEmployees().stream()
                 .filter(e -> e.getUserId().equals(employeeId))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
-        employee.setPosition(organization.getPositions().stream()
+        PositionEntity position = organization.getPositions().stream()
                 .filter(p -> p.getPositionId().equals(positionId))
                 .findFirst()
-                .orElseThrow(() -> new NotFoundException("Position not found")));
+                .orElseThrow(() -> new NotFoundException("Position not found"));
+        employee.setPosition(position);
 
         userDetailsRepository.save(employee);
 
-        return employee.getEmail();
+        Map<String, String> data = Map.of(
+                "sub", "Вы назначены на новую должность",
+                "posId", positionId.toString(),
+                "title", position.getTitle(),
+                "email", employee.getEmail(),
+                "timestamp", Instant.now().toString()
+        );
+        return new PushNotification(
+                employeeId,
+                data
+        );
     }
 }

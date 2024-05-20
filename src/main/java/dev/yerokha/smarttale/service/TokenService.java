@@ -46,8 +46,8 @@ public class TokenService {
     private final UserRepository userRepository;
     private final UserDetailsRepository userDetailsRepository;
 
-    private static final int ACCESS_TOKEN_EXPIRATION = 15;
-    private static final int REFRESH_TOKEN_EXPIRATION = ACCESS_TOKEN_EXPIRATION * 4 * 24 * 7;
+    private static final int ACCESS_TOKEN_EXPIRATION = 60;
+    private static final int REFRESH_TOKEN_EXPIRATION = ACCESS_TOKEN_EXPIRATION * 24 * 7;
 
     public TokenService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRepository tokenRepository, UserRepository userRepository, UserDetailsRepository userDetailsRepository) {
         this.jwtEncoder = jwtEncoder;
@@ -81,7 +81,7 @@ public class TokenService {
 
     private String generateToken(UserEntity entity, int expirationTime, TokenType tokenType, PositionEntity position) {
         Instant now = Instant.now();
-        String scopes = getScopes(entity);
+        String roles = getRoles(entity);
 
         int hierarchy = 0;
         int authorities = 0;
@@ -94,14 +94,14 @@ public class TokenService {
                 expirationTime,
                 entity.getEmail(),
                 entity.getUserId(),
-                scopes,
+                roles,
                 hierarchy,
                 authorities,
                 tokenType);
         return encodeToken(claims);
     }
 
-    private String getScopes(UserEntity entity) {
+    private String getRoles(UserEntity entity) {
         return entity.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));

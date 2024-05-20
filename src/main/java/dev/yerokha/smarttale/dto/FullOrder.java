@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// used in get my advertisements/id
+// used in get my advertisements/recipientId
 public record FullOrder(
         @NotNull
         Long orderId,

@@ -44,7 +44,7 @@ public class OrganizationsController {
     }
 
     @Operation(
-            summary = "Get organization by id", description = "Public endpoint", tags = {"get", "organization"},
+            summary = "Get organization by recipientId", description = "Public endpoint", tags = {"get", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "404", description = "Not found", content = @Content)

@@ -224,7 +224,7 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Get position", description = "Get position by id",
+            summary = "Get position", description = "Get position by recipientId",
             tags = {"organization", "get", "position", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -241,7 +241,7 @@ public class OrganizationController {
 
     @Operation(
             summary = "Create position", description = "Evaluates hierarchy and authorities then creates. " +
-            "Position id should be empty or 0",
+            "Position recipientId should be empty or 0",
             tags = {"post", "position", "organization"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Success"),
@@ -351,7 +351,7 @@ public class OrganizationController {
     public ResponseEntity<String> updateEmployeePosition(Authentication authentication,
                                                          @RequestBody @Valid UpdateEmployeeRequest request) {
 
-        organizationService.updateEmployee(getUserIdFromAuthToken(authentication), request.employeeId(), request.positionId());
+        organizationService.updateEmployee(getUserIdFromAuthToken(authentication), request.employeeId(), request.positionId()); //TODO impl aspect
 
         return ResponseEntity.ok("Employee position updated");
     }

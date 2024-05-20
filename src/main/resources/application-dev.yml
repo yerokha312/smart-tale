@@ -18,6 +18,9 @@ spring:
 logging:
   level:
     org.springframework.security: debug
+    org.springframework.web: debug
+    org.springframework.messaging: debug
+
 
 rsa:
   private-key: ${RSA_PRIVATE_KEY}

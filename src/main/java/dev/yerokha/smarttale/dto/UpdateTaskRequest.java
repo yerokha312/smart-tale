@@ -10,9 +10,9 @@ public record UpdateTaskRequest(
         @NotNull @Positive
         Long taskId,
         @NotNull
-        List<Long> addEmployees,
+        List<Long> addedEmployees,
         @NotNull
-        List<Long> removeEmployees,
+        List<Long> removedEmployees,
         @Length(min = 1, max = 40)
         String comment
 ) {

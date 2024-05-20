@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-// account get my orders/id
+// account get my orders/recipientId
 public record OrderDto(
         @NotNull
         Long orderId,

@@ -73,7 +73,7 @@ public class MonitoringController {
     }
 
     @Operation(
-            summary = "Change status", tags = {"put", "order", "organization", "monitoring"},
+            summary = "Update status", tags = {"put", "order", "organization", "monitoring"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
@@ -86,7 +86,7 @@ public class MonitoringController {
     public ResponseEntity<String> changeStatus(Authentication authentication,
                                                @PathVariable Long orderId,
                                                @RequestBody String status) {
-        advertisementService.changeStatus(getUserIdFromAuthToken(authentication), orderId, status);
+        advertisementService.updateStatus(getUserIdFromAuthToken(authentication), orderId, status);
 
         return ResponseEntity.ok("Status changed");
     }
@@ -143,11 +143,11 @@ public class MonitoringController {
 
         organizationService.updateTask(getUserIdFromAuthToken(authentication), request);
 
-        return ResponseEntity.ok("Employees assigned");
+        return ResponseEntity.ok("Task updated");
     }
 
     @Operation(
-            summary = "Delete task", description = "Deletes task (order) by id if user has permission",
+            summary = "Delete task", description = "Deletes task (order) by recipientId if user has permission",
             tags = {"delete", "order", "task", "monitoring", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),

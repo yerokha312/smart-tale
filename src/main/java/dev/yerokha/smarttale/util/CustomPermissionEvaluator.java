@@ -78,7 +78,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             }
             case "ASSIGN_EMPLOYEES" -> {
                 UpdateTaskRequest request = (UpdateTaskRequest) targetDomainObject;
-                List<UserDetailsEntity> contractors = userDetailsRepository.findAllById(request.addEmployees());
+                List<UserDetailsEntity> contractors = userDetailsRepository.findAllById(request.addedEmployees());
                 yield contractors.stream()
                         .map(UserDetailsEntity::getPosition)
                         .allMatch(contractorPosition -> contractorPosition.getHierarchy() > userHierarchy);
