@@ -129,7 +129,7 @@ public class OrganizationController {
                     @Parameter(name = "page", description = "Page number. Default 0"),
                     @Parameter(name = "size", description = "Page size. Default 6"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +
-                            "sorting properties. Default \"acceptedAt\"",
+                                                              "sorting properties. Default \"acceptedAt\"",
                             examples = {
                                     @ExampleObject(name = "deadlineAt", value = "asc", description = "\"sorting param=asc/desc\"")
                             })
@@ -157,7 +157,7 @@ public class OrganizationController {
                     @Parameter(name = "orders", description = "Sorts by active orders number"),
                     @Parameter(name = "status", description = "Not a property, needs front implementation"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +
-                            "sorting properties. Default \"name\""
+                                                              "sorting properties. Default \"name\""
                     )
             }
     )
@@ -193,7 +193,7 @@ public class OrganizationController {
 
     @Operation(
             summary = "Positions dropdown in invite", description = "Get a list of positions to which user can invite. " +
-            "Drop down request. Evaluates requesting user's permissions",
+                                                                    "Drop down request. Evaluates requesting user's permissions",
             tags = {"organization", "get", "position", "account", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -241,7 +241,7 @@ public class OrganizationController {
 
     @Operation(
             summary = "Create position", description = "Evaluates hierarchy and authorities then creates. " +
-            "Position recipientId should be empty or 0",
+                                                       "Position recipientId should be empty or 0",
             tags = {"post", "position", "organization"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Success"),
@@ -261,7 +261,7 @@ public class OrganizationController {
 
     @Operation(
             summary = "Update position", description = "Evaluates hierarchy and authorities then updates," +
-            "positionId shouldn't be null",
+                                                       "positionId shouldn't be null",
             tags = {"put", "position", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -351,7 +351,7 @@ public class OrganizationController {
     public ResponseEntity<String> updateEmployeePosition(Authentication authentication,
                                                          @RequestBody @Valid UpdateEmployeeRequest request) {
 
-        organizationService.updateEmployee(getUserIdFromAuthToken(authentication), request.employeeId(), request.positionId()); //TODO impl aspect
+        organizationService.updateEmployee(getUserIdFromAuthToken(authentication), request.employeeId(), request.positionId());
 
         return ResponseEntity.ok("Employee position updated");
     }

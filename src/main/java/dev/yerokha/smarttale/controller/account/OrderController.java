@@ -35,7 +35,7 @@ public class OrderController {
 
     @Operation(
             summary = "Get orders", description = "Retrieve all active or completed orders of author. " +
-            "Sort by fields of object. Default sorting by deadlineAt",
+                                                  "Sort by fields of object. Default sorting by deadlineAt",
             tags = {"get", "account", "order"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),

@@ -356,7 +356,7 @@ public class OrganizationService {
                     PositionEntity userPosition = user.getPosition();
                     int userAuths = userPosition.getAuthorities();
                     return pos.getHierarchy() > userPosition.getHierarchy()
-                            && ((positionAuths & userAuths) == positionAuths);
+                           && ((positionAuths & userAuths) == positionAuths);
                 })
                 .sorted(Comparator.comparing(PositionEntity::getTitle))
                 .map(pos -> new PositionSummary(
@@ -468,7 +468,7 @@ public class OrganizationService {
         }
 
         if (((authorities & Authorities.UPDATE_POSITION.getBitmask()) > 0
-                || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
+             || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
                 && (authorities & Authorities.CREATE_POSITION.getBitmask()) <= 0)) {
             throw new ForbiddenException("If were chosen either update or invite, you have to choose create");
         }
@@ -500,7 +500,7 @@ public class OrganizationService {
         }
 
         if (((authorities & Authorities.UPDATE_POSITION.getBitmask()) > 0
-                || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
+             || ((authorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0)
                 && (authorities & Authorities.CREATE_POSITION.getBitmask()) == 0)) {
             throw new ForbiddenException("If were chosen either update or invite, you have to choose create");
         }

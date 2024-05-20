@@ -58,7 +58,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                         .map(authString -> valueOf(authString).getBitmask())
                         .reduce(0, (acc, bitmask) -> acc | bitmask);
                 yield ((positionAuthorities & userAuthorities) == positionAuthorities)
-                        && (userHierarchy < position.hierarchy());
+                      && (userHierarchy < position.hierarchy());
             }
             case "UPDATE_POSITION" -> {
                 Position position = (Position) targetDomainObject;
@@ -74,7 +74,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                     yield false;
                 }
                 yield ((positionAuthorities & userAuthorities) == positionAuthorities)
-                        && (userHierarchy < position.hierarchy());
+                      && (userHierarchy < position.hierarchy());
             }
             case "ASSIGN_EMPLOYEES" -> {
                 UpdateTaskRequest request = (UpdateTaskRequest) targetDomainObject;
@@ -172,15 +172,15 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         int employeeHierarchy = employeePosition.getHierarchy();
         int employeeAuthorities = employeePosition.getAuthorities();
         return userHierarchy < employeeHierarchy
-                && ((userAuthorities & employeeAuthorities) == employeeAuthorities);
+               && ((userAuthorities & employeeAuthorities) == employeeAuthorities);
     }
 
     private static boolean hasPermission(OrderEntity order, boolean userCanMoveFromChecking) {
         OrderStatus orderStatus = order.getStatus();
 
         boolean orderStatusIsRestricted = orderStatus == OrderStatus.PENDING ||
-                orderStatus == OrderStatus.COMPLETED ||
-                orderStatus == OrderStatus.CANCELED;
+                                          orderStatus == OrderStatus.COMPLETED ||
+                                          orderStatus == OrderStatus.CANCELED;
 
         if (orderStatusIsRestricted) {
             return false;
@@ -196,6 +196,6 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         }
         int positionAuthorities = position.getAuthorities();
         return userHierarchy < position.getHierarchy()
-                && ((positionAuthorities & userAuthorities) == positionAuthorities);
+               && ((positionAuthorities & userAuthorities) == positionAuthorities);
     }
 }

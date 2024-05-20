@@ -108,7 +108,7 @@ public class MonitoringController {
                     @Parameter(name = "page", description = "Page number. Default 0"),
                     @Parameter(name = "size", description = "Page size. Default 6"),
                     @Parameter(name = "[sort]", description = "Sorting property. Equals to object field. Can be multiple" +
-                            "sorting properties. Default \"acceptedAt\"",
+                                                              "sorting properties. Default \"acceptedAt\"",
                             examples = {
                                     @ExampleObject(name = "deadlineAt", value = "asc", description = "\"sorting param=asc/desc\"")
                             })
@@ -125,8 +125,8 @@ public class MonitoringController {
 
     @Operation(
             summary = "Update task", description = "Method for adding, removing employees from task and comment editing. " +
-            "Please send only new added or deleted employees' ids in List. Can not add to order with PENDING and COMPLETED status. " +
-            "Send empty list if just updating comment",
+                                                   "Please send only new added or deleted employees' ids in List. Can not add to order with PENDING and COMPLETED status. " +
+                                                   "Send empty list if just updating comment",
             tags = {"put", "order", "monitoring", "organization", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),

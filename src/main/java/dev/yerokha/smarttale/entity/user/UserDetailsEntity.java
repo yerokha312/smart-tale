@@ -135,7 +135,7 @@ public class UserDetailsEntity {
 
     public String getName() {
         return (this.lastName == null ? "" : this.lastName + " " + this.firstName + " " +
-                (this.middleName == null ? "" : this.middleName)).trim();
+                                             (this.middleName == null ? "" : this.middleName)).trim();
     }
 
     public void addAssignedTask(OrderEntity task) {

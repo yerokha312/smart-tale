@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
@@ -10,6 +9,7 @@ import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;

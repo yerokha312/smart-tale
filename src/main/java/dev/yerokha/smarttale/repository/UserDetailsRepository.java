@@ -20,10 +20,10 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
     Optional<UserDetailsEntity> findByEmail(String email);
 
     @Query("SELECT DISTINCT ud FROM UserDetailsEntity ud " +
-            "LEFT JOIN ud.invitations inv " +
-            "LEFT JOIN ud.organization org " +
-            "WHERE org.organizationId = :orgId OR (inv.organization.organizationId = :orgId " +
-            "AND inv.invitedAt + 7 DAY >= CURRENT_DATE)")
+           "LEFT JOIN ud.invitations inv " +
+           "LEFT JOIN ud.organization org " +
+           "WHERE org.organizationId = :orgId OR (inv.organization.organizationId = :orgId " +
+           "AND inv.invitedAt + 7 DAY >= CURRENT_DATE)")
     Page<UserDetailsEntity> findAllEmployeesAndInvitees(@Param("orgId") Long orgId, Pageable pageable);
 
     @Modifying

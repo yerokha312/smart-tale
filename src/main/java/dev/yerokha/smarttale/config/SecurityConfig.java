@@ -52,9 +52,9 @@ public class SecurityConfig {
                                 "/v1/organizations/**",
                                 "/swagger-ui/**",
                                 "/v3/**",
-                                "/ws/**",
                                 "/",
                                 "/index.html",
+                                "/ws/**",
                                 "/main.js",
                                 "/ws-documentation"
                         )
