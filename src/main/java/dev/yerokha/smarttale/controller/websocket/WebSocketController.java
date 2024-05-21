@@ -16,7 +16,7 @@ public class WebSocketController {
     )
     @GetMapping("/ws-documentation")
     public String wsDocumentation() {
-        return "ws-documentation";
+        return "websocket/ws-documentation";
     }
 }
 

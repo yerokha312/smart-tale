@@ -42,7 +42,7 @@ public class OrderEntity extends Advertisement {
     @JoinColumn(name = "accepted_by")
     private OrganizationEntity acceptedBy;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AcceptanceEntity> acceptanceEntities;
 
     @Column(name = "accepted_at")
@@ -69,7 +69,6 @@ public class OrderEntity extends Advertisement {
         if (this.acceptanceEntities == null) {
             this.acceptanceEntities = new HashSet<>();
         }
-
         this.acceptanceEntities.add(acceptance);
     }
 

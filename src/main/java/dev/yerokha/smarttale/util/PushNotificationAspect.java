@@ -15,11 +15,11 @@ import java.util.Map;
 
 @Aspect
 @Component
-public class NotificationAspect {
+public class PushNotificationAspect {
 
     private final PushService pushService;
 
-    public NotificationAspect(PushService pushService) {
+    public PushNotificationAspect(PushService pushService) {
         this.pushService = pushService;
     }
 

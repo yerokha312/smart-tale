@@ -272,6 +272,14 @@ class MarketplaceControllerTest {
     }
 
     @Test
+    @Order(9)
+    void accept_Should409() throws Exception {
+        mockMvc.perform(put("/v1/market/100040")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     @Order(10)
     void confirmOrder() throws Exception {
         Thread.sleep(1000);

@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<!--    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>-->
-<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>-->
-<!--    <meta name="color-scheme" content="light dark"/>-->
-<!--    <meta name="supported-color-schemes" content="light dark"/>-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <title>WebSocket Documentation</title>
     <style>
         code {
@@ -13,26 +12,50 @@
             padding: 2px 4px;
             font-size: 90%;
             color: #c7254e;
-            background-color: #f9f2f4;
             border-radius: 4px;
         }
 
         pre {
             background-color: #f4f4f4;
             padding: 10px;
-            border-radius: 4px;
+            max-width: 50%;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-<h1>WebSocket Documentation</h1>
-<p>To connect to the WebSocket endpoint, use <code>ws://host-name/ws</code></p>
-<p>Subscribe to the channel <code>/user/{userId}/push</code> to receive personal notifications.</p>
-<p>Subscribe to the channel <code>/org/{orgId}/push</code> to receive broadcasting notifications.</p>
-<p>Message format varies depending on push-n type. E.g.</p>
-<br>
-
-<pre>{
+<div class="container mt-5">
+    <h1>WebSocket Documentation</h1>
+    <p>To connect to the WebSocket endpoint, use <code>ws://host-name/ws</code></p>
+    <p>Subscribe to the channel <code>/user/{userId}/push</code> to receive personal notifications.</p>
+    <p>Subscribe to the channel <code>/org/{orgId}/push</code> to receive broadcasting notifications.</p>
+    <p>Web Sockets were tested using these libraries:</p>
+    <ul>
+        <li><a href="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js" target="_blank">STOMP.js
+            2.3.3</a></li>
+        <li><a href="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js" target="_blank">SockJS
+            Client 1.6.1</a></li>
+        <li><a href="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" target="_blank">jQuery 3.7.1</a>
+        </li>
+        <li><a href="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js" target="_blank">jwt-decode
+            3.1.2</a></li>
+    </ul>
+    <br>
+    <h2>WebSocket Security</h2>
+    <p>Since project implemented JWT Bearer tokens</p>
+    <p>It is asked to send one when connecting to channels</p>
+    <p>Send Authorization header along with <code>'Bearer ${accessToken}'</code> on connect</p>
+    <p>Extract all necessary info from JWT as userId and orgId (not impl yet)</p>
+    <p>Then send subscribe messages to corresponding destinations</p>
+</div>
+<div class="container-md">
+    <h2>Message formats</h2>
+    <p>Message format varies depending on push-notification type. E.g.</p>
+    <pre>{
     "sub": "Запрос о принятии заказа",
     "orderId": "3",
     "orderImg": "http://images.com/u/3mx4.jpg",
@@ -40,12 +63,12 @@
     "orgId": "1",
     "orgName": "Organization",
     "logo": "http://logo.com/u/3mx4.jpg",
-    "code": "?code=0RoSZpt96o7pocG0TIuX-A", // *this is for "confirm" submit
-                                              button should be concatenated to confirm EP*
+        // concat code to confirm path for button
+    "code": "?code=0RoSZpt96o7pocG0TIuX-A",
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }</pre>
-<br>
-<pre>{
+    <br>
+    <pre>{
     "email": "example@mail.com" // ignore this property
     "sub": "Приглашение в организацию",
     "orgId: "15",
@@ -54,9 +77,9 @@
     "code": "?code=mdc903ocG48kwkwX", // code for button
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }
-</pre>
-<br>
-<pre>{
+    </pre>
+    <br>
+    <pre>{
     "sub": "Подтвержден заказ",
     "orderId": "3",
     "title": "Order",
@@ -66,8 +89,8 @@
     "authorAvatar": "http://avatars.com/u/3mx4.jpg",
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }</pre>
-<br>
-<pre>{
+    <br>
+    <pre>{
     "sub": "Статус заказа обновлен",
     "employeeId": "15", // belongs to whom made update
     "employeeName": "User Updated Order",
@@ -79,9 +102,9 @@
     "newStatus": "IN_PROGRESS",
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }
-</pre>
-<br>
-<pre>{
+    </pre>
+    <br>
+    <pre>{
     "sub": "Вас отстранили от заказа",
     "orderId": "45",
     "title": "Order title",
@@ -90,9 +113,9 @@
     "status": "CHECKING",
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }
-</pre>
-<br>
-<pre>{
+    </pre>
+    <br>
+    <pre>{
     "sub": "Вас назначили на заказ",
     "orderId": "45",
     "title": "Order title",
@@ -101,31 +124,32 @@
     "status": "CHECKING",
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }
-</pre>
-<br>
-<pre>{
+    </pre>
+    <br>
+    <pre>{
     "sub": "Ваша должность обновлена", // for user personally
     "posId": "25",
     "title": "Position title",
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }
-</pre>
-<br>
-<pre>{
+    </pre>
+    <br>
+    <pre>{
     "sub": "Должность была обновлена", // for org broadcasting
     "posId": "25",
     "title": "Position title",
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }
-</pre>
-<br>
-<pre>{
+    </pre>
+    <br>
+    <pre>{
     "sub": "Вы назначены на новую должность",
     "posId": "25",
     "title": "Position title",
     "email": "email@example.com" // ignore this property
     "timestamp": "2024-05-19T09:39:23.608360Z"
 }
-</pre>
+    </pre>
+</div>
 </body>
 </html>

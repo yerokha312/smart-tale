@@ -35,9 +35,11 @@ import static java.util.Collections.emptyList;
 
 public class AdMapper {
 
+    private static final int DESC_LENGTH = 120;
+
     public static AdvertisementInterface toDto(Advertisement advertisement) {
         String description = advertisement.getDescription();
-        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
+        String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
         List<Image> images = advertisement.getImages();
         if (advertisement instanceof OrderEntity order) {
             int acceptancesCount = Hibernate.size(order.getAcceptanceEntities());
