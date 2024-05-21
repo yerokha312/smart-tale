@@ -21,6 +21,7 @@ import dev.yerokha.smarttale.entity.advertisement.PurchaseEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
+import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.ForbiddenException;
 import dev.yerokha.smarttale.exception.MissedException;
 import dev.yerokha.smarttale.exception.NotFoundException;
@@ -82,6 +83,7 @@ public class AdvertisementService {
     private static final byte DISCLOSE = 2;
     private static final byte DELETE = 3;
     private static final byte RESTORE = 4;
+    private final OrganizationService organizationService;
 
     public AdvertisementService(ProductRepository productRepository,
                                 OrderRepository orderRepository,
@@ -91,7 +93,7 @@ public class AdvertisementService {
                                 MailService mailService,
                                 PurchaseRepository purchaseRepository,
                                 TaskKeyGeneratorService taskKeyGeneratorService,
-                                OrganizationRepository organizationRepository, AcceptanceRepository acceptanceRepository, UserDetailsRepository userDetailsRepository) {
+                                OrganizationRepository organizationRepository, AcceptanceRepository acceptanceRepository, UserDetailsRepository userDetailsRepository, OrganizationService organizationService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
@@ -103,6 +105,7 @@ public class AdvertisementService {
         this.organizationRepository = organizationRepository;
         this.acceptanceRepository = acceptanceRepository;
         this.userDetailsRepository = userDetailsRepository;
+        this.organizationService = organizationService;
     }
 
     // get Ads in Personal account -> My advertisements
@@ -152,7 +155,7 @@ public class AdvertisementService {
             case DISCLOSE -> discloseAd(userId, advertisementId);
             case DELETE -> deleteAd(userId, advertisementId);
             case RESTORE -> restoreAd(userId, advertisementId);
-            default -> throw new IllegalArgumentException("Unsupported action recipientId");
+            default -> throw new IllegalArgumentException("Unsupported action id");
         };
     }
 
@@ -351,6 +354,10 @@ public class AdvertisementService {
         UserDetailsEntity buyer = userService.getUserDetailsEntity(buyerId);
         UserDetailsEntity seller = product.getPublishedBy();
 
+        if (seller.getUserId().equals(buyerId)) {
+            throw new ForbiddenException("You are not allowed to purchase your own product");
+        }
+
         product.getPurchases().add(new PurchaseEntity(
                 buyer,
                 product,
@@ -387,9 +394,17 @@ public class AdvertisementService {
             throw new MissedException("You are late!");
         }
 
-        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+        if (order.getPublishedBy().getUserId().equals(userId)) {
+            throw new ForbiddenException("You are not allowed to accept your own order");
+        }
 
-        OrganizationEntity organization = user.getOrganization();
+        OrganizationEntity organization = organizationService.getOrganizationByEmployeeId(userId);
+        if (acceptanceRepository
+                .existsByOrganization_OrganizationIdAndOrder_AdvertisementId(
+                        organization.getOrganizationId(), advertisementId)) {
+            throw new AlreadyTakenException("An acceptance request has already been sent by this organization");
+        }
+
 
         AcceptanceEntity acceptance = new AcceptanceEntity(
                 order, organization, LocalDate.now()
@@ -442,16 +457,15 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public void createAd(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+    public String createAd(CreateAdRequest request, List<MultipartFile> files, Long userId) {
         if (request.type().equalsIgnoreCase("order")) {
-            createOrder(request, files, userId);
-            return;
+            return createOrder(request, files, userId);
         }
 
-        createProduct(request, files, userId);
+        return createProduct(request, files, userId);
     }
 
-    private void createOrder(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+    private String createOrder(CreateAdRequest request, List<MultipartFile> files, Long userId) {
         OrderEntity order = new OrderEntity();
 
         UserDetailsEntity user = userService.getUserDetailsEntity(userId);
@@ -472,9 +486,11 @@ public class AdvertisementService {
         }
 
         orderRepository.save(order);
+
+        return "Order created";
     }
 
-    private void createProduct(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+    private String createProduct(CreateAdRequest request, List<MultipartFile> files, Long userId) {
         ProductEntity product = new ProductEntity();
 
         UserDetailsEntity user = userService.getUserDetailsEntity(userId);
@@ -493,6 +509,8 @@ public class AdvertisementService {
         }
 
         productRepository.save(product);
+
+        return "Product created";
     }
 
     @Transactional
@@ -519,7 +537,7 @@ public class AdvertisementService {
         order.setAcceptedAt(LocalDate.now());
         order.setStatus(NEW);
         order.setTaskKey(taskKeyGeneratorService.generateTaskKey(organization));
-        order.getAcceptanceEntities().clear();
+//        order.getAcceptanceEntities().clear();
 
         orderRepository.save(order);
         acceptanceRepository.deleteAll(order.getAcceptanceEntities());

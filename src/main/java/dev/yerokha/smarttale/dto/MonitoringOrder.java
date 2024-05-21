@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// get monitoring/recipientId
+// get monitoring/id
 public record MonitoringOrder(
         @NotNull
         Long orderId,

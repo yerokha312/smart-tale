@@ -224,7 +224,7 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Get position", description = "Get position by recipientId",
+            summary = "Get position", description = "Get position by id",
             tags = {"organization", "get", "position", "employee"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -241,7 +241,7 @@ public class OrganizationController {
 
     @Operation(
             summary = "Create position", description = "Evaluates hierarchy and authorities then creates. " +
-                                                       "Position recipientId should be empty or 0",
+                                                       "Position id should be empty or 0",
             tags = {"post", "position", "organization"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Success"),

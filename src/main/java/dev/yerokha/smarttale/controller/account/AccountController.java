@@ -86,7 +86,7 @@ public class AccountController {
             parameters = @Parameter(name = "avatar", required = true, description = "content type \"image/\"")
     )
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> updateAvatar(@RequestParam("avatar") MultipartFile avatar,
+    public ResponseEntity<String> updateAvatar(@RequestParam(value = "avatar", required = false) MultipartFile avatar,
                                                Authentication authentication) {
 
         validateImage(avatar);

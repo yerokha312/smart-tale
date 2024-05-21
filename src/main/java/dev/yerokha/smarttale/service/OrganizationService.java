@@ -170,7 +170,7 @@ public class OrganizationService {
         );
     }
 
-    private OrganizationEntity getOrganizationByEmployeeId(Long employeeId) {
+    public OrganizationEntity getOrganizationByEmployeeId(Long employeeId) {
         OrganizationEntity organization = getUserDetailsEntity(employeeId)
                 .getOrganization();
 

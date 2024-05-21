@@ -147,7 +147,7 @@ public class MonitoringController {
     }
 
     @Operation(
-            summary = "Delete task", description = "Deletes task (order) by recipientId if user has permission",
+            summary = "Delete task", description = "Deletes task (order) by id if user has permission",
             tags = {"delete", "order", "task", "monitoring", "organization"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),

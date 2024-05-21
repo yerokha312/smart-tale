@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// get market/recipientId
+// get market/id
 public record FullOrderCard(
         @NotNull
         Long advertisementId,

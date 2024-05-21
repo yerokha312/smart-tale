@@ -65,7 +65,7 @@ public class MarketplaceController {
     }
 
     @Operation(
-            summary = "Get one ad", description = "Get order or product by recipientId",
+            summary = "Get one ad", description = "Get order or product by id",
             tags = {"get", "order", "product", "market", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
@@ -81,7 +81,7 @@ public class MarketplaceController {
     }
 
     @Operation(
-            summary = "Purchase product", description = "Buy a product by ad recipientId", tags = {"post", "market", "product"},
+            summary = "Purchase product", description = "Buy a product by ad id", tags = {"post", "market", "product"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -99,7 +99,7 @@ public class MarketplaceController {
     }
 
     @Operation(
-            summary = "Accept order", description = "Accept order by it's recipientId", tags = {"put", "market", "order"},
+            summary = "Accept order", description = "Accept order by it's id", tags = {"put", "market", "order"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
@@ -141,8 +141,9 @@ public class MarketplaceController {
             }
         }
 
-        advertisementService.createAd(request, files, getUserIdFromAuthToken(authentication));
-
-        return new ResponseEntity<>("Advertisement placed successfully", HttpStatus.CREATED);
+        return new ResponseEntity<>(advertisementService.createAd(
+                request,
+                files,
+                getUserIdFromAuthToken(authentication)) ,HttpStatus.CREATED);
     }
 }
