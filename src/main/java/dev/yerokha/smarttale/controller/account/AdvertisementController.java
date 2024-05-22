@@ -45,7 +45,7 @@ public class AdvertisementController {
     }
 
     @Operation(
-            summary = "Get all ads", description = "Returns orders and products that belong to user, distinguish by " +
+            summary = "Get all my ads", description = "Returns orders and products that belong to user, distinguish by " +
                                                    "\"orderId\" and \"productId\" field of objects",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
@@ -72,7 +72,7 @@ public class AdvertisementController {
     }
 
     @Operation(
-            summary = "Get one ad", description = "Returns status or product that belongs to user, distinguish by " +
+            summary = "Get one my ad", description = "Returns status or product that belongs to user, distinguish by " +
                                                   "\"orderId\" and \"productId\" field of object",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
@@ -111,7 +111,7 @@ public class AdvertisementController {
     }
 
     @Operation(
-            summary = "Update ad", description = "EP for updating an advertisement. Send date as string format: yyyy-MM-dd",
+            summary = "Update my ad", description = "EP for updating an advertisement. Send date as string format: yyyy-MM-dd",
             tags = {"advertisement", "user", "put", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),

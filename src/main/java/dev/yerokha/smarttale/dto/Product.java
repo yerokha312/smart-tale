@@ -18,6 +18,8 @@ public record Product(
         @NotNull
         String imageUrl,
         @NotNull
-        LocalDateTime publishedAt
+        LocalDateTime publishedAt,
+        @NotNull
+        boolean isClosed
 ) implements AdvertisementInterface {
 }

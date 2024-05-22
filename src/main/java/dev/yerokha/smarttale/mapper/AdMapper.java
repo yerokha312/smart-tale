@@ -50,7 +50,8 @@ public class AdMapper {
                     order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
                     images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
                     order.getPublishedAt(),
-                    acceptancesCount
+                    acceptancesCount,
+                    order.isClosed()
             );
         }
 
@@ -60,7 +61,8 @@ public class AdMapper {
                 truncatedDescription,
                 advertisement.getPrice() == null ? BigDecimal.ZERO : advertisement.getPrice(),
                 images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
-                advertisement.getPublishedAt()
+                advertisement.getPublishedAt(),
+                advertisement.isClosed()
         );
     }
 
@@ -135,7 +137,7 @@ public class AdMapper {
         UserDetailsEntity publishedBy = advertisement.getPublishedBy();
         String avatarUrl = getImageUrl(publishedBy.getImage());
         String description = advertisement.getDescription();
-        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
+        String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
         List<Image> images = advertisement.getImages();
         return new Card(
                 advertisement.getAdvertisementId(),
@@ -253,7 +255,7 @@ public class AdMapper {
         String comment = null;
         if (order.getComment() == null) {
             String description = order.getDescription();
-            comment = description.length() >= 40 ? description.substring(0, 40) : description;
+            comment = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
         }
 
         return new DashboardOrder(
@@ -335,7 +337,7 @@ public class AdMapper {
     public static OrderSummary toCurrentOrder(OrderEntity order) {
         List<Image> images = order.getImages();
         String description = order.getDescription();
-        String truncatedDescription = description.length() >= 40 ? description.substring(0, 40) : description;
+        String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
         return new OrderSummary(
                 order.getAdvertisementId(),
                 order.getTaskKey() == null ? "" : order.getTaskKey(),
