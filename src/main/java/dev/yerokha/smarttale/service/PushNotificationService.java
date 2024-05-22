@@ -1,18 +1,22 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.repository.NotificationRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
-public class PushService {
+public class PushNotificationService {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationRepository notificationRepository;
+//    private final RedisTemplate<String, >
 
 
-    public PushService(SimpMessagingTemplate messagingTemplate) {
+    public PushNotificationService(SimpMessagingTemplate messagingTemplate, NotificationRepository notificationRepository) {
         this.messagingTemplate = messagingTemplate;
+        this.notificationRepository = notificationRepository;
     }
 
     public void sendToUser(Long userId, Map<String, String> body) {

@@ -138,6 +138,10 @@ public class TokenService {
         return decodeToken(token).getSubject();
     }
 
+    public Long getUserIdFromToken(String token) {
+        return decodeToken(token).getClaim("userId");
+    }
+
     private Jwt decodeToken(String token) {
         if (!token.startsWith("Bearer ")) {
             throw new InvalidTokenException("Invalid token format");

@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.config;
 
+import dev.yerokha.smarttale.exception.InvalidTokenException;
 import dev.yerokha.smarttale.service.TokenService;
 import dev.yerokha.smarttale.service.UserService;
 import org.slf4j.Logger;
@@ -20,12 +21,16 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final TokenService tokenService;
     private final UserService userService;
+    private static final Map<Long, Boolean> onlineUsers = new ConcurrentHashMap<>();
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketConfig.class);
 
@@ -56,24 +61,46 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 StompHeaderAccessor accessor =
                         MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
                 log.info("Headers: {}", accessor);
-
                 assert accessor != null;
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-
-                    String authorizationHeader = accessor.getFirstNativeHeader("Authorization");
-                    assert authorizationHeader != null;
-
-                    String username = tokenService.getEmailFromToken(authorizationHeader);
-                    UserDetails userDetails = userService.loadUserByUsername(username);
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-
-                    accessor.setUser(usernamePasswordAuthenticationToken);
+                    String accessToken = accessor.getFirstNativeHeader("Authorization");
+                    assert accessToken != null;
+                    try {
+                        Long userId = tokenService.getUserIdFromToken(accessToken);
+                        String username = tokenService.getEmailFromToken(accessToken);
+                        UserDetails userDetails = userService.loadUserByUsername(username);
+                        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails, null, userDetails.getAuthorities());
+                        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                        onlineUsers.put(userId, true);
+                        accessor.setUser(usernamePasswordAuthenticationToken);
+                    } catch (Exception e) {
+                        log.error("Invalid token on connect");
+                        throw new InvalidTokenException("Invalid token on connect");
+                    }
+                } else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+                    String accessToken = accessor.getFirstNativeHeader("Authorization");
+                    if (accessToken != null) {
+                        Long userId = null;
+                        try {
+                            userId = tokenService.getUserIdFromToken(accessToken);
+                            onlineUsers.remove(userId);
+                        } catch (Exception e) {
+                            log.error("Invalid token on disconnect");
+                        } finally {
+                            if (userId != null) {
+                                onlineUsers.remove(userId);
+                            }
+                        }
+                    }
                 }
-
                 return message;
             }
-
         });
+    }
+
+    public static boolean userIsOnline(Long userId) {
+        return onlineUsers.get(userId);
     }
 }

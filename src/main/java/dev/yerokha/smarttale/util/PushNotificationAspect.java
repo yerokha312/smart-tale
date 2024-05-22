@@ -1,9 +1,9 @@
 package dev.yerokha.smarttale.util;
 
-import dev.yerokha.smarttale.dto.PushNotification;
+import dev.yerokha.smarttale.entity.PushNotification;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
-import dev.yerokha.smarttale.service.PushService;
+import dev.yerokha.smarttale.service.PushNotificationService;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
@@ -17,10 +17,10 @@ import java.util.Map;
 @Component
 public class PushNotificationAspect {
 
-    private final PushService pushService;
+    private final PushNotificationService pushNotificationService;
 
-    public PushNotificationAspect(PushService pushService) {
-        this.pushService = pushService;
+    public PushNotificationAspect(PushNotificationService pushNotificationService) {
+        this.pushNotificationService = pushNotificationService;
     }
 
     @AfterReturning(
@@ -109,9 +109,9 @@ public class PushNotificationAspect {
 
     private void sendNotification(Long id, Map<String, String> data, String to) {
         if (to.equals("user")) {
-            pushService.sendToUser(id, data);
+            pushNotificationService.sendToUser(id, data);
         } else if (to.equals("org")) {
-            pushService.sendToOrganization(id, data);
+            pushNotificationService.sendToOrganization(id, data);
         } else {
             throw new UnsupportedOperationException("Unsupported notification type: " + to);
         }

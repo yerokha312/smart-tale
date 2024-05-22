@@ -11,7 +11,7 @@ import dev.yerokha.smarttale.dto.OrganizationSummary;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
-import dev.yerokha.smarttale.dto.PushNotification;
+import dev.yerokha.smarttale.entity.PushNotification;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;

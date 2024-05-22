@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.util;
 
-import dev.yerokha.smarttale.dto.PushNotification;
+import dev.yerokha.smarttale.entity.PushNotification;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.service.TokenService;
@@ -30,13 +30,13 @@ public class TokenRevocationAspect {
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.updateEmployee(..))",
             returning = "notification")
     public void afterUpdateEmployee(PushNotification notification) {
-        revokeTokens(notification.data().get("email"));
+        revokeTokens(notification.getData().get("email"));
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.deleteEmployee(..))",
             returning = "notification")
     public void afterDeleteEmployee(PushNotification notification) {
-        revokeTokens(notification.data().get("email"));
+        revokeTokens(notification.getData().get("email"));
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.updatePosition(..))",
