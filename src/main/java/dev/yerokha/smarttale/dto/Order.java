@@ -20,6 +20,8 @@ public record Order(
         @NotNull
         LocalDateTime publishedAt,
         @NotNull
-        int acceptancesCount
+        int acceptancesCount,
+        @NotNull
+        boolean isClosed
 ) implements AdvertisementInterface {
 }
