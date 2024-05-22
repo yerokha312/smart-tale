@@ -1,5 +1,8 @@
 package dev.yerokha.smarttale.service;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.entity.RefreshToken;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
@@ -22,6 +25,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -141,6 +145,23 @@ public class TokenService {
     public Long getUserIdFromToken(String token) {
         return decodeToken(token).getClaim("userId");
     }
+
+    public Long getUserIdFromTokenIgnoringExpiration(String token) {
+        if (!token.startsWith("Bearer ")) {
+            throw new InvalidTokenException("Invalid token format");
+        }
+
+        String strippedToken = token.substring(7);
+
+        try {
+            JWTClaimsSet claimsSet = JWTParser.parse(strippedToken).getJWTClaimsSet();
+            return claimsSet.getLongClaim("userId");
+        } catch (ParseException e) {
+            throw new InvalidTokenException("Invalid token");
+        }
+    }
+
+
 
     private Jwt decodeToken(String token) {
         if (!token.startsWith("Bearer ")) {

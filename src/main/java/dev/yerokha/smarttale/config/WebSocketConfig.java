@@ -84,7 +84,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     if (accessToken != null) {
                         Long userId = null;
                         try {
-                            userId = tokenService.getUserIdFromToken(accessToken);
+                            userId = tokenService.getUserIdFromTokenIgnoringExpiration(accessToken);
                             onlineUsers.remove(userId);
                         } catch (Exception e) {
                             log.error("Invalid token on disconnect");
