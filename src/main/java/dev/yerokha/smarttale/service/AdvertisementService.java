@@ -9,7 +9,7 @@ import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
-import dev.yerokha.smarttale.entity.PushNotification;
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
@@ -42,7 +42,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -410,11 +409,11 @@ public class AdvertisementService {
                 order, organization, LocalDate.now()
         );
 
+        acceptanceRepository.save(acceptance);
         order.setStatus(PENDING);
         order.addAcceptanceRequest(acceptance);
         orderRepository.save(order);
 
-        acceptanceRepository.save(acceptance);
         String encryptedCode = "?code=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
         sendAcceptanceRequest(acceptance, encryptedCode);
         String imageUrl = order.getImages() == null || order.getImages().isEmpty() ? "" : order.getImages().get(0).getImageUrl();
@@ -428,7 +427,6 @@ public class AdvertisementService {
         data.put("orgName", organization.getName());
         data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
         data.put("code", encryptedCode);
-        data.put("timestamp", Instant.now().toString());
 
         return new PushNotification(
                 order.getPublishedBy().getUserId(),
@@ -551,7 +549,6 @@ public class AdvertisementService {
         data.put("authorName", order.getPublishedBy().getName());
         Image authorAvatar = order.getPublishedBy().getImage();
         data.put("authorAvatar", authorAvatar == null ? "" : authorAvatar.getImageUrl());
-        data.put("timestamp", Instant.now().toString());
         return new PushNotification(
                 organization.getOrganizationId(),
                 data
@@ -626,7 +623,6 @@ public class AdvertisementService {
         data.put("title", order.getTitle());
         data.put("oldStatus", oldStatus.name());
         data.put("newStatus", newStatus.name());
-        data.put("timestamp", Instant.now().toString());
         return new PushNotification(
                 order.getAcceptedBy().getOrganizationId(),
                 data

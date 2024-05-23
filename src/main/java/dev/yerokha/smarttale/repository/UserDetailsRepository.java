@@ -31,4 +31,9 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
     void updateActiveOrdersCount(int amount, Long userId);
 
     List<UserDetailsEntity> findAllByOrganizationOrganizationIdAndUserIdIn(Long organizationId, List<Long> employeeIds);
+
+    @Query("SELECT ud.userId " +
+           "FROM UserDetailsEntity ud " +
+           "WHERE ud.organization.organizationId = :organizationId")
+    List<Long> findAllByOrganizationId(Long organizationId);
 }

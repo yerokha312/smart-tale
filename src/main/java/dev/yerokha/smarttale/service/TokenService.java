@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.service;
 
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 import dev.yerokha.smarttale.dto.LoginResponse;
@@ -160,7 +159,6 @@ public class TokenService {
             throw new InvalidTokenException("Invalid token");
         }
     }
-
 
 
     private Jwt decodeToken(String token) {

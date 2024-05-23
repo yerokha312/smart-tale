@@ -1,17 +1,20 @@
 package dev.yerokha.smarttale.util;
 
-import dev.yerokha.smarttale.entity.PushNotification;
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.enums.RecipientType;
 import dev.yerokha.smarttale.service.PushNotificationService;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static dev.yerokha.smarttale.enums.RecipientType.ORGANIZATION;
+import static dev.yerokha.smarttale.enums.RecipientType.USER;
 
 @Aspect
 @Component
@@ -28,7 +31,7 @@ public class PushNotificationAspect {
             returning = "acceptance"
     )
     public void afterAcceptOrder(PushNotification acceptance) {
-        sendNotification(acceptance.recipientId(), acceptance.data(), "user");
+        sendNotification(acceptance.recipientId(), acceptance.data(), USER);
     }
 
     @AfterReturning(
@@ -36,7 +39,7 @@ public class PushNotificationAspect {
             returning = "invitation"
     )
     public void afterInviteEmployee(PushNotification invitation) {
-        sendNotification(invitation.recipientId(), invitation.data(), "user");
+        sendNotification(invitation.recipientId(), invitation.data(), USER);
     }
 
     @AfterReturning(
@@ -44,7 +47,7 @@ public class PushNotificationAspect {
             returning = "confirmation"
     )
     public void afterConfirmOrder(PushNotification confirmation) {
-        sendNotification(confirmation.recipientId(), confirmation.data(), "org");
+        sendNotification(confirmation.recipientId(), confirmation.data(), ORGANIZATION);
     }
 
     @AfterReturning(
@@ -52,7 +55,7 @@ public class PushNotificationAspect {
             returning = "notification"
     )
     public void afterChangeStatus(PushNotification notification) {
-        sendNotification(notification.recipientId(), notification.data(), "org");
+        sendNotification(notification.recipientId(), notification.data(), ORGANIZATION);
     }
 
     @AfterReturning(
@@ -61,7 +64,7 @@ public class PushNotificationAspect {
     )
     public void afterRemoveContractors(List<PushNotification> notifications) {
         for (PushNotification notification : notifications) {
-            sendNotification(notification.recipientId(), notification.data(), "user");
+            sendNotification(notification.recipientId(), notification.data(), USER);
         }
     }
 
@@ -71,7 +74,7 @@ public class PushNotificationAspect {
     )
     public void afterAssignContractors(List<PushNotification> notifications) {
         for (PushNotification notification : notifications) {
-            sendNotification(notification.recipientId(), notification.data(), "user");
+            sendNotification(notification.recipientId(), notification.data(), USER);
         }
     }
 
@@ -85,18 +88,16 @@ public class PushNotificationAspect {
             Map<String, String> data = Map.of(
                     "sub", "Ваша должность обновлена",
                     "posId", position.getPositionId().toString(),
-                    "title", position.getTitle(),
-                    "timestamp", Instant.now().toString()
+                    "title", position.getTitle()
             );
-            sendNotification(employee.getUserId(), data, "user");
+            sendNotification(employee.getUserId(), data, USER);
         }
         Map<String, String> data = Map.of(
                 "sub", "Должность была обновлена",
                 "posId", position.getPositionId().toString(),
-                "title", position.getTitle(),
-                "timestamp", Instant.now().toString()
+                "title", position.getTitle()
         );
-        sendNotification(position.getOrganization().getOrganizationId(), data, "org");
+        sendNotification(position.getOrganization().getOrganizationId(), data, ORGANIZATION);
     }
 
     @AfterReturning(
@@ -104,13 +105,13 @@ public class PushNotificationAspect {
             returning = "notification"
     )
     public void afterUpdateEmployee(PushNotification notification) {
-        sendNotification(notification.recipientId(), notification.data(), "user");
+        sendNotification(notification.recipientId(), notification.data(), USER);
     }
 
-    private void sendNotification(Long id, Map<String, String> data, String to) {
-        if (to.equals("user")) {
+    private void sendNotification(Long id, Map<String, String> data, RecipientType to) {
+        if (to.equals(USER)) {
             pushNotificationService.sendToUser(id, data);
-        } else if (to.equals("org")) {
+        } else if (to.equals(ORGANIZATION)) {
             pushNotificationService.sendToOrganization(id, data);
         } else {
             throw new UnsupportedOperationException("Unsupported notification type: " + to);

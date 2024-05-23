@@ -137,13 +137,13 @@
         const socket = new SockJS("/ws");
         stompClient = Stomp.over(socket);
         let accessToken = getItem("accessToken");
-        stompClient.connect({Authorization: `${accessToken}`}, (frame) => {
+        stompClient.connect({Authorization: `Bearer ${accessToken}`}, (frame) => {
             console.log(frame);
             setConnected()
 
             const decodedToken = jwt_decode(accessToken);
             const userId = decodedToken.userId;
-            stompClient.subscribe(`/org/1/push`);
+            stompClient.subscribe(`/user/${userId}/push`);
         });
     });
 </script>
