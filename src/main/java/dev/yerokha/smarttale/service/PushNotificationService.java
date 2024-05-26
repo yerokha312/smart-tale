@@ -169,4 +169,9 @@ public class PushNotificationService {
         scheduler.schedule(() -> sendQueuedNotification(event.getUserId()), 1, TimeUnit.SECONDS);
         log.info("User {} connected", event.getUserId());
     }
+
+    @Transactional
+    public void markAsRead(Long notificationId) {
+        notificationRepository.markAsRead(notificationId);
+    }
 }

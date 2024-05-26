@@ -1,22 +1,3 @@
-<!--
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>WebSocket Notifications</title>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-</head>
-<body>
-<h1>WebSocket Notifications</h1>
-<button id="connectButton">Connect to WebSocket</button>
-<div id="notifications"></div>
-
-<script src="main.js"></script>
-</body>
-</html>
--->
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -89,13 +70,10 @@
                 <tr>
                     <th>Notification</th>
                     <th>From</th>
+                    <th>Action</th>
                 </tr>
                 </thead>
                 <tbody id="tbody">
-                <tr>
-                    <td>Hi!</td>
-                    <td>Inu</td>
-                </tr>
                 </tbody>
             </table>
         </div>
@@ -128,7 +106,7 @@
             $("#login-div").hide();
             $("#connect-div").removeClass("d-none")
         }).catch(err => {
-            alert("Invalid username of password")
+            alert("Invalid username or password")
         })
     })
 
@@ -139,13 +117,43 @@
         let accessToken = getItem("accessToken");
         stompClient.connect({Authorization: `Bearer ${accessToken}`}, (frame) => {
             console.log(frame);
-            setConnected()
+            setConnected(true);
 
             const decodedToken = jwt_decode(accessToken);
             const userId = decodedToken.userId;
-            stompClient.subscribe(`/user/${userId}/push`);
+            stompClient.subscribe(`/user/${userId}/push`, (message) => {
+                const notification = JSON.parse(message.body);
+                showNotification(notification);
+            });
         });
     });
+
+    function showNotification(notification) {
+        const tbody = document.getElementById("tbody");
+        const row = document.createElement("tr");
+
+        const notificationCell = document.createElement("td");
+        notificationCell.innerText = notification.data.message || "New Notification";
+        row.appendChild(notificationCell);
+
+        const fromCell = document.createElement("td");
+        fromCell.innerText = notification.data.from || "Unknown";
+        row.appendChild(fromCell);
+
+        const actionCell = document.createElement("td");
+        const markAsReadButton = document.createElement("button");
+        markAsReadButton.innerText = "Mark as Read";
+        markAsReadButton.className = "btn btn-primary btn-sm";
+        markAsReadButton.onclick = () => markAsRead(notification.notificationId);
+        actionCell.appendChild(markAsReadButton);
+        row.appendChild(actionCell);
+
+        tbody.appendChild(row);
+    }
+
+    function markAsRead(notificationId) {
+        stompClient.send("/app/notifications/markAsRead", {}, notificationId.toString());
+    }
 </script>
 </body>
 </html>

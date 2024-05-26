@@ -30,7 +30,7 @@ public class PushNotificationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "notifications_notification_id_seq")
-    @SequenceGenerator(name = "notifications_notification_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "notifications_notification_id_seq", allocationSize = 5)
     @Column(name = "notification_id")
     private Long notificationId;
 
