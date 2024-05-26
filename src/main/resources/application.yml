@@ -17,3 +17,6 @@ spring:
       hibernate:
         order_by:
           default_null_ordering: last
+  liquibase:
+    change-log: db/changelog/2024/05/26-01-changelog.yaml
+    enabled: false

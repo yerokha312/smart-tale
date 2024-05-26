@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1716746112008-9
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 5
+            sequenceName: notifications_notification_id_seq
+  - changeSet:
+      id: 1716746112008-10
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: notifications_pkey
+                  name: notification_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: data
+                  type: JSON
+              - column:
+                  constraints:
+                    nullable: false
+                  name: is_read
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                  name: is_sent
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                  name: recipient_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: recipient_type
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: timestamp
+                  type: timestamp
+            tableName: notifications
+  - changeSet:
+      id: 1716746112008-11
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: recipient_id
+            indexName: recipient_idx
+            tableName: notifications
+

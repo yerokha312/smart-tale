@@ -186,6 +186,7 @@ public class AuthenticationService {
                 tokenService.generateAccessToken(user, position),
                 tokenService.generateRefreshToken(user, position),
                 user.getUserId(),
+                position == null ? 0 : position.getOrganization().getOrganizationId(),
                 position == null ? 0 : position.getHierarchy(),
                 position == null ? Collections.emptyList() : Authorities.getNamesByValues(position.getAuthorities())
         );

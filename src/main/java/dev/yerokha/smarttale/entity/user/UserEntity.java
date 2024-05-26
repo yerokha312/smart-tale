@@ -42,10 +42,10 @@ public class UserEntity implements UserDetails {
     @JsonBackReference
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
     private UserDetailsEntity details;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     @Fetch(FetchMode.JOIN)
     @JoinTable(
             name = "user_role_junction",

@@ -11,6 +11,7 @@ public record LoginResponse(
         String refreshToken,
         @NotNull
         Long userId,
+        long organizationId,
         @NotNull
         int hierarchy,
         @NotNull

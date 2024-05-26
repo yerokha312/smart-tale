@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -307,7 +306,6 @@ public class OrganizationService {
         data.put("orgName", organization.getName());
         data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
         data.put("code", code);
-        data.put("timestamp", Instant.now().toString());
 
         return new PushNotification(
                 invitee.getUserId(),
@@ -557,8 +555,7 @@ public class OrganizationService {
                     "title", order.getTitle(),
                     "key", order.getTaskKey(),
                     "image", imageUrl,
-                    "status", order.getStatus().name(),
-                    "timestamp", Instant.now().toString()
+                    "status", order.getStatus().name()
             );
             PushNotification notification = new PushNotification(
                     contractor.getUserId(),
@@ -589,8 +586,7 @@ public class OrganizationService {
                     "title", order.getTitle(),
                     "key", order.getTaskKey(),
                     "image", imageUrl,
-                    "status", order.getStatus().name(),
-                    "timestamp", Instant.now().toString()
+                    "status", order.getStatus().name()
             );
             PushNotification notification = new PushNotification(
                     contractor.getUserId(),
@@ -650,7 +646,6 @@ public class OrganizationService {
 
         Map<String, String> data = Map.of(
                 "sub", "Вас исключили из организации",
-                "timestamp", Instant.now().toString(),
                 "email", employee.getEmail()
         );
         return new PushNotification(
@@ -691,8 +686,7 @@ public class OrganizationService {
                 "sub", "Вы назначены на новую должность",
                 "posId", positionId.toString(),
                 "title", position.getTitle(),
-                "email", employee.getEmail(),
-                "timestamp", Instant.now().toString()
+                "email", employee.getEmail()
         );
         return new PushNotification(
                 employeeId,
