@@ -234,17 +234,16 @@ create table notifications
 (
     notification_id bigint                      not null
         primary key,
-    data            varchar(255)                not null,
+    data            json                        not null,
     is_read         boolean                     not null,
     is_sent         boolean                     not null,
     recipient_id    bigint                      not null,
-    recipient_type  smallint                    not null
-        constraint notifications_recipient_type_check
-            check ((recipient_type >= 0) AND (recipient_type <= 1)),
+    recipient_type  varchar(255)                not null
+        CONSTRAINT notifications_recipient_type_check CHECK (recipient_type IN ('ORGANIZATION', 'USER')),
     timestamp       timestamp(6) with time zone not null
 );
 create sequence notifications_notification_id_seq
-    increment by 1;
+    increment by 5;
 create index recipient_idx
     on notifications (recipient_id);
 

@@ -1,7 +1,8 @@
 package dev.yerokha.smarttale.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import dev.yerokha.smarttale.enums.RecipientType;
-import dev.yerokha.smarttale.util.MapToJsonConverter;
+import dev.yerokha.smarttale.util.JsonNodeConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -13,17 +14,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.Objects;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "notifications", indexes = @Index(name = "recipient_idx", columnList = "recipient_id"))
 public class PushNotificationEntity {
@@ -37,13 +33,13 @@ public class PushNotificationEntity {
     @Column(name = "recipient_id", nullable = false)
     private Long recipientId;
 
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     @Column(name = "recipient_type", nullable = false)
     private RecipientType recipientType;
 
-    @Convert(converter = MapToJsonConverter.class)
-    @Column(name = "data", nullable = false)
-    private Map<String, String> data;
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "data", nullable = false, columnDefinition = "jsonb")
+    private JsonNode data;
 
     @Column(name = "timestamp", nullable = false)
     private Instant timestamp;
@@ -53,6 +49,22 @@ public class PushNotificationEntity {
 
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
+
+    public PushNotificationEntity() {
+    }
+
+    public PushNotificationEntity(Long recipientId,
+                                  RecipientType recipientType,
+                                  JsonNode data,
+                                  Instant timestamp,
+                                  boolean isSent) {
+        this.recipientId = recipientId;
+        this.recipientType = recipientType;
+        this.data = data;
+        this.timestamp = timestamp;
+        this.isSent = isSent;
+        this.isRead = false;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -67,3 +79,4 @@ public class PushNotificationEntity {
         return Objects.hash(notificationId);
     }
 }
+

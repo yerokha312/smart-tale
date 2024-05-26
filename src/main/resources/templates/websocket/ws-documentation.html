@@ -56,16 +56,22 @@
     <h2>Message formats</h2>
     <p>Message format varies depending on push-notification type. E.g.</p>
     <pre>{
-    "sub": "Запрос о принятии заказа",
-    "orderId": "3",
-    "orderImg": "http://images.com/u/3mx4.jpg",
-    "title": "Order",
-    "orgId": "1",
-    "orgName": "Organization",
-    "logo": "http://logo.com/u/3mx4.jpg",
-        // concat code to confirm path for button
-    "code": "?code=0RoSZpt96o7pocG0TIuX-A",
-    "timestamp": "2024-05-19T09:39:23.608360Z"
+        "notificationId":2,
+        "recipientId":2,
+        "recipientType":"USER",
+        "data":{
+            "sub":"Запрос о принятии заказа",
+            "orgName":"Org name",
+            "code":"?code=_oTye7GlgWRgO3pe0orqiA",
+            "orderImg":"",
+            "orderId":"4",
+            "logo":"",
+            "title":"Postman Order",
+            "orgId":"1"
+            },
+        "timestamp":"2024-05-26T09:45:00.306547Z",
+        "read":false,
+        "sent":true
 }</pre>
     <br>
     <pre>{
@@ -148,6 +154,38 @@
     "title": "Position title",
     "email": "email@example.com" // ignore this property
     "timestamp": "2024-05-19T09:39:23.608360Z"
+}
+    </pre>
+    <p>For retrieving notifications history format is as follows:</p>
+    <pre>{
+  "content": [
+    {
+      "notificationId": 1,
+      "recipientId": 101,
+      "recipientType": "USER",
+      "data": {
+        "message": "You have a new message",
+        "from": "John Doe"
+      },
+      "timestamp": "2024-05-23T10:15:30Z",
+      "isSent": true,
+      "isRead": false
+    },
+    {
+      "notificationId": 2,
+      "recipientId": 101,
+      "recipientType": "USER",
+      "data": {
+        "message": "Your order has been shipped",
+        "from": "Shop"
+      },
+      "timestamp": "2024-05-23T11:00:00Z",
+      "isSent": true,
+      "isRead": false
+    }
+    // More notifications...
+  ],
+  "hasNext": true
 }
     </pre>
 </div>

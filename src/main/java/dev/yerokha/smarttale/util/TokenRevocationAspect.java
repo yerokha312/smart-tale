@@ -30,13 +30,13 @@ public class TokenRevocationAspect {
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.updateEmployee(..))",
             returning = "notification")
     public void afterUpdateEmployee(PushNotificationEntity notification) {
-        revokeTokens(notification.getData().get("email"));
+        revokeTokens(notification.getData().get("email").toString());
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.deleteEmployee(..))",
             returning = "notification")
     public void afterDeleteEmployee(PushNotificationEntity notification) {
-        revokeTokens(notification.getData().get("email"));
+        revokeTokens(notification.getData().get("email").toString());
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.updatePosition(..))",

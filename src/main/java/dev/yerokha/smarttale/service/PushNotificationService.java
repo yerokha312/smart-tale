@@ -2,6 +2,8 @@ package dev.yerokha.smarttale.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.yerokha.smarttale.dto.NotificationHistoryRequest;
+import dev.yerokha.smarttale.dto.NotificationSliceContainer;
 import dev.yerokha.smarttale.entity.PushNotificationEntity;
 import dev.yerokha.smarttale.repository.NotificationRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
@@ -9,6 +11,9 @@ import dev.yerokha.smarttale.util.UserConnectedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -54,13 +59,11 @@ public class PushNotificationService {
 
     public void sendToUser(Long userId, Map<String, String> body) {
         PushNotificationEntity pushNotificationEntity = new PushNotificationEntity(
-                0L,
                 userId,
                 USER,
-                body,
+                objectMapper.valueToTree(body),
                 Instant.now(),
-                userIsOnline(userId),
-                false
+                userIsOnline(userId)
         );
 
         pushNotificationEntity = notificationRepository.save(pushNotificationEntity);
@@ -73,12 +76,10 @@ public class PushNotificationService {
 
     public void sendToOrganization(Long organizationId, Map<String, String> body) {
         PushNotificationEntity pushNotificationEntity = new PushNotificationEntity(
-                0L,
                 organizationId,
                 ORGANIZATION,
-                body,
+                objectMapper.valueToTree(body),
                 Instant.now(),
-                true,
                 true
         );
         notificationRepository.save(pushNotificationEntity);
@@ -150,17 +151,17 @@ public class PushNotificationService {
     }
 
     private void sendNotifications(Long userId, List<PushNotificationEntity> notificationsToSend) {
-        for (PushNotificationEntity notification : notificationsToSend) {
-            messagingTemplate.convertAndSendToUser(userId.toString(), "/push", notification);
-        }
+        notificationsToSend.forEach(n ->
+                messagingTemplate.convertAndSendToUser(userId.toString(), "/push", n));
     }
 
     private void markNotificationsAsSent(List<PushNotificationEntity> unsentNotifications) {
-        unsentNotifications.forEach(notification -> {
-            notification.setSent(true);
-            notificationRepository.save(notification);
+        unsentNotifications.forEach(n -> {
+            if (!n.isSent()) {
+                n.setSent(true);
+                notificationRepository.markAsSent(n.getNotificationId());
+            }
         });
-
     }
 
     @EventListener
@@ -171,7 +172,22 @@ public class PushNotificationService {
     }
 
     @Transactional
-    public void markAsRead(Long notificationId) {
+    public void markNotificationAsRead(Long notificationId) {
         notificationRepository.markAsRead(notificationId);
+    }
+
+    @Transactional
+    public void getHistory(NotificationHistoryRequest request) {
+        Pageable pageable = PageRequest.of(request.page(), request.size());
+        Slice<PushNotificationEntity> history = notificationRepository
+                .findHistory(request.userId(), request.organizationId(), pageable);
+
+        List<PushNotificationEntity> content = history.getContent();
+        NotificationSliceContainer container = new NotificationSliceContainer(
+                content,
+                history.hasNext()
+        );
+        markNotificationsAsSent(content);
+        messagingTemplate.convertAndSendToUser(request.userId().toString(), "/push", container);
     }
 }
