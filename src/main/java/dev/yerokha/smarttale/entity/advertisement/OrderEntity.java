@@ -3,7 +3,6 @@ package dev.yerokha.smarttale.entity.advertisement;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -42,7 +41,7 @@ public class OrderEntity extends Advertisement {
     @JoinColumn(name = "accepted_by")
     private OrganizationEntity acceptedBy;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order")
     private Set<AcceptanceEntity> acceptanceEntities;
 
     @Column(name = "accepted_at")

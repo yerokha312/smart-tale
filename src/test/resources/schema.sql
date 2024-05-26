@@ -230,3 +230,22 @@ create table user_role_junction
         foreign key (user_id) references users
 );
 
+create table notifications
+(
+    notification_id bigint                      not null
+        primary key,
+    data            json                        not null,
+    is_read         boolean                     not null,
+    is_sent         boolean                     not null,
+    recipient_id    bigint                      not null,
+    recipient_type  varchar(255)                not null
+        CONSTRAINT notifications_recipient_type_check CHECK (recipient_type IN ('ORGANIZATION', 'USER')),
+    timestamp       timestamp(6) with time zone not null
+);
+create sequence notifications_notification_id_seq
+    increment by 5;
+create index recipient_idx
+    on notifications (recipient_id);
+
+
+

@@ -144,6 +144,6 @@ public class MarketplaceController {
         return new ResponseEntity<>(advertisementService.createAd(
                 request,
                 files,
-                getUserIdFromAuthToken(authentication)) ,HttpStatus.CREATED);
+                getUserIdFromAuthToken(authentication)), HttpStatus.CREATED);
     }
 }

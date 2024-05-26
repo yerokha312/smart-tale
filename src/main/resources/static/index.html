@@ -1,22 +1,4 @@
-<!--
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>WebSocket Notifications</title>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-</head>
-<body>
-<h1>WebSocket Notifications</h1>
-<button id="connectButton">Connect to WebSocket</button>
-<div id="notifications"></div>
-
-<script src="main.js"></script>
-</body>
-</html>
--->
+<!--Sample Page for testing web sockets-->
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -77,31 +59,26 @@
         </div>
     </div>
 
-
     <div class="row mt-3">
         <div class="col-12">
             <h4>Notifications</h4>
+            <button class="btn btn-primary mb-3" id="fetch-history">Fetch History</button>
         </div>
-
         <div class="col-12">
             <table class="table table-striped">
                 <thead>
                 <tr>
                     <th>Notification</th>
                     <th>From</th>
+                    <th>Action</th>
                 </tr>
                 </thead>
                 <tbody id="tbody">
-                <tr>
-                    <td>Hi!</td>
-                    <td>Inu</td>
-                </tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
 
 <script>
     function getItem(key) {
@@ -128,7 +105,7 @@
             $("#login-div").hide();
             $("#connect-div").removeClass("d-none")
         }).catch(err => {
-            alert("Invalid username of password")
+            alert("Invalid refresh token")
         })
     })
 
@@ -137,14 +114,65 @@
         const socket = new SockJS("/ws");
         stompClient = Stomp.over(socket);
         let accessToken = getItem("accessToken");
-        stompClient.connect({Authorization: `${accessToken}`}, (frame) => {
+        stompClient.connect({Authorization: `Bearer ${accessToken}`}, (frame) => {
             console.log(frame);
-            setConnected()
+            setConnected(true);
 
             const decodedToken = jwt_decode(accessToken);
             const userId = decodedToken.userId;
-            stompClient.subscribe(`/org/1/push`);
+            const orgId = decodedToken.orgId;
+            console.log(userId + " " + orgId);
+            stompClient.subscribe(`/user/${userId}/push`, (message) => {
+                const notification = JSON.parse(message.body);
+                showNotification(notification);
+            });
+            if (orgId > 0) {
+                stompClient.subscribe(`/org/${orgId}/push`, (message) => {
+                    const notification = JSON.parse(message.body);
+                    showNotification(notification);
+                });
+            }
         });
+    });
+
+    function showNotification(notification) {
+        const tbody = document.getElementById("tbody");
+        const row = document.createElement("tr");
+
+        const notificationCell = document.createElement("td");
+        notificationCell.innerText = notification.data.message || "New Notification";
+        row.appendChild(notificationCell);
+
+        const fromCell = document.createElement("td");
+        fromCell.innerText = notification.data.from || "Unknown";
+        row.appendChild(fromCell);
+
+        const actionCell = document.createElement("td");
+        const markAsReadButton = document.createElement("button");
+        markAsReadButton.innerText = "Mark as Read";
+        markAsReadButton.className = "btn btn-primary btn-sm";
+        markAsReadButton.onclick = () => markAsRead(notification.notificationId);
+        actionCell.appendChild(markAsReadButton);
+        row.appendChild(actionCell);
+
+        tbody.appendChild(row);
+    }
+
+    function markAsRead(notificationId) {
+        stompClient.send("/app/notifications/markAsRead", {}, notificationId.toString());
+    }
+
+    $("#fetch-history").click(() => {
+        const decodedToken = jwt_decode(getItem("accessToken"));
+        const userId = decodedToken.userId;
+        const orgId = decodedToken.orgId;
+        const request = {
+            userId: userId,
+            orgId: orgId,
+            page: 0,
+            size: 5
+        };
+        stompClient.send(`/app/notifications/history`, {}, JSON.stringify(request));
     });
 </script>
 </body>

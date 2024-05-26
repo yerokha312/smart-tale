@@ -46,7 +46,7 @@ public class AdvertisementController {
 
     @Operation(
             summary = "Get all my ads", description = "Returns orders and products that belong to user, distinguish by " +
-                                                   "\"orderId\" and \"productId\" field of objects",
+                                                      "\"orderId\" and \"productId\" field of objects",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
@@ -73,7 +73,7 @@ public class AdvertisementController {
 
     @Operation(
             summary = "Get one my ad", description = "Returns status or product that belongs to user, distinguish by " +
-                                                  "\"orderId\" and \"productId\" field of object",
+                                                     "\"orderId\" and \"productId\" field of object",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(

@@ -1,7 +1,10 @@
 package dev.yerokha.smarttale.service;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
 import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.entity.RefreshToken;
+import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.Role;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
@@ -22,6 +25,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -45,18 +49,16 @@ public class TokenService {
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final UserDetailsRepository userDetailsRepository;
-    private final UserService userService;
 
     private static final int ACCESS_TOKEN_EXPIRATION = 60;
     private static final int REFRESH_TOKEN_EXPIRATION = ACCESS_TOKEN_EXPIRATION * 24 * 7;
 
-    public TokenService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRepository tokenRepository, UserRepository userRepository, UserDetailsRepository userDetailsRepository, UserService userService) {
+    public TokenService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRepository tokenRepository, UserRepository userRepository, UserDetailsRepository userDetailsRepository) {
         this.jwtEncoder = jwtEncoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
         this.userDetailsRepository = userDetailsRepository;
-        this.userService = userService;
     }
 
     public String generateAccessToken(UserEntity entity, PositionEntity position) {
@@ -85,9 +87,12 @@ public class TokenService {
         Instant now = Instant.now();
         String roles = getRoles(entity);
 
+        long organizationId = 0;
         int hierarchy = 0;
         int authorities = 0;
         if (position != null) {
+            OrganizationEntity organization = position.getOrganization();
+            organizationId = organization == null ? 0 : organization.getOrganizationId();
             hierarchy = position.getHierarchy();
             authorities = position.getAuthorities();
         }
@@ -97,6 +102,7 @@ public class TokenService {
                 entity.getEmail(),
                 entity.getUserId(),
                 roles,
+                organizationId,
                 hierarchy,
                 authorities,
                 tokenType);
@@ -114,6 +120,7 @@ public class TokenService {
                                    String subject,
                                    Long userId,
                                    String roles,
+                                   long organizationId,
                                    int hierarchy,
                                    int authorities,
                                    TokenType tokenType) {
@@ -123,6 +130,7 @@ public class TokenService {
                 .expiresAt(now.plus(expirationTime, ChronoUnit.MINUTES))
                 .subject(subject)
                 .claim("roles", roles)
+                .claim("orgId", organizationId)
                 .claim("hierarchy", hierarchy)
                 .claim("authorities", authorities)
                 .claim("tokenType", tokenType)
@@ -137,6 +145,26 @@ public class TokenService {
     public String getEmailFromToken(String token) {
         return decodeToken(token).getSubject();
     }
+
+    public Long getUserIdFromToken(String token) {
+        return decodeToken(token).getClaim("userId");
+    }
+
+    public Long getUserIdFromTokenIgnoringExpiration(String token) {
+        if (!token.startsWith("Bearer ")) {
+            throw new InvalidTokenException("Invalid token format");
+        }
+
+        String strippedToken = token.substring(7);
+
+        try {
+            JWTClaimsSet claimsSet = JWTParser.parse(strippedToken).getJWTClaimsSet();
+            return claimsSet.getLongClaim("userId");
+        } catch (ParseException e) {
+            throw new InvalidTokenException("Invalid token");
+        }
+    }
+
 
     private Jwt decodeToken(String token) {
         if (!token.startsWith("Bearer ")) {
@@ -213,6 +241,7 @@ public class TokenService {
                         generateRefreshToken(user, emptyPosition),
                         user.getUserId(),
                         0,
+                        0,
                         Collections.emptyList());
             } else { // case user (not employee) logged out and using old refresh
                 throw new InvalidTokenException("Token is revoked");
@@ -225,7 +254,7 @@ public class TokenService {
             || tokenHierarchy != hierarchy
             || tokenAuthorities != authorities) {
 
-            return generateNewTokenPair(user, new PositionEntity(null, hierarchy, authorities, null));
+            return generateNewTokenPair(user, position);
         }
 
         throw new InvalidTokenException("Token is revoked");
@@ -241,7 +270,12 @@ public class TokenService {
         String accessToken = generateAccessToken(user, position);
         String refreshToken = generateRefreshToken(user, position);
 
-        return new LoginResponse(accessToken, refreshToken, user.getUserId(), position.getHierarchy(),
+        return new LoginResponse(
+                accessToken,
+                refreshToken,
+                user.getUserId(),
+                position.getOrganization().getOrganizationId(),
+                position.getHierarchy(),
                 Authorities.getNamesByValues(position.getAuthorities()));
     }
 
@@ -250,6 +284,7 @@ public class TokenService {
         String subject = decodedToken.getSubject();
         Long userId = decodedToken.getClaim("userId");
         String roles = decodedToken.getClaim("roles");
+        long organizationId = decodedToken.getClaim("orgId");
         int hierarchy = intValue(decodedToken.getClaim("hierarchy"));
         int authorities = intValue(decodedToken.getClaim("authorities"));
         JwtClaimsSet claims = getClaims(now,
@@ -257,6 +292,7 @@ public class TokenService {
                 subject,
                 userId,
                 roles,
+                organizationId,
                 hierarchy,
                 authorities,
                 TokenType.ACCESS);
@@ -267,6 +303,7 @@ public class TokenService {
                 token,
                 refreshToken.substring(7),
                 userId,
+                organizationId,
                 hierarchy,
                 Authorities.getNamesByValues(authorities)
         );
