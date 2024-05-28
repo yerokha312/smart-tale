@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
@@ -49,6 +50,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static dev.yerokha.smarttale.service.AdvertisementService.getCustomPage;
 import static java.lang.Integer.parseInt;
 import static java.time.LocalDate.parse;
 
@@ -85,7 +87,7 @@ public class OrganizationService {
         this.authenticationService = authenticationService;
     }
 
-    public Page<OrderSummary> getOrders(Long employeeId, Map<String, String> params) {
+    public CustomPage getOrders(Long employeeId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
@@ -103,17 +105,19 @@ public class OrganizationService {
         if (dateType != null) {
             LocalDate dateFrom = parse(params.get("dateFrom"));
             LocalDate dateTo = parse(params.get("dateTo"));
-            return orderRepository.findByDateRange(organizationId,
+            Page<OrderSummary> page = orderRepository.findByDateRange(organizationId,
                             isActive,
                             dateType,
                             dateFrom,
                             dateTo,
                             pageable)
-                    .map(AdMapper::toCurrentOrder);
+                    .map(AdMapper::toOrderSummary);
+            return getCustomPage(page);
         }
 
-        return orderRepository.findByActiveStatus(organizationId, isActive, pageable)
-                .map(AdMapper::toCurrentOrder);
+        Page<OrderSummary> page = orderRepository.findByActiveStatus(organizationId, isActive, pageable)
+                .map(AdMapper::toOrderSummary);
+        return getCustomPage(page);
     }
 
 
@@ -138,7 +142,7 @@ public class OrganizationService {
         return orders.isEmpty() ? Sort.unsorted() : Sort.by(orders);
     }
 
-    public Page<Employee> getEmployees(Long employeeId, Map<String, String> params) {
+    public CustomPage getEmployees(Long employeeId, Map<String, String> params) {
         Sort sort = getSortProps(params);
 
         if (sort.isUnsorted()) {
@@ -149,8 +153,9 @@ public class OrganizationService {
 
         OrganizationEntity organization = getOrganizationByEmployeeId(employeeId);
 
-        return getEmployees(organization.getOrganizationId(), pageable)
+        Page<Object> page = getEmployees(organization.getOrganizationId(), pageable)
                 .map(emp -> mapToEmployee(emp, organization.getOrganizationId()));
+        return getCustomPage(page);
     }
 
     private Employee mapToEmployee(UserDetailsEntity user, Long organizationId) {
@@ -270,7 +275,7 @@ public class OrganizationService {
 
         return employee.getAssignedTasks().stream()
                 .filter(order -> order.getCompletedAt() == null)
-                .map(AdMapper::toCurrentOrder)
+                .map(AdMapper::toOrderSummary)
                 .toList();
     }
 
@@ -386,11 +391,12 @@ public class OrganizationService {
         );
     }
 
-    public Page<OrganizationSummary> getAllOrganizations(Map<String, String> params) {
+    public CustomPage getAllOrganizations(Map<String, String> params) {
         Pageable pageable = PageRequest.of(
                 Integer.parseInt(params.getOrDefault("page", "0")),
                 Integer.parseInt(params.getOrDefault("size", "10")));
-        return organizationRepository.findAll(pageable).map(OrganizationService::mapToOrganizationSummary);
+        Page<OrganizationSummary> page = organizationRepository.findAll(pageable).map(OrganizationService::mapToOrganizationSummary);
+        return getCustomPage(page);
     }
 
     private static OrganizationSummary mapToOrganizationSummary(OrganizationEntity organization) {

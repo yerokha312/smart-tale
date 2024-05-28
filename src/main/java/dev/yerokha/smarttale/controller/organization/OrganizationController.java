@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.controller.organization;
 
 import dev.yerokha.smarttale.controller.account.AccountController;
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
@@ -16,10 +17,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -116,7 +117,8 @@ public class OrganizationController {
             summary = "Get order history", description = "Get all orders of organization",
             tags = {"organization", "get", "order", "monitoring"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
+                            schema = @Schema(allOf = {CustomPage.class, OrderSummary.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad param request", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User or organization not found", content = @Content)
@@ -136,8 +138,8 @@ public class OrganizationController {
             }
     )
     @GetMapping("/orders")
-    public ResponseEntity<Page<OrderSummary>> getOrders(Authentication authentication,
-                                                        @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage> getOrders(Authentication authentication,
+                                                @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getOrders(getUserIdFromAuthToken(authentication), params));
     }
 
@@ -145,7 +147,8 @@ public class OrganizationController {
             summary = "Get employees", description = "Get all employees and invitees of organization",
             tags = {"organization", "get", "employee", "user", "account"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
+                            schema = @Schema(allOf = {CustomPage.class, Employee.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad param request", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User or organization not found", content = @Content)
@@ -162,8 +165,8 @@ public class OrganizationController {
             }
     )
     @GetMapping("/employees")
-    public ResponseEntity<Page<Employee>> getEmployees(Authentication authentication,
-                                                       @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage> getEmployees(Authentication authentication,
+                                                   @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getEmployees(
                 getUserIdFromAuthToken(authentication),
                 params));

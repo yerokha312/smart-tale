@@ -334,7 +334,7 @@ public class AdMapper {
         }
     }
 
-    public static OrderSummary toCurrentOrder(OrderEntity order) {
+    public static OrderSummary toOrderSummary(OrderEntity order) {
         List<Image> images = order.getImages();
         String description = order.getDescription();
         String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;

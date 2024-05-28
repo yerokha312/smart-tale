@@ -4,6 +4,7 @@ import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdRequest;
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
@@ -108,20 +109,23 @@ public class AdvertisementService {
     }
 
     // get Ads in Personal account -> My advertisements
-    public Page<AdvertisementInterface> getAds(Long userId, Map<String, String> params) {
+    public CustomPage getAds(Long userId, Map<String, String> params) {
         Pageable pageable = getPageable(params);
 
         String query = params.get("q");
 
+        Page<AdvertisementInterface> page;
         if (query != null) {
-            return switch (query) {
+            page = switch (query) {
                 case "orders" -> getOrders(userId, pageable);
                 case "products" -> getProducts(userId, pageable);
-                default -> throw new IllegalStateException("Unexpected value: " + query);
+                default -> Page.empty();
             };
+        } else {
+            page = getAllAds(userId, pageable);
         }
 
-        return getAllAds(userId, pageable);
+        return getCustomPage(page);
     }
 
     // get Ads in Personal account -> My advertisements
@@ -236,18 +240,30 @@ public class AdvertisementService {
         }
     }
 
-    public Page<Card> getPurchases(Long userId, Map<String, String> params) {
+    public CustomPage getPurchases(Long userId, Map<String, String> params) {
         Pageable pageable = PageRequest.of(
                 Integer.parseInt(params.getOrDefault("page", "0")),
                 Integer.parseInt(params.getOrDefault("size", "8")),
                 Sort.by(Sort.Direction.DESC, "purchasedAt"));
 
-        return purchaseRepository.findAllByPurchasedByUserId(userId, pageable)
+        Page<Card> page = purchaseRepository.findAllByPurchasedByUserId(userId, pageable)
                 .map(purchase -> {
                     ProductEntity product = purchase.getProduct();
                     product.setAdvertisementId(purchase.getPurchaseId());
                     return mapToCards(product);
                 });
+        return getCustomPage(page);
+    }
+
+    static CustomPage getCustomPage(Page<?> page) {
+        return new CustomPage(
+                page.getContent(),
+                page.getTotalPages(),
+                page.getTotalElements(),
+                page.getNumber(),
+                page.getSize(),
+                page.isEmpty()
+        );
     }
 
     public AdvertisementInterface getPurchase(Long purchaseId) {
@@ -262,24 +278,25 @@ public class AdvertisementService {
     }
 
     // in Personal account -> My orders
-    public Page<SmallOrder> getOrders(Long userId, Map<String, String> params) {
+    public CustomPage getOrders(Long userId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         if (params.get("q").equals("active")) {
             Pageable pageable = PageRequest.of(
                     Integer.parseInt(params.getOrDefault("page", "0")),
                     Integer.parseInt(params.getOrDefault("size", "12")),
                     sort);
-            return orderRepository.findAllByPublishedByUserIdAndAcceptedByIsNotNullAndCompletedAtIsNull(userId, pageable)
+            Page<SmallOrder> page = orderRepository.findAllByPublishedByUserIdAndAcceptedByIsNotNullAndCompletedAtIsNull(userId, pageable)
                     .map(AdMapper::toSmallOrder);
+            return getCustomPage(page);
         }
 
         Pageable pageable = PageRequest.of(
                 Integer.parseInt(params.getOrDefault("page", "0")),
                 Integer.parseInt(params.getOrDefault("size", "12")),
                 sort);
-        return orderRepository.findAllByPublishedByUserIdAndCompletedAtNotNull(userId, pageable)
+        Page<SmallOrder> page = orderRepository.findAllByPublishedByUserIdAndCompletedAtNotNull(userId, pageable)
                 .map(AdMapper::toSmallOrder);
-
+        return getCustomPage(page);
     }
 
     private Sort getSortProps(Map<String, String> params) {
@@ -314,21 +331,23 @@ public class AdvertisementService {
     }
 
     // get Ads for marketplace
-    public Page<Card> getAds(Map<String, String> params) {
+    public CustomPage getAds(Map<String, String> params) {
         Pageable pageable = getPageable(params);
 
         String query = params.get("type");
 
-        return switch (query) {
+        Page<Card> page;
+        page = switch (query) {
             case "orders" -> orderRepository
                     .findAllByAcceptedByIsNullAndIsClosedFalseAndIsDeletedFalse(pageable)
                     .map(AdMapper::mapToCards);
             case "products" -> productRepository
                     .findAllByIsClosedFalseAndIsDeletedFalse(pageable)
                     .map(AdMapper::mapToCards);
-            default -> throw new IllegalStateException("Unexpected value: " + query);
+            default -> Page.empty();
         };
 
+        return getCustomPage(page);
     }
 
     // get Ad for marketplace

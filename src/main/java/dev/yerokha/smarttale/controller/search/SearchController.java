@@ -3,7 +3,6 @@ package dev.yerokha.smarttale.controller.search;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.service.SearchService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.Authentication;

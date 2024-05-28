@@ -4,6 +4,7 @@ import dev.yerokha.smarttale.controller.account.AccountController;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdRequest;
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
@@ -14,7 +15,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,7 +49,8 @@ public class MarketplaceController {
             summary = "Get ads", description = "Get orders and products by mandatory \"type\" param",
             tags = {"get", "order", "product", "market", "advertisement"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
+                            schema = @Schema(allOf = {Card.class, CustomPage.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad param", content = @Content)
             },
             parameters = {
@@ -59,7 +60,7 @@ public class MarketplaceController {
             }
     )
     @GetMapping
-    public ResponseEntity<Page<Card>> getAds(@RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage> getAds(@RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(advertisementService.getAds(params));
     }
