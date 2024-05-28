@@ -9,6 +9,9 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   data:
     redis:
       password: ${REDIS_PASSWORD}
@@ -20,6 +23,7 @@ logging:
     org.springframework.security: debug
     org.springframework.web: debug
     org.springframework.messaging: debug
+    sql: debug
 
 
 rsa:

@@ -1,13 +1,14 @@
 package dev.yerokha.smarttale.controller.publicEndpoints;
 
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.OrganizationSummary;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +31,8 @@ public class OrganizationsController {
     @Operation(
             summary = "Get all organizations", description = "Public endpoint", tags = {"get", "organization"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Organizations paged list")
+                    @ApiResponse(responseCode = "200", description = "Organizations paged list", content = @Content(
+                            schema = @Schema(allOf = {CustomPage.class, OrganizationSummary.class}))),
             },
             parameters = {
                     @Parameter(name = "page", description = "default 0"),
@@ -38,8 +40,8 @@ public class OrganizationsController {
             }
     )
     @GetMapping
-    public ResponseEntity<Page<OrganizationSummary>> getAllOrganizations(@RequestParam(required = false)
-                                                                         Map<String, String> params) {
+    public ResponseEntity<CustomPage> getAllOrganizations(@RequestParam(required = false)
+                                                          Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getAllOrganizations(params));
     }
 

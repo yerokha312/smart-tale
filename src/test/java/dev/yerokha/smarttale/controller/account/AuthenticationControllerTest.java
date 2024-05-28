@@ -334,7 +334,8 @@ public class AuthenticationControllerTest {
     void revoke_OldToken() throws Exception {
         mockMvc.perform(post("/v1/auth/logout")
                         .header("Authorization", "Bearer " + initialAccessToken)
-                        .content("Bearer " + refreshToken))
+                        .content("Bearer " + refreshToken)
+                        .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().isUnauthorized());
     }
 

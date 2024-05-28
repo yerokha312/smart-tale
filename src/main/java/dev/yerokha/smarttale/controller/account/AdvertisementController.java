@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.Order;
@@ -15,7 +16,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -50,7 +50,7 @@ public class AdvertisementController {
             tags = {"advertisement", "user", "get", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
-                            anyOf = {Order.class, Product.class}))),
+                            anyOf = {Order.class, Product.class, CustomPage.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad request param", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
@@ -65,8 +65,8 @@ public class AdvertisementController {
             }
     )
     @GetMapping
-    public ResponseEntity<Page<AdvertisementInterface>> getAds(Authentication authentication,
-                                                               @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage> getAds(Authentication authentication,
+                                             @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(advertisementService.getAds(getUserIdFromAuthToken(authentication), params));
     }

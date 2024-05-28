@@ -166,16 +166,10 @@ class AdvertisementControllerTest {
 
     @Test
     @Order(4)
-    void deleteAd() throws Exception {
+    void deleteAd_Should403() throws Exception {
         mockMvc.perform(delete("/v1/account/advertisements/100012/3")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpectAll(
-                        status().isOk(),
-                        content().string("Ad deleted")
-                );
-
-        // TODO assert that deleted status is true
-
+                .andExpect(status().isForbidden());
     }
 
     @Test

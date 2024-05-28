@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -175,8 +176,8 @@ public class TokenService {
 
         try {
             return jwtDecoder.decode(strippedToken);
-        } catch (InvalidTokenException e) {
-            throw new InvalidTokenException("Invalid token");
+        } catch (InvalidTokenException | JwtException e) {
+            throw new InvalidTokenException(e.getMessage());
         }
     }
 
@@ -187,6 +188,15 @@ public class TokenService {
 
         Jwt jwt = (Jwt) authentication.getPrincipal();
         return jwt.getClaim("userId");
+    }
+
+    public static Long getOrgIdFromAuthToken(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        return jwt.getClaim("orgId");
     }
 
     public static Integer getUserHierarchyFromToken(Authentication authentication) {

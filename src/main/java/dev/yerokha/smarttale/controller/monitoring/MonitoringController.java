@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.controller.monitoring;
 
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderSummary;
@@ -10,10 +11,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -95,7 +96,8 @@ public class MonitoringController {
             summary = "Get order history", description = "Get all orders of organization",
             tags = {"organization", "get", "order", "monitoring"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
+                            schema = @Schema(allOf = {CustomPage.class, OrderSummary.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad param request", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User or organization not found", content = @Content)
@@ -115,8 +117,8 @@ public class MonitoringController {
             }
     )
     @GetMapping("/orders")
-    public ResponseEntity<Page<OrderSummary>> getOrdersHistory(Authentication authentication,
-                                                               @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage> getOrdersHistory(Authentication authentication,
+                                                       @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(organizationService.getOrders(
                 getUserIdFromAuthToken(authentication),

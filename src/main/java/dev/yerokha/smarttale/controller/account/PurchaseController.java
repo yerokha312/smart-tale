@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +38,8 @@ public class PurchaseController {
             summary = "All purchases", description = "Returns products purchased by user, id of product replaced by purchase id",
             tags = {"purchase", "user", "get", "account", "product"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
+                            schema = @Schema(allOf = {Card.class, CustomPage.class}))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
             },
             parameters = {
@@ -48,7 +49,7 @@ public class PurchaseController {
 
     )
     @GetMapping
-    public ResponseEntity<Page<Card>> getPurchases(Authentication authentication,
+    public ResponseEntity<CustomPage> getPurchases(Authentication authentication,
                                                    @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(advertisementService.getPurchases(getUserIdFromAuthToken(authentication), params));
     }

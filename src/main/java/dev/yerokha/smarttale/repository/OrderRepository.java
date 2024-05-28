@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.repository;
 
+import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
 import org.springframework.data.domain.Page;
@@ -24,10 +25,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     Page<OrderEntity> findAllByAcceptedByIsNullAndIsClosedFalseAndIsDeletedFalse(Pageable pageable);
 
     Optional<OrderEntity> findByPublishedByUserIdAndAdvertisementId(Long userId, Long orderId);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNull(Long organizationId, Pageable pageable);
-
-    Page<OrderEntity> findAllByAcceptedByOrganizationIdAndCompletedAtIsNotNull(Long organizationId, Pageable pageable);
 
     @Query("SELECT o FROM OrderEntity o " +
            "WHERE o.acceptedBy.organizationId = :organizationId " +
@@ -61,6 +58,31 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     Page<OrderEntity> findTasksByEmployeeId(Long employeeId, Long organizationId, boolean isActive, Pageable pageable);
 
     Optional<OrderEntity> findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(Long organizationId, Long orderId);
+
+    @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
+           "o.advertisementId, " +
+           "dev.yerokha.smarttale.enums.ContextType.ORDER, " +
+           "o.title, " +
+           "(SELECT i.imageUrl FROM Image i WHERE i IN elements(o.images) ORDER BY i.imageId ASC)" +
+           ") " +
+           "FROM OrderEntity o " +
+           "WHERE (lower(o.title) LIKE %:query% " +
+           "OR lower(o.description) LIKE %:query%) " +
+           "AND ((:userId IS NULL AND o.isClosed = false) OR (o.publishedBy.userId = :userId)) " +
+           "AND o.isDeleted = false")
+    Page<SearchItem> findSearchedItemsJPQL(String query, Long userId, Pageable pageable);
+
+    @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
+           "o.advertisementId, " +
+           "dev.yerokha.smarttale.enums.ContextType.ORDER, " +
+           "o.title, " +
+           "(SELECT i.imageUrl FROM Image i WHERE i IN elements(o.images) ORDER BY i.imageId ASC)" +
+           ") " +
+           "FROM OrderEntity o " +
+           "WHERE (lower(o.title) LIKE %:query% " +
+           "OR lower(o.description) LIKE %:query%) " +
+           "AND (o.acceptedBy.organizationId = :organizationId)")
+    Page<SearchItem> findSearchedItemsJPQL(String query, Long organizationId, Pageable pageable, String org);
 }
 
 
