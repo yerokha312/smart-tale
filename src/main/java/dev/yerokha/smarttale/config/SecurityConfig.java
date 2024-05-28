@@ -62,7 +62,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/v1/market/**",
                                 "/v1/account/**",
-                                "/v1/organization")
+                                "/v1/organization",
+                                "/v1/search/**")
                         .authenticated()
                         .anyRequest().hasRole("EMPLOYEE"))
                 .oauth2ResourceServer(oauth2 -> oauth2

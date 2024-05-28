@@ -187,7 +187,7 @@ public class AdvertisementService {
     }
 
     private Advertisement getAdEntity(Long userId, Long advertisementId) {
-        return advertisementRepository.findByPublishedByUserIdAndAdvertisementId(userId, advertisementId)
+        return advertisementRepository.findByPublishedByUserIdAndAdvertisementIdAndIsDeletedFalse(userId, advertisementId)
                 .orElseThrow(() -> new NotFoundException("Ad not found"));
     }
 

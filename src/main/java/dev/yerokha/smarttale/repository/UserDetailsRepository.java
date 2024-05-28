@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.repository;
 
+import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,4 +37,19 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "FROM UserDetailsEntity ud " +
            "WHERE ud.organization.organizationId = :organizationId")
     List<Long> findAllByOrganizationId(Long organizationId);
+
+    @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
+           "ud.userId, " +
+           "CASE WHEN :orgId IS NULL THEN dev.yerokha.smarttale.enums.ContextType.USER " +
+           "ELSE dev.yerokha.smarttale.enums.ContextType.EMPLOYEE END, " +
+           "concat(ud.firstName, ' ', ud.lastName), " +
+           "coalesce(i.imageUrl, '')" +
+           ") " +
+           "FROM UserDetailsEntity ud " +
+           "LEFT JOIN Image i ON i.imageId = ud.image.imageId " +
+           "WHERE (lower(ud.lastName) LIKE %:query% " +
+           "OR lower(ud.firstName) LIKE %:query%) " +
+           "AND (:orgId IS NULL OR ud.organization.organizationId = :orgId)")
+    Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("orgId") Long orgId, Pageable pageable);
+
 }

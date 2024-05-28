@@ -18,6 +18,12 @@ public record Profile(
         String phoneNumber,
         @NotNull
         String avatarUrl,
+        @NotNull
+        Long organizationId,
+        @NotNull
+        String organizationName,
+        @NotNull
+        String organizationLogoUrl,
         LocalDate subscriptionEndDate
 ) {
 }

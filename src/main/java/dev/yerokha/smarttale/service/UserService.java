@@ -3,6 +3,7 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.Profile;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
 import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
@@ -79,6 +80,7 @@ public class UserService implements UserDetailsService {
 
     private Profile mapProfile(UserDetailsEntity userDetails) {
         Image avatar = userDetails.getImage();
+        OrganizationEntity organization = userDetails.getOrganization();
         return new Profile(
                 userDetails.getFirstName(),
                 userDetails.getLastName(),
@@ -86,6 +88,9 @@ public class UserService implements UserDetailsService {
                 userDetails.getEmail(),
                 userDetails.getPhoneNumber(),
                 avatar == null ? "" : avatar.getImageUrl(),
+                organization == null ? 0 : organization.getOrganizationId(),
+                organization == null ? "" : organization.getName(),
+                organization != null && organization.getImage() != null ? organization.getImage().getImageUrl() : "",
                 userDetails.isSubscribed() ? userDetails.getSubscriptionEndDate() : null
         );
     }
