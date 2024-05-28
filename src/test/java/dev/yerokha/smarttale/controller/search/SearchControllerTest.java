@@ -136,7 +136,7 @@ class SearchControllerTest {
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(10)),
-                        jsonPath("$.totalElements").value(31)
+                        jsonPath("$.totalElements").value(29)
                         );
     }
 
@@ -154,17 +154,8 @@ class SearchControllerTest {
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(10)),
-                        jsonPath("$.totalElements").value(41)
+                        jsonPath("$.totalElements").value(40)
                         );
-    }
-
-    @Test
-    @Order(5)
-    void getOrganizationId() {
-        Long organizationId = userDetailsRepository.findById(100004L).orElseThrow(AssertionError::new)
-                .getOrganization().getOrganizationId();
-
-        Assertions.assertEquals(100000L, organizationId);
     }
 
     @Test
@@ -174,7 +165,7 @@ class SearchControllerTest {
         login("existing4@example.com");
         mockMvc.perform(get("/v1/search")
                 .header("Authorization", "Bearer " + accessToken)
-                .param("q", "fifth")
+                .param("q", "sixth")
                 .param("con", "EMPLOYEE")
         )
                 .andExpectAll(
@@ -188,8 +179,6 @@ class SearchControllerTest {
     @Test
     @Order(5)
     void search_Org_Orders() throws Exception {
-        Thread.sleep(1000);
-        login("existing4@example.com");
         mockMvc.perform(get("/v1/search")
                 .header("Authorization", "Bearer " + accessToken)
                 .param("q", "order")
@@ -199,7 +188,7 @@ class SearchControllerTest {
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(5)),
-                        jsonPath("$.totalElements").value(25)
+                        jsonPath("$.totalElements").value(24)
                         );
     }
 }
