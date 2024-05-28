@@ -15,10 +15,12 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
            "o.organizationId, " +
            "dev.yerokha.smarttale.enums.ContextType.ORGANIZATION, " +
            "o.name, " +
-           "o.image.imageUrl" +
+           "coalesce(i.imageUrl, '')" +
            ") " +
            "FROM OrganizationEntity o " +
+           "LEFT JOIN Image i ON i.imageId = o.image.imageId " +
            "WHERE lower(o.name) LIKE %:query% " +
-           "OR lower(o.description) LIKE %:query%")
+           "OR lower(o.description) LIKE %:query% " +
+           "AND o.isDeleted = false")
     Page<SearchItem> findSearchedItemsJPQL(String query, Pageable pageable);
 }

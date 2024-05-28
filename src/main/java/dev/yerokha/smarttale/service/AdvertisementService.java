@@ -167,6 +167,9 @@ public class AdvertisementService {
 
     private String deleteAd(Long userId, Long advertisementId) {
         Advertisement advertisement = getAdEntity(userId, advertisementId);
+        if (advertisement instanceof OrderEntity order && order.getAcceptedBy() != null) {
+            throw new ForbiddenException("You are not allowed to delete an accepted order");
+        }
         advertisement.setDeleted(true);
         advertisementRepository.save(advertisement);
         return "Ad deleted";

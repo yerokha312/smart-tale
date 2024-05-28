@@ -6,7 +6,6 @@ import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -47,8 +46,6 @@ class SearchControllerTest {
     UserRepository userRepository;
     final String APP_JSON = "application/json";
     public static String accessToken;
-    @Autowired
-    private UserDetailsRepository userDetailsRepository;
 
     private void login(String email) throws Exception {
         mockMvc.perform(post("/v1/auth/login")
@@ -136,7 +133,7 @@ class SearchControllerTest {
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(10)),
-                        jsonPath("$.totalElements").value(29)
+                        jsonPath("$.totalElements").value(30)
                         );
     }
 
@@ -154,7 +151,7 @@ class SearchControllerTest {
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(10)),
-                        jsonPath("$.totalElements").value(40)
+                        jsonPath("$.totalElements").value(41)
                         );
     }
 
@@ -190,5 +187,39 @@ class SearchControllerTest {
                         jsonPath("$.content", hasSize(5)),
                         jsonPath("$.totalElements").value(24)
                         );
+    }
+
+    @Test
+    @Order(6)
+    void search_Purchases() throws Exception {
+        Thread.sleep(1000);
+        login("existing3@example.com");
+        mockMvc.perform(get("/v1/search")
+                .header("Authorization", "Bearer " + accessToken)
+                .param("q", "product")
+                .param("con", "purchase")
+        )
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(6)
+                );
+    }
+
+    @Test
+    @Order(7)
+    void search_Organizations() throws Exception {
+        Thread.sleep(1000);
+        login("existing3@example.com");
+        mockMvc.perform(get("/v1/search")
+                .header("Authorization", "Bearer " + accessToken)
+                .param("q", "Org")
+                .param("con", "organization")
+        )
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(3)
+                );
     }
 }
