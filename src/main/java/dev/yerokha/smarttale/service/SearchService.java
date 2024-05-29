@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import static dev.yerokha.smarttale.service.AdvertisementService.getCustomPage;
 import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
@@ -42,7 +43,7 @@ public class SearchService {
         this.purchaseRepository = purchaseRepository;
     }
 
-    public CustomPage search(Authentication authentication, String query, String context, boolean isDropDown, int page, int size) {
+    public CustomPage<SearchItem> search(Authentication authentication, String query, String context, boolean isDropDown, int page, int size) {
         Pageable pageable = getPageable(page, size, isDropDown);
         Long userId = getUserIdFromAuthToken(authentication);
         query = query == null ? "" : query.toLowerCase();
@@ -71,14 +72,7 @@ public class SearchService {
             contentPage = Page.empty();
         }
 
-        return new CustomPage(
-                contentPage.getContent(),
-                contentPage.getTotalPages(),
-                contentPage.getTotalElements(),
-                contentPage.getNumber(),
-                contentPage.getSize(),
-                contentPage.isEmpty()
-        );
+        return getCustomPage(contentPage);
     }
 
     private Pageable getPageable(int page, int size, boolean isDropDown) {

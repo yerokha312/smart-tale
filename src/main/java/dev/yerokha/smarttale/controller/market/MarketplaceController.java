@@ -49,8 +49,7 @@ public class MarketplaceController {
             summary = "Get ads", description = "Get orders and products by mandatory \"type\" param",
             tags = {"get", "order", "product", "market", "advertisement"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
-                            schema = @Schema(allOf = {Card.class, CustomPage.class}))),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad param", content = @Content)
             },
             parameters = {
@@ -60,7 +59,7 @@ public class MarketplaceController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage> getAds(@RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<Card>> getAds(@RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(advertisementService.getAds(params));
     }

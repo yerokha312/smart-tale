@@ -109,7 +109,7 @@ public class AdvertisementService {
     }
 
     // get Ads in Personal account -> My advertisements
-    public CustomPage getAds(Long userId, Map<String, String> params) {
+    public CustomPage<AdvertisementInterface> getAds(Long userId, Map<String, String> params) {
         Pageable pageable = getPageable(params);
 
         String query = params.get("q");
@@ -240,7 +240,7 @@ public class AdvertisementService {
         }
     }
 
-    public CustomPage getPurchases(Long userId, Map<String, String> params) {
+    public CustomPage<Card> getPurchases(Long userId, Map<String, String> params) {
         Pageable pageable = PageRequest.of(
                 Integer.parseInt(params.getOrDefault("page", "0")),
                 Integer.parseInt(params.getOrDefault("size", "8")),
@@ -255,8 +255,8 @@ public class AdvertisementService {
         return getCustomPage(page);
     }
 
-    static CustomPage getCustomPage(Page<?> page) {
-        return new CustomPage(
+    static <T> CustomPage<T> getCustomPage(Page<T> page) {
+        return new CustomPage<>(
                 page.getContent(),
                 page.getTotalPages(),
                 page.getTotalElements(),
@@ -278,7 +278,7 @@ public class AdvertisementService {
     }
 
     // in Personal account -> My orders
-    public CustomPage getOrders(Long userId, Map<String, String> params) {
+    public CustomPage<SmallOrder> getOrders(Long userId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         if (params.get("q").equals("active")) {
             Pageable pageable = PageRequest.of(
@@ -331,7 +331,7 @@ public class AdvertisementService {
     }
 
     // get Ads for marketplace
-    public CustomPage getAds(Map<String, String> params) {
+    public CustomPage<Card> getAds(Map<String, String> params) {
         Pageable pageable = getPageable(params);
 
         String query = params.get("type");

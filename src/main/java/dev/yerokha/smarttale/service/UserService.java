@@ -84,7 +84,7 @@ public class UserService implements UserDetailsService {
         return new Profile(
                 userDetails.getFirstName(),
                 userDetails.getLastName(),
-                userDetails.getMiddleName(),
+                userDetails.getMiddleName() == null ? "" : userDetails.getMiddleName(),
                 userDetails.getEmail(),
                 userDetails.getPhoneNumber(),
                 avatar == null ? "" : avatar.getImageUrl(),

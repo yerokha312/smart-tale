@@ -2,7 +2,6 @@ package dev.yerokha.smarttale.controller.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.yerokha.smarttale.dto.VerificationRequest;
-import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
@@ -209,8 +208,6 @@ class SearchControllerTest {
     @Test
     @Order(7)
     void search_Organizations() throws Exception {
-        Thread.sleep(1000);
-        login("existing3@example.com");
         mockMvc.perform(get("/v1/search")
                 .header("Authorization", "Bearer " + accessToken)
                 .param("q", "Org")

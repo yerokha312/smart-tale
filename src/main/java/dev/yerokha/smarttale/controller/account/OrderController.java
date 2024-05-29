@@ -7,7 +7,6 @@ import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -39,8 +38,7 @@ public class OrderController {
                                                      "Sort by fields of object. Default sorting by deadlineAt",
             tags = {"get", "account", "order"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
-                            schema = @Schema(allOf = {SmallOrder.class, CustomPage.class}))),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad param", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
@@ -52,8 +50,8 @@ public class OrderController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage> getOrders(Authentication authentication,
-                                                @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<SmallOrder>> getOrders(Authentication authentication,
+                                                            @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(advertisementService.getOrders(getUserIdFromAuthToken(authentication), params));
     }
 

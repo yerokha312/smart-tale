@@ -42,7 +42,7 @@ public class UserEntity implements UserDetails {
     @JsonBackReference
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private UserDetailsEntity details;
 
     @ManyToMany(fetch = FetchType.EAGER)

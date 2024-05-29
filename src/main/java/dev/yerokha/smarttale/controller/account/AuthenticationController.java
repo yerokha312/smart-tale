@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -151,8 +150,8 @@ public class AuthenticationController {
             }
     )
     @PostMapping(value = "/logout", consumes = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> revoke(@RequestBody String refreshToken, HttpServletRequest request) {
-        authenticationService.revoke(refreshToken, request);
+    public ResponseEntity<String> revoke(@RequestBody String refreshToken) {
+        authenticationService.revoke(refreshToken);
         return ResponseEntity.ok("Logout success");
     }
 

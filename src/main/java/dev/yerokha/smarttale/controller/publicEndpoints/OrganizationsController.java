@@ -7,7 +7,6 @@ import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,8 +30,7 @@ public class OrganizationsController {
     @Operation(
             summary = "Get all organizations", description = "Public endpoint", tags = {"get", "organization"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Organizations paged list", content = @Content(
-                            schema = @Schema(allOf = {CustomPage.class, OrganizationSummary.class}))),
+                    @ApiResponse(responseCode = "200", description = "Organizations paged list"),
             },
             parameters = {
                     @Parameter(name = "page", description = "default 0"),
@@ -40,8 +38,8 @@ public class OrganizationsController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage> getAllOrganizations(@RequestParam(required = false)
-                                                          Map<String, String> params) {
+    public ResponseEntity<CustomPage<OrganizationSummary>> getAllOrganizations(@RequestParam(required = false)
+                                                                               Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getAllOrganizations(params));
     }
 
