@@ -87,7 +87,7 @@ public class OrganizationService {
         this.authenticationService = authenticationService;
     }
 
-    public CustomPage getOrders(Long employeeId, Map<String, String> params) {
+    public CustomPage<OrderSummary> getOrders(Long employeeId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
@@ -142,7 +142,7 @@ public class OrganizationService {
         return orders.isEmpty() ? Sort.unsorted() : Sort.by(orders);
     }
 
-    public CustomPage getEmployees(Long employeeId, Map<String, String> params) {
+    public CustomPage<Employee> getEmployees(Long employeeId, Map<String, String> params) {
         Sort sort = getSortProps(params);
 
         if (sort.isUnsorted()) {
@@ -153,7 +153,7 @@ public class OrganizationService {
 
         OrganizationEntity organization = getOrganizationByEmployeeId(employeeId);
 
-        Page<Object> page = getEmployees(organization.getOrganizationId(), pageable)
+        Page<Employee> page = getEmployees(organization.getOrganizationId(), pageable)
                 .map(emp -> mapToEmployee(emp, organization.getOrganizationId()));
         return getCustomPage(page);
     }
@@ -391,7 +391,7 @@ public class OrganizationService {
         );
     }
 
-    public CustomPage getAllOrganizations(Map<String, String> params) {
+    public CustomPage<OrganizationSummary> getAllOrganizations(Map<String, String> params) {
         Pageable pageable = PageRequest.of(
                 Integer.parseInt(params.getOrDefault("page", "0")),
                 Integer.parseInt(params.getOrDefault("size", "10")));

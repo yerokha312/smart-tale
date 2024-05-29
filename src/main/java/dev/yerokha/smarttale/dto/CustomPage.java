@@ -4,9 +4,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record CustomPage(
+public record CustomPage<T>(
         @NotNull
-        List<?> content,
+        List<T> content,
         @NotNull
         int totalPages,
         @NotNull

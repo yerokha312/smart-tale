@@ -31,7 +31,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -222,10 +221,6 @@ public class TokenService {
             throw new InvalidTokenException("Invalid token type");
         }
 
-        if (isExpired(decodedToken)) {
-            throw new InvalidTokenException("Refresh token expired");
-        }
-
         if (isRevoked(refreshToken, email)) {
             return getNewTokenPair(decodedToken, email);
         }
@@ -320,6 +315,10 @@ public class TokenService {
     }
 
     private boolean isRevoked(String refreshToken, String email) {
+        if (isTokenRevoked(refreshToken)) {
+            return true;
+        }
+
         List<RefreshToken> tokenList = tokenRepository.findNotRevokedByEmail(email);
         if (tokenList.isEmpty()) {
             return true;
@@ -334,23 +333,23 @@ public class TokenService {
         return true;
     }
 
-    private boolean isExpired(Jwt decodedToken) {
-        return Objects.requireNonNull(decodedToken.getExpiresAt()).isBefore(Instant.now());
+    private boolean isTokenRevoked(String refreshToken) {
+        return containsKey("revoked_token:" + refreshToken.substring(7));
     }
 
-    public void revokeToken(String token) {
+    public void revokeToken_Logout(String token) {
         String email = decodeToken(token).getSubject();
         String key = "access_token:" + email;
         if (containsKey(key)) {
             deleteKey(key);
-            return;
         }
         List<RefreshToken> notRevokedByUsername = tokenRepository.findNotRevokedByEmail(email);
         for (RefreshToken refreshToken : notRevokedByUsername) {
-            if (token.equals(decrypt(refreshToken.getToken()))) {
+            String decryptedTokenValue = decrypt(refreshToken.getToken());
+            if (token.equals(decryptedTokenValue)) {
                 refreshToken.setRevoked(true);
+                setValue("revoked_token:" + decryptedTokenValue.substring(7), "true", 7, TimeUnit.DAYS);
                 tokenRepository.save(refreshToken);
-                return;
             }
         }
     }
@@ -358,8 +357,11 @@ public class TokenService {
     public void revokeAllTokens(String email) {
         deleteKey("access_token:" + email);
         List<RefreshToken> notRevokedByUsername = tokenRepository.findNotRevokedByEmail(email);
-        notRevokedByUsername.forEach(token -> token.setRevoked(true));
-        tokenRepository.saveAll(notRevokedByUsername);
+        notRevokedByUsername.forEach(token -> {
+            token.setRevoked(true);
+            tokenRepository.save(token);
+            setValue("revoked_token:" + decrypt(token.getToken()).substring(7), "true", 7, TimeUnit.DAYS);
+        });
     }
 //
 //    public boolean validateToken(String token) {

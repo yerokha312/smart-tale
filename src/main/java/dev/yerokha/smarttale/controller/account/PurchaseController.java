@@ -38,8 +38,7 @@ public class PurchaseController {
             summary = "All purchases", description = "Returns products purchased by user, id of product replaced by purchase id",
             tags = {"purchase", "user", "get", "account", "product"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
-                            schema = @Schema(allOf = {Card.class, CustomPage.class}))),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
             },
             parameters = {
@@ -49,8 +48,8 @@ public class PurchaseController {
 
     )
     @GetMapping
-    public ResponseEntity<CustomPage> getPurchases(Authentication authentication,
-                                                   @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<Card>> getPurchases(Authentication authentication,
+                                                         @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(advertisementService.getPurchases(getUserIdFromAuthToken(authentication), params));
     }
 

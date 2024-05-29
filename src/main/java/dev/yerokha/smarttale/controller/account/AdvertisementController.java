@@ -49,8 +49,8 @@ public class AdvertisementController {
                                                       "\"orderId\" and \"productId\" field of objects",
             tags = {"advertisement", "user", "get", "account"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
-                            anyOf = {Order.class, Product.class, CustomPage.class}))),
+                    @ApiResponse(responseCode = "200", description = "Success", content = @Content(
+                            schema = @Schema(allOf = {Order.class, Product.class, CustomPage.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad request param", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
@@ -65,8 +65,8 @@ public class AdvertisementController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage> getAds(Authentication authentication,
-                                             @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<AdvertisementInterface>> getAds(Authentication authentication,
+                                                                     @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(advertisementService.getAds(getUserIdFromAuthToken(authentication), params));
     }

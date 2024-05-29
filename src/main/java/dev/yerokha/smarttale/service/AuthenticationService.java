@@ -18,7 +18,6 @@ import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.util.Authorities;
 import dev.yerokha.smarttale.util.EncryptionUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -204,10 +203,8 @@ public class AuthenticationService {
         return tokenService.refreshAccessToken(refreshToken);
     }
 
-    public void revoke(String refreshToken, HttpServletRequest request) {
-        final String accessToken = request.getHeader("Authorization");
-        tokenService.revokeToken(accessToken);
-        tokenService.revokeToken(refreshToken);
+    public void revoke(String refreshToken) {
+        tokenService.revokeToken_Logout(refreshToken);
     }
 
     private static String generateVerificationCode() {
