@@ -85,7 +85,7 @@ public class PushNotificationService {
         notificationRepository.save(pushNotificationEntity);
         String destination = "/org/" + organizationId + "/push";
         messagingTemplate.convertAndSend(destination, pushNotificationEntity);
-        List<Long> employeeIdList = userDetailsRepository.findAllByOrganizationId(organizationId);
+        List<Long> employeeIdList = userDetailsRepository.findAllUserIdsByOrganizationId(organizationId);
         for (Long employeeId : employeeIdList) {
             if (!userIsOnline(employeeId)) {
                 queueNotification(employeeId, pushNotificationEntity);

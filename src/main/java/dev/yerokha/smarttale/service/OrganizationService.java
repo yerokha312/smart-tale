@@ -32,6 +32,7 @@ import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.util.Authorities;
 import dev.yerokha.smarttale.util.EncryptionUtil;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -87,17 +88,13 @@ public class OrganizationService {
         this.authenticationService = authenticationService;
     }
 
-    public CustomPage<OrderSummary> getOrders(Long employeeId, Map<String, String> params) {
+    public CustomPage<OrderSummary> getOrders(Long organizationId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
                 parseInt(params.getOrDefault("size", "6")),
                 sort.equals(Sort.unsorted()) ?
                         Sort.by(Sort.Direction.DESC, "acceptedAt") : sort);
-
-        Long organizationId = getUserDetailsEntity(employeeId)
-                .getOrganization()
-                .getOrganizationId();
 
         boolean isActive = Boolean.parseBoolean(params.getOrDefault("active", "true"));
         String dateType = params.get("dateType");
@@ -142,7 +139,7 @@ public class OrganizationService {
         return orders.isEmpty() ? Sort.unsorted() : Sort.by(orders);
     }
 
-    public CustomPage<Employee> getEmployees(Long employeeId, Map<String, String> params) {
+    public CustomPage<Employee> getEmployees(Long organizationId, Map<String, String> params) {
         Sort sort = getSortProps(params);
 
         if (sort.isUnsorted()) {
@@ -151,10 +148,8 @@ public class OrganizationService {
 
         Pageable pageable = getPageable(params, sort);
 
-        OrganizationEntity organization = getOrganizationByEmployeeId(employeeId);
-
-        Page<Employee> page = getEmployees(organization.getOrganizationId(), pageable)
-                .map(emp -> mapToEmployee(emp, organization.getOrganizationId()));
+        Page<Employee> page = getEmployees(organizationId, pageable)
+                .map(emp -> mapToEmployee(emp, organizationId));
         return getCustomPage(page);
     }
 
@@ -197,28 +192,21 @@ public class OrganizationService {
                 .findAllEmployeesAndInvitees(organizationId, pageable);
     }
 
-    public EmployeeTasksResponse getEmployee(Long userId, Long employeeId, Map<String, String> params) {
-        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
-
-        UserDetailsEntity employee = findEmployeeById(organization, employeeId);
+    public EmployeeTasksResponse getEmployee(Long organizationId, Long employeeId, Map<String, String> params) {
+        UserDetailsEntity employee = getEmployeeById(organizationId, employeeId);
         return new EmployeeTasksResponse(
-                mapToEmployeeDto(organization.getOrganizationId(), employee),
-                getTasks(employee, organization.getOrganizationId(), params)
+                mapToEmployeeDto(organizationId, employee),
+                getTasks(employee, organizationId, params)
         );
     }
 
-    private UserDetailsEntity findEmployeeById(OrganizationEntity organization, Long employeeId) {
-        return organization.getEmployees().stream()
-                .filter(emp -> emp.getUserId().equals(employeeId))
-                .findFirst()
-                .orElseGet(() -> findInvitedEmployee(organization, employeeId));
+    private UserDetailsEntity getEmployeeById(Long organizationId, Long employeeId) {
+        return userDetailsRepository.findEmployeeById(organizationId, employeeId)
+                .orElseGet(() -> getInvitedEmployee(organizationId, employeeId));
     }
 
-    private UserDetailsEntity findInvitedEmployee(OrganizationEntity organization, Long employeeId) {
-        return organization.getInvitations().stream()
-                .map(InvitationEntity::getInvitee)
-                .filter(invitee -> invitee.getUserId().equals(employeeId))
-                .findFirst()
+    private UserDetailsEntity getInvitedEmployee(Long organizationId, Long employeeId) {
+        return invitationRepository.findInviteeById(organizationId, employeeId)
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
     }
 
@@ -408,13 +396,19 @@ public class OrganizationService {
     }
 
     public Organization getOrganizationById(Long organizationId) {
-        return mapToOrganization(organizationRepository.findById(organizationId).orElseThrow(
-                () -> new NotFoundException("Organization not found")));
+        OrganizationEntity organizationEntity = getOrganizationEntity(organizationId);
+        return mapToOrganization(organizationEntity);
+    }
+
+    private OrganizationEntity getOrganizationEntity(Long organizationId) {
+        return organizationRepository.findById(organizationId).orElseThrow(
+                () -> new NotFoundException("Organization not found"));
     }
 
     @Transactional
     public String createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
-        UserDetailsEntity user = getUserDetailsEntity(userId);
+//        UserDetailsEntity user = getUserDetailsEntity(userId);
+        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
         if (!user.isSubscribed() || user.getOrganization() != null) {
             throw new ForbiddenException("User is not subscribed or already has an organization");
         }
@@ -437,15 +431,8 @@ public class OrganizationService {
         return user.getEmail();
     }
 
-    public void updateOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
-        UserDetailsEntity user = getUserDetailsEntity(userId);
-
-        OrganizationEntity organization = user.getOrganization();
-        boolean isOwner = organization.getOwner().getUserId().equals(userId);
-
-        if (!isOwner) {
-            throw new ForbiddenException("User is not an owner of the organization");
-        }
+    public void updateOrganization(CreateOrgRequest request, MultipartFile file, Long orgId) {
+        OrganizationEntity organization = getOrganizationEntity(orgId);
 
         organization.setName(request.name());
         organization.setDescription(request.description());
@@ -454,12 +441,8 @@ public class OrganizationService {
         organizationRepository.save(organization);
     }
 
-    public void createPosition(Long userId, Position position) {
-        UserDetailsEntity user = getUserDetailsEntity(userId);
-
-        OrganizationEntity organization = user.getOrganization();
-
-        if (!organization.getOrganizationId().equals(position.organizationId())) {
+    public void createPosition(Long organizationId, Position position) {
+        if (!organizationId.equals(position.organizationId())) {
             throw new ForbiddenException("It is not your organization");
         }
 
@@ -476,7 +459,7 @@ public class OrganizationService {
                 && (authorities & Authorities.CREATE_POSITION.getBitmask()) <= 0)) {
             throw new ForbiddenException("If were chosen either update or invite, you have to choose create");
         }
-
+        OrganizationEntity organization = organizationRepository.getReferenceById(organizationId);
         PositionEntity positionEntity = new PositionEntity(
                 position.title(),
                 position.hierarchy(),
@@ -487,14 +470,14 @@ public class OrganizationService {
         positionRepository.save(positionEntity);
     }
 
-    public PositionEntity updatePosition(Long userId, Position position) {
+    public PositionEntity updatePosition(Long organizationId, Position position) {
         PositionEntity positionEntity = positionRepository.findById(position.positionId())
                 .orElseThrow(() -> new NotFoundException("Position not found"));
-        boolean userIsEmployeeOfPositionOrganization = positionEntity.getOrganization().getEmployees().stream()
-                .anyMatch(emp -> emp.getUserId().equals(userId));
-        if (!userIsEmployeeOfPositionOrganization) {
-            throw new ForbiddenException("The user is not an employee of the organization associated with this position");
+
+        if (!organizationId.equals(position.organizationId())) {
+            throw new ForbiddenException("It is not your organization");
         }
+
         int hierarchy = position.hierarchy();
         int authorities = 0;
         List<String> authoritiesList = position.authorities();
@@ -604,8 +587,8 @@ public class OrganizationService {
         return notifications;
     }
 
-    public List<PositionSummary> getAllPositions(Long userId) {
-        return getUserDetailsEntity(userId).getOrganization().getPositions().stream()
+    public List<PositionSummary> getAllPositions(Long organizationId) {
+        return getOrganizationEntity(organizationId).getPositions().stream()
                 .map(pos -> new PositionSummary(
                         pos.getPositionId(),
                         pos.getTitle()
@@ -613,9 +596,9 @@ public class OrganizationService {
                 .toList();
     }
 
-    public PositionDto getOnePosition(Long userId, Long positionId) {
+    public PositionDto getOnePosition(Long organizationId, Long positionId) {
         PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(
-                        getUserDetailsEntity(userId).getOrganization().getOrganizationId(), positionId)
+                        organizationId, positionId)
                 .orElseThrow(() -> new NotFoundException("Position not found"));
 
         List<String> authorities = Authorities.getNamesByValues(position.getAuthorities());
@@ -629,16 +612,9 @@ public class OrganizationService {
     }
 
     @Transactional
-    public PushNotification deleteEmployee(Long userId, Long employeeId) {
-        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
-
-        Set<UserDetailsEntity> employees = organization.getEmployees();
-        UserDetailsEntity employee = employees.stream()
-                .filter(e -> e.getUserId().equals(employeeId))
-                .findFirst()
+    public PushNotification deleteEmployee(Long organizationId, Long employeeId) {
+        UserDetailsEntity employee = userDetailsRepository.findEmployeeById(organizationId, employeeId)
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
-
-        employees.remove(employee);
         employee.setOrganization(null);
         employee.setPosition(null);
         employee.setAssignedTasks(null);
@@ -660,30 +636,25 @@ public class OrganizationService {
         );
     }
 
-    public void deletePosition(Long userId, Long positionId) {
-        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
-        PositionEntity position = organization.getPositions().stream()
-                .filter(p -> p.getPositionId().equals(positionId))
-                .findFirst()
+    public void deletePosition(Long organizationId, Long positionId) {
+        PositionEntity position = positionRepository
+                .findByOrganizationOrganizationIdAndPositionId(organizationId, positionId)
                 .orElseThrow(() -> new NotFoundException("Position not found"));
 
-        if (!position.getEmployees().isEmpty()) {
+        if (Hibernate.size(position.getEmployees()) > 0) {
             throw new ForbiddenException("Reassign user positions first");
         }
 
         positionRepository.delete(position);
     }
 
-    public PushNotification updateEmployee(Long userId, Long employeeId, Long positionId) {
-        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
-        UserDetailsEntity employee = organization.getEmployees().stream()
-                .filter(e -> e.getUserId().equals(employeeId))
-                .findFirst()
+    @Transactional
+    public PushNotification updateEmployee(Long organizationId, Long employeeId, Long positionId) {
+        UserDetailsEntity employee = userDetailsRepository.findEmployeeById(organizationId, employeeId)
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
-        PositionEntity position = organization.getPositions().stream()
-                .filter(p -> p.getPositionId().equals(positionId))
-                .findFirst()
+        PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(organizationId, positionId)
                 .orElseThrow(() -> new NotFoundException("Position not found"));
+
         employee.setPosition(position);
 
         userDetailsRepository.save(employee);

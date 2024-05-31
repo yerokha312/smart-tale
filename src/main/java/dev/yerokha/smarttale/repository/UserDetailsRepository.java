@@ -27,6 +27,12 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "AND inv.invitedAt + 7 DAY >= CURRENT_DATE)")
     Page<UserDetailsEntity> findAllEmployeesAndInvitees(@Param("orgId") Long orgId, Pageable pageable);
 
+    @Query("SELECT u " +
+           "FROM UserDetailsEntity u " +
+           "WHERE u.organization.organizationId = :organizationId " +
+           "AND u.userId = :employeeId")
+    Optional<UserDetailsEntity> findEmployeeById(Long organizationId, Long employeeId);
+
     @Modifying
     @Query(value = "UPDATE user_details SET active_orders_count = active_orders_count + :amount WHERE details_id = :userId", nativeQuery = true)
     void updateActiveOrdersCount(int amount, Long userId);
@@ -36,7 +42,7 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
     @Query("SELECT ud.userId " +
            "FROM UserDetailsEntity ud " +
            "WHERE ud.organization.organizationId = :organizationId")
-    List<Long> findAllByOrganizationId(Long organizationId);
+    List<Long> findAllUserIdsByOrganizationId(Long organizationId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
            "ud.userId, " +

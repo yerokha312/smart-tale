@@ -164,8 +164,7 @@ public class TokenService {
             throw new InvalidTokenException("Invalid token");
         }
     }
-
-
+    
     private Jwt decodeToken(String token) {
         if (!token.startsWith("Bearer ")) {
             throw new InvalidTokenException("Invalid token format");
@@ -363,23 +362,5 @@ public class TokenService {
             setValue("revoked_token:" + decrypt(token.getToken()).substring(7), "true", 7, TimeUnit.DAYS);
         });
     }
-//
-//    public boolean validateToken(String token) {
-//        try {
-//            jwtDecoder.decode(token);
-//            return true;
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
-//
-//    public Authentication getAuthentication(String token) {
-//        Jwt decodedToken = jwtDecoder.decode(token);
-//        String username = decodedToken.getSubject();
-//
-//        UserDetails userDetails = userService.loadUserByUsername(username);
-//
-//        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
-//    }
 }
 

@@ -39,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
+import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Organization", description = "Organization controller EPs")
@@ -106,7 +107,7 @@ public class OrganizationController {
             AccountController.validateImage(file);
         }
 
-        organizationService.updateOrganization(request, file, getUserIdFromAuthToken(authentication));
+        organizationService.updateOrganization(request, file, getOrgIdFromAuthToken(authentication));
 
         return ResponseEntity.ok("Organization updated");
     }
@@ -138,7 +139,7 @@ public class OrganizationController {
     @GetMapping("/orders")
     public ResponseEntity<CustomPage<OrderSummary>> getOrders(Authentication authentication,
                                                               @RequestParam(required = false) Map<String, String> params) {
-        return ResponseEntity.ok(organizationService.getOrders(getUserIdFromAuthToken(authentication), params));
+        return ResponseEntity.ok(organizationService.getOrders(getOrgIdFromAuthToken(authentication), params));
     }
 
     @Operation(
@@ -165,7 +166,7 @@ public class OrganizationController {
     public ResponseEntity<CustomPage<Employee>> getEmployees(Authentication authentication,
                                                              @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getEmployees(
-                getUserIdFromAuthToken(authentication),
+                getOrgIdFromAuthToken(authentication),
                 params));
     }
 
@@ -188,7 +189,7 @@ public class OrganizationController {
     public ResponseEntity<EmployeeTasksResponse> getEmployee(@PathVariable Long employeeId,
                                                              Authentication authentication,
                                                              @RequestParam(required = false) Map<String, String> params) {
-        return ResponseEntity.ok(organizationService.getEmployee(getUserIdFromAuthToken(authentication), employeeId, params));
+        return ResponseEntity.ok(organizationService.getEmployee(getOrgIdFromAuthToken(authentication), employeeId, params));
     }
 
     @Operation(
@@ -220,7 +221,7 @@ public class OrganizationController {
     )
     @GetMapping("/positions")
     public ResponseEntity<List<PositionSummary>> getAllPositions(Authentication authentication) {
-        return ResponseEntity.ok(organizationService.getAllPositions(getUserIdFromAuthToken(authentication)));
+        return ResponseEntity.ok(organizationService.getAllPositions(getOrgIdFromAuthToken(authentication)));
     }
 
     @Operation(
@@ -236,7 +237,7 @@ public class OrganizationController {
     @GetMapping("/positions/{positionId}")
     public ResponseEntity<PositionDto> getOnePosition(Authentication authentication,
                                                       @PathVariable Long positionId) {
-        return ResponseEntity.ok(organizationService.getOnePosition(getUserIdFromAuthToken(authentication), positionId));
+        return ResponseEntity.ok(organizationService.getOnePosition(getOrgIdFromAuthToken(authentication), positionId));
     }
 
     @Operation(
@@ -254,7 +255,7 @@ public class OrganizationController {
     @PostMapping("/positions")
     @PreAuthorize("hasPermission(#position, 'CREATE_POSITION')")
     public ResponseEntity<String> createPosition(Authentication authentication, @Valid @RequestBody Position position) {
-        organizationService.createPosition(getUserIdFromAuthToken(authentication), position);
+        organizationService.createPosition(getOrgIdFromAuthToken(authentication), position);
 
         return new ResponseEntity<>("Position created", HttpStatus.CREATED);
     }
@@ -274,7 +275,7 @@ public class OrganizationController {
     @PutMapping("/positions")
     @PreAuthorize("hasPermission(#position, 'UPDATE_POSITION')")
     public ResponseEntity<String> updatePosition(Authentication authentication, @Valid @RequestBody Position position) {
-        organizationService.updatePosition(getUserIdFromAuthToken(authentication), position);
+        organizationService.updatePosition(getOrgIdFromAuthToken(authentication), position);
 
         return new ResponseEntity<>("Position updated", HttpStatus.OK);
     }
@@ -313,7 +314,7 @@ public class OrganizationController {
     public ResponseEntity<String> deleteEmployee(Authentication authentication,
                                                  @PathVariable Long employeeId) {
 
-        organizationService.deleteEmployee(getUserIdFromAuthToken(authentication), employeeId);
+        organizationService.deleteEmployee(getOrgIdFromAuthToken(authentication), employeeId);
 
         return ResponseEntity.ok("Employee deleted from organization");
 
@@ -332,7 +333,7 @@ public class OrganizationController {
     @PreAuthorize("hasPermission(#positionId, 'PositionEntity', 'DELETE_POSITION')")
     public ResponseEntity<String> deletePosition(Authentication authentication,
                                                  @PathVariable Long positionId) {
-        organizationService.deletePosition(getUserIdFromAuthToken(authentication), positionId);
+        organizationService.deletePosition(getOrgIdFromAuthToken(authentication), positionId);
 
         return ResponseEntity.ok("Position deleted");
     }
@@ -351,7 +352,7 @@ public class OrganizationController {
     public ResponseEntity<String> updateEmployeePosition(Authentication authentication,
                                                          @RequestBody @Valid UpdateEmployeeRequest request) {
 
-        organizationService.updateEmployee(getUserIdFromAuthToken(authentication), request.employeeId(), request.positionId());
+        organizationService.updateEmployee(getOrgIdFromAuthToken(authentication), request.employeeId(), request.positionId());
 
         return ResponseEntity.ok("Employee position updated");
     }

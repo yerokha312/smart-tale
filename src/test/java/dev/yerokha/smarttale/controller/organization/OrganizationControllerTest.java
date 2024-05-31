@@ -37,6 +37,7 @@ import static dev.yerokha.smarttale.controller.account.AuthenticationControllerT
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -511,7 +512,8 @@ class OrganizationControllerTest {
     void checkFormerEmployeeRoles() {
         UserEntity user = userRepository.findById(100004L).get();
 
-        assertEquals(1, user.getAuthorities().size());
+        assertFalse(user.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("EMPLOYEE")));
     }
 
     @Test

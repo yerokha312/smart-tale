@@ -108,6 +108,14 @@ public class PushNotificationAspect {
         sendNotification(notification.recipientId(), notification.data(), USER);
     }
 
+    @AfterReturning(
+            pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.deleteEmployee(..))",
+            returning = "notification"
+    )
+    public void afterDeleteEmployee(PushNotification notification) {
+        sendNotification(notification.recipientId(), notification.data(), USER);
+    }
+
     private void sendNotification(Long id, Map<String, String> data, RecipientType to) {
         if (to.equals(USER)) {
             pushNotificationService.sendToUser(id, data);
