@@ -134,7 +134,7 @@ create table advertisement_image_junction
 
 create table invitations
 (
-    invited_at      date,
+    invited_at      timestamp(6),
     invitation_id   bigserial,
     invitee_id      bigint,
     inviter_id      bigint,

@@ -2,8 +2,8 @@ package dev.yerokha.smarttale.controller.monitoring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.DashboardOrder;
+import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
@@ -197,7 +197,7 @@ class MonitoringControllerTest {
     void getHistory() throws Exception {
         MvcResult result = mockMvc.perform(get(
                         "/v1/monitoring/orders?" +
-                                "active=true&dateType=accepted&dateFrom=2000-01-01&dateTo=2024-12-31&acceptedAt=desc")
+                        "active=true&dateType=accepted&dateFrom=2000-01-01&dateTo=2024-12-31&acceptedAt=desc")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),

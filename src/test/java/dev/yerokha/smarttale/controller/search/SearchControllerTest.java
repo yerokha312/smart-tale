@@ -79,9 +79,9 @@ class SearchControllerTest {
     @Order(1)
     void search_Unauthorized() throws Exception {
         mockMvc.perform(get("/v1/search")
-                .param("q", "product")
-                .param("con", "my_product")
-        )
+                        .param("q", "product")
+                        .param("con", "my_product")
+                )
                 .andExpect(status().isUnauthorized());
     }
 
@@ -92,66 +92,66 @@ class SearchControllerTest {
         login("existing2@example.com");
 
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "product")
-                .param("con", "my_product")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "product")
+                        .param("con", "my_product")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(5))
-                        );
+                );
     }
 
     @Test
     @Order(2)
     void search_My_Orders() throws Exception {
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "order")
-                .param("con", "my_order")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "order")
+                        .param("con", "my_order")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(5))
-                        );
+                );
     }
 
     @Test
     @Order(3)
     void search_My_Orders_iDD_False() throws Exception {
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "ord")
-                .param("con", "my_order")
-                .param("iDD", "false")
-                .param("size", "10")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "ord")
+                        .param("con", "my_order")
+                        .param("iDD", "false")
+                        .param("size", "10")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(10)),
                         jsonPath("$.totalElements").value(30)
-                        );
+                );
     }
 
     @Test
     @Order(4)
     void search_My_Advertisements_iDD_False() throws Exception {
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "")
-                .param("con", "my_advertisement")
-                .param("iDD", "false")
-                .param("size", "10")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "")
+                        .param("con", "my_advertisement")
+                        .param("iDD", "false")
+                        .param("size", "10")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(10)),
                         jsonPath("$.totalElements").value(41)
-                        );
+                );
     }
 
     @Test
@@ -160,32 +160,32 @@ class SearchControllerTest {
         Thread.sleep(1000);
         login("existing4@example.com");
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "sixth")
-                .param("con", "EMPLOYEE")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "sixth")
+                        .param("con", "EMPLOYEE")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(1)),
                         jsonPath("$.totalElements").value(1)
-                        );
+                );
     }
 
     @Test
     @Order(5)
     void search_Org_Orders() throws Exception {
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "order")
-                .param("con", "ORG_order")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "order")
+                        .param("con", "ORG_order")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
                         jsonPath("$.content", hasSize(5)),
                         jsonPath("$.totalElements").value(24)
-                        );
+                );
     }
 
     @Test
@@ -194,10 +194,10 @@ class SearchControllerTest {
         Thread.sleep(1000);
         login("existing3@example.com");
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "product")
-                .param("con", "purchase")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "product")
+                        .param("con", "purchase")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
@@ -209,10 +209,10 @@ class SearchControllerTest {
     @Order(7)
     void search_Organizations() throws Exception {
         mockMvc.perform(get("/v1/search")
-                .header("Authorization", "Bearer " + accessToken)
-                .param("q", "Org")
-                .param("con", "organization")
-        )
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "Org")
+                        .param("con", "organization")
+                )
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),

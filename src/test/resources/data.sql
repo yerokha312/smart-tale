@@ -50,7 +50,10 @@ INSERT INTO user_details (details_id, last_name, first_name, middle_name, email,
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100007, 'ZEighth', 'Existing', 'Profile', 'existing8@example.com', '+777712345400', 100001, 100003, 4);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100008, 'Invited', 'Person', 'Profile', 'invited1@example.com', '+777712341100', null, null, 0);
 
-INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES ('2023-01-01', 100000, 100008, 100003, 100000, 100003);
+INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '1' DAY, 100000, 100008, 100003, 100000, 100003);
+INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '2' DAY, 100003, 100007, 100003, 100000, 100003);
+INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '3' DAY, 100002, 100007, 100003, 100000, 100003);
+INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '4' DAY, 100001, 100007, 100003, 100000, 100003);
 
 -- create 10 abstract ads --
 INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,

@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Data
@@ -25,7 +25,7 @@ public class InvitationEntity {
     private Long invitationId;
 
     @Column(name = "invited_at")
-    private LocalDate invitedAt;
+    private LocalDateTime invitedAt;
 
     @ManyToOne
     @JoinColumn(name = "inviter_id")
@@ -46,7 +46,7 @@ public class InvitationEntity {
     public InvitationEntity() {
     }
 
-    public InvitationEntity(LocalDate invitedAt, UserDetailsEntity inviter, UserDetailsEntity invitee, OrganizationEntity organization, PositionEntity position) {
+    public InvitationEntity(LocalDateTime invitedAt, UserDetailsEntity inviter, UserDetailsEntity invitee, OrganizationEntity organization, PositionEntity position) {
         this.invitedAt = invitedAt;
         this.inviter = inviter;
         this.invitee = invitee;
@@ -59,11 +59,12 @@ public class InvitationEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         InvitationEntity that = (InvitationEntity) o;
-        return Objects.equals(invitee, that.invitee) && Objects.equals(position, that.position);
+        return Objects.equals(invitee.getUserId(), that.invitee.getUserId())
+               && Objects.equals(position.getPositionId(), that.position.getPositionId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(invitee, position);
+        return Objects.hash(invitee.getUserId(), position.getPositionId());
     }
 }

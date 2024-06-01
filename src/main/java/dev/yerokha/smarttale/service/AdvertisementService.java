@@ -62,6 +62,7 @@ import static dev.yerokha.smarttale.mapper.AdMapper.mapToCards;
 import static dev.yerokha.smarttale.mapper.AdMapper.mapToFullCard;
 import static dev.yerokha.smarttale.mapper.AdMapper.toFullDto;
 import static dev.yerokha.smarttale.mapper.AdMapper.toOrderDto;
+import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
 import static java.lang.Integer.parseInt;
 
 @Service
@@ -253,17 +254,6 @@ public class AdvertisementService {
                     return mapToCards(product);
                 });
         return getCustomPage(page);
-    }
-
-    static <T> CustomPage<T> getCustomPage(Page<T> page) {
-        return new CustomPage<>(
-                page.getContent(),
-                page.getTotalPages(),
-                page.getTotalElements(),
-                page.getNumber(),
-                page.getSize(),
-                page.isEmpty()
-        );
     }
 
     public AdvertisementInterface getPurchase(Long purchaseId) {

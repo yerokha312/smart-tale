@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
@@ -273,7 +272,7 @@ public class AuthenticationService {
                         Long.valueOf(EncryptionUtil.decrypt(code)))
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
-        if (invitation.getInvitedAt().plusDays(7).isBefore(LocalDate.now())) {
+        if (invitation.getInvitedAt().plusDays(7).isBefore(LocalDateTime.now())) {
             throw new MissedException("Invitation is expired");
         }
 
@@ -288,7 +287,7 @@ public class AuthenticationService {
         details.setRegisteredAt(LocalDateTime.now());
 
         userRepository.save(user);
-        invitationRepository.deleteAll(details.getInvitations());
+        invitationRepository.deleteAllByInvitee_UserIdJPQL(user.getUserId());
 
         return "Registered successfully. Please log in";
     }
@@ -307,7 +306,7 @@ public class AuthenticationService {
                         Long.valueOf(EncryptionUtil.decrypt(code)))
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
-        if (invitation.getInvitedAt().plusDays(7).isBefore(LocalDate.now())) {
+        if (invitation.getInvitedAt().plusDays(7).isBefore(LocalDateTime.now())) {
             throw new MissedException("Invitation is expired");
         }
 
@@ -319,7 +318,7 @@ public class AuthenticationService {
 
         user.setAuthorities(getUserAndEmployeeRole());
         userRepository.save(user);
-        invitationRepository.deleteAll(details.getInvitations());
+        invitationRepository.deleteAllByInvitee_UserIdJPQL(user.getUserId());
 
         if (!user.isEnabled()) {
             throw new DisabledException("User is not enabled");

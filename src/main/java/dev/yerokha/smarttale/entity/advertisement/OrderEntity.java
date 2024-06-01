@@ -14,6 +14,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.Set;
 @ToString
 @Entity
 @Table(name = "orders")
+@OnDelete(action = OnDeleteAction.CASCADE)
 public class OrderEntity extends Advertisement {
 
     @Column(name = "size")

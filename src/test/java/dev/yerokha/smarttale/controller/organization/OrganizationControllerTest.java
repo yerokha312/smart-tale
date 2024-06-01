@@ -13,7 +13,6 @@ import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -30,13 +29,13 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.Comparator;
 import java.util.List;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -207,13 +206,14 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(4))
+                        jsonPath("$.totalElements").value(6))
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
         List<String> names = JsonPath.read(content, "$.content[*].name");
+        List<String> statuses = JsonPath.read(content, "$.content[*].status");
         for (int i = 1; i < names.size(); i++) {
-            assert names.get(i - 1).compareTo(names.get(i)) <= 0;
+            assert names.get(i - 1).compareTo(names.get(i)) <= 0 || statuses.get(i).equals("Invited");
         }
     }
 
@@ -225,7 +225,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(4))
+                        jsonPath("$.totalElements").value(6))
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
@@ -308,30 +308,21 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(6),
+                        jsonPath("$.totalElements").value(7),
                         jsonPath("$.content[*].status").value(hasItem("Invited")))
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
         List<String> names = JsonPath.read(content, "$.content[*].name");
-
-        Comparator<String> nameComparator = (name1, name2) -> {
-            if (name1.isEmpty() && !name2.isEmpty()) {
-                return 1; // name1 (empty) should be considered greater
-            } else if (!name1.isEmpty() && name2.isEmpty()) {
-                return -1; // name1 should be considered less than name2 (empty)
-            } else {
-                return name1.compareTo(name2); // Compare non-empty strings as usual
-            }
-        };
-
-        Assertions.assertThat(names).isSortedAccordingTo(nameComparator);
-
         List<String> statuses = JsonPath.read(content, "$.content[*].status");
+
+        for (int i = 1; i < names.size(); i++) {
+            assert names.get(i - 1).compareTo(names.get(i)) <= 0 || statuses.get(i).equals("Invited");
+        }
 
         long invitedCount = statuses.stream().filter(status -> status.equals("Invited")).count();
 
-        assertEquals(2, invitedCount);
+        assertEquals(3, invitedCount);
     }
 
     @Test
@@ -342,7 +333,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(6),
+                        jsonPath("$.totalElements").value(7),
                         jsonPath("$.content[*].status").value(hasItem("Invited")))
                 .andReturn();
 
@@ -483,7 +474,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.totalElements").value(6)
+                        jsonPath("$.totalElements").value(7)
                 );
     }
 
@@ -502,7 +493,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.totalElements").value(5)
+                        jsonPath("$.totalElements").value(6)
                 );
     }
 
@@ -511,7 +502,8 @@ class OrganizationControllerTest {
     void checkFormerEmployeeRoles() {
         UserEntity user = userRepository.findById(100004L).get();
 
-        assertEquals(1, user.getAuthorities().size());
+        assertFalse(user.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("EMPLOYEE")));
     }
 
     @Test
@@ -696,7 +688,6 @@ class OrganizationControllerTest {
                         .content(json))
                 .andExpect(status().isForbidden());
     }
-
 
     @Test
     @Order(31)

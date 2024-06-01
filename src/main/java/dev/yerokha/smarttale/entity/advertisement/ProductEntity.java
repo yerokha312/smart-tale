@@ -7,6 +7,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "products")
+@OnDelete(action = OnDeleteAction.CASCADE)
 public class ProductEntity extends Advertisement {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

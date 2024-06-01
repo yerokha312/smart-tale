@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Tag(name = "Monitoring")
@@ -119,7 +120,7 @@ public class MonitoringController {
                                                                      @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(organizationService.getOrders(
-                getUserIdFromAuthToken(authentication),
+                getOrgIdFromAuthToken(authentication),
                 params));
     }
 
