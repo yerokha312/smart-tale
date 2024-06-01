@@ -61,6 +61,11 @@ public class TokenService {
         this.userDetailsRepository = userDetailsRepository;
     }
 
+    static String getEmailFromAuthToken(Authentication authentication) {
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        return jwt.getSubject();
+    }
+
     public String generateAccessToken(UserEntity entity, PositionEntity position) {
         String accessToken = generateToken(entity, ACCESS_TOKEN_EXPIRATION, TokenType.ACCESS, position);
         setValue("access_token:" + entity.getEmail(),
@@ -117,7 +122,7 @@ public class TokenService {
 
     private JwtClaimsSet getClaims(Instant now,
                                    int expirationTime,
-                                   String subject,
+                                   String email,
                                    Long userId,
                                    String roles,
                                    long organizationId,
@@ -128,7 +133,7 @@ public class TokenService {
                 .issuer("self")
                 .issuedAt(now)
                 .expiresAt(now.plus(expirationTime, ChronoUnit.MINUTES))
-                .subject(subject)
+                .subject(email)
                 .claim("roles", roles)
                 .claim("orgId", organizationId)
                 .claim("hierarchy", hierarchy)

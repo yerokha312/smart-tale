@@ -95,7 +95,7 @@ public class PushNotificationService {
 
     private void queueNotification(Long userId, PushNotificationEntity body) {
         try {
-            redisTemplate.opsForList().leftPush(userId + "-notifications", objectMapper.writeValueAsString(body));
+            redisTemplate.opsForList().rightPush(userId + "-notifications", objectMapper.writeValueAsString(body));
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Could not serialize push notification", e);
         }

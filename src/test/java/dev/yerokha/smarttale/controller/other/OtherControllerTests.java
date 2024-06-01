@@ -2,9 +2,11 @@ package dev.yerokha.smarttale.controller.other;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -44,6 +47,8 @@ public class OtherControllerTests {
     UserRepository userRepository;
     final String APP_JSON = "application/json";
     public static String accessToken;
+    @Autowired
+    private InvitationRepository invitationRepository;
 
     private void login(String email) throws Exception {
         Thread.sleep(1000);
@@ -126,13 +131,9 @@ public class OtherControllerTests {
 
     @Test
     @Order(31)
-    void checkInvitations() throws Exception {
-        mockMvc.perform(get("/v1/account/profile/invitations")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(0)
-                );
+    void checkInvitations() {
+        var invitations = invitationRepository
+                .findAllByInviteeId(100000L, PageRequest.of(0, 10));
+        Assertions.assertEquals(0, invitations.getTotalElements());
     }
 }

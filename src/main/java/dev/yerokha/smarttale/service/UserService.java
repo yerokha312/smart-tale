@@ -3,6 +3,7 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Invitation;
 import dev.yerokha.smarttale.dto.Profile;
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
@@ -18,6 +19,7 @@ import dev.yerokha.smarttale.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -25,8 +27,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
+import static dev.yerokha.smarttale.service.TokenService.getEmailFromAuthToken;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -142,8 +146,8 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void acceptInvitation(Long userId, Long invitationId) {
-        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
+    public PushNotification acceptInvitation(Authentication authentication, Long invitationId) {
+        Long userId = TokenService.getUserIdFromAuthToken(authentication);
         boolean userHasAssignedTasks = userDetailsRepository.existsAssignedTasks(userId);
         if (userHasAssignedTasks) {
             throw new ForbiddenException("You have assigned tasks");
@@ -153,11 +157,37 @@ public class UserService implements UserDetailsService {
                         invitationId, userId, LocalDateTime.now().plusWeeks(1))
                 .orElseThrow(() -> new NotFoundException("Invitation not found or expired"));
 
-        user.setOrganization(invitation.getOrganization());
+        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
+        OrganizationEntity organization = invitation.getOrganization();
+        user.setOrganization(organization);
         user.setPosition(invitation.getPosition());
         user.setActiveOrdersCount(0);
 
         userDetailsRepository.save(user);
         invitationRepository.deleteAllByInvitee_UserIdJPQL(userId);
+
+        String email = getEmailFromAuthToken(authentication);
+        Image image = invitation.getInvitee().getImage();
+        String imageUrl = image == null ? "" : image.getImageUrl();
+        Map<String, String> data = Map.of(
+                "email", email,
+                "sub", "Пользователь принял приглашение",
+                "employeeId", userId.toString(),
+                "employeeName", invitation.getInvitee().getName(),
+                "employeeAvatar", imageUrl,
+                "employeePosition", invitation.getPosition().getTitle()
+        );
+
+        return new PushNotification(
+                organization.getOrganizationId(),
+                data
+        );
+    }
+
+    public void declineInvitation(Long userId, Long invitationId) {
+        int deletedCount = invitationRepository.deleteByInvitationIdAndInvitee_UserIdJPQL(invitationId, userId);
+        if (deletedCount == 0) {
+            throw new NotFoundException("Invitation not found");
+        }
     }
 }

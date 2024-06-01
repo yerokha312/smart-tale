@@ -58,4 +58,8 @@ public interface InvitationRepository extends JpaRepository<InvitationEntity, Lo
     @Modifying
     @Query("DELETE FROM InvitationEntity i WHERE i.invitee.userId = :userId")
     void deleteAllByInvitee_UserIdJPQL(Long userId);
+
+    @Modifying
+    @Query("DELETE FROM InvitationEntity i WHERE i.invitationId = :invitationId AND i.invitee.userId = :userId")
+    int deleteByInvitationIdAndInvitee_UserIdJPQL(Long invitationId, Long userId);
 }

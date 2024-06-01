@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -139,9 +140,24 @@ public class AccountController {
     @PostMapping("/invitations/{invitationId}")
     public ResponseEntity<String> acceptInvitation(Authentication authentication,
                                                    @PathVariable Long invitationId) {
-        userService.acceptInvitation(getUserIdFromAuthToken(authentication), invitationId);
+        userService.acceptInvitation(authentication, invitationId);
 
         return ResponseEntity.ok("Invitation accepted");
     }
 
+    @Operation(
+            summary = "Decline invitation", tags = {"delete", "invitation", "account"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "404", description = "Invitation not found")
+            }
+    )
+    @DeleteMapping("/invitations/{invitationId}")
+    public ResponseEntity<String> declineInvitation(Authentication authentication,
+                                                    @PathVariable Long invitationId) {
+        userService.declineInvitation(getUserIdFromAuthToken(authentication), invitationId);
+
+        return ResponseEntity.ok("Invitation declined");
+    }
 }
