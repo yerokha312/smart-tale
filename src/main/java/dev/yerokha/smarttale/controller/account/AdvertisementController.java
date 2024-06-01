@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
+import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 
 @Tag(name = "My Advertisements", description = "Controller for ads in Private Account")
 @RestController
@@ -130,7 +131,7 @@ public class AdvertisementController {
                 throw new IllegalArgumentException("You can not upload more than 5 images");
             }
             for (MultipartFile file : files) {
-                AccountController.validateImage(file);
+                validateImage(file);
             }
         }
 

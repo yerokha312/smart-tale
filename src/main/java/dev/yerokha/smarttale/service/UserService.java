@@ -1,19 +1,36 @@
 package dev.yerokha.smarttale.service;
 
+import dev.yerokha.smarttale.dto.CustomPage;
+import dev.yerokha.smarttale.dto.Invitation;
 import dev.yerokha.smarttale.dto.Profile;
+import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
 import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
+import dev.yerokha.smarttale.exception.ForbiddenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
+import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
+import static dev.yerokha.smarttale.service.TokenService.getEmailFromAuthToken;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -22,12 +39,14 @@ public class UserService implements UserDetailsService {
     private final UserDetailsRepository userDetailsRepository;
     private final ImageService imageService;
     private final MailService mailService;
+    private final InvitationRepository invitationRepository;
 
-    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService, MailService mailService) {
+    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService, MailService mailService, InvitationRepository invitationRepository) {
         this.userRepository = userRepository;
         this.userDetailsRepository = userDetailsRepository;
         this.imageService = imageService;
         this.mailService = mailService;
+        this.invitationRepository = invitationRepository;
     }
 
     @Override
@@ -117,6 +136,58 @@ public class UserService implements UserDetailsService {
     public void subscribe(Long userIdFromAuthToken) {
         UserDetailsEntity user = getUserDetailsEntity(userIdFromAuthToken);
         mailService.sendSubscriptionRequest(user);
+    }
 
+    public CustomPage<Invitation> getInvitations(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Invitation> invitations = invitationRepository
+                .findAllByInviteeId(userId, pageable);
+        return getCustomPage(invitations);
+    }
+
+    @Transactional
+    public PushNotification acceptInvitation(Authentication authentication, Long invitationId) {
+        Long userId = TokenService.getUserIdFromAuthToken(authentication);
+        boolean userHasAssignedTasks = userDetailsRepository.existsAssignedTasks(userId);
+        if (userHasAssignedTasks) {
+            throw new ForbiddenException("You have assigned tasks");
+        }
+
+        InvitationEntity invitation = invitationRepository.findByInvitationIdAndInvitee_UserIdAndInvitedAtBefore(
+                        invitationId, userId, LocalDateTime.now().plusWeeks(1))
+                .orElseThrow(() -> new NotFoundException("Invitation not found or expired"));
+
+        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
+        OrganizationEntity organization = invitation.getOrganization();
+        user.setOrganization(organization);
+        user.setPosition(invitation.getPosition());
+        user.setActiveOrdersCount(0);
+
+        userDetailsRepository.save(user);
+        invitationRepository.deleteAllByInvitee_UserIdJPQL(userId);
+
+        String email = getEmailFromAuthToken(authentication);
+        Image image = invitation.getInvitee().getImage();
+        String imageUrl = image == null ? "" : image.getImageUrl();
+        Map<String, String> data = Map.of(
+                "email", email,
+                "sub", "Пользователь принял приглашение",
+                "employeeId", userId.toString(),
+                "employeeName", invitation.getInvitee().getName(),
+                "employeeAvatar", imageUrl,
+                "employeePosition", invitation.getPosition().getTitle()
+        );
+
+        return new PushNotification(
+                organization.getOrganizationId(),
+                data
+        );
+    }
+
+    public void declineInvitation(Long userId, Long invitationId) {
+        int deletedCount = invitationRepository.deleteByInvitationIdAndInvitee_UserIdJPQL(invitationId, userId);
+        if (deletedCount == 0) {
+            throw new NotFoundException("Invitation not found");
+        }
     }
 }

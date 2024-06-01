@@ -15,7 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import static dev.yerokha.smarttale.service.AdvertisementService.getCustomPage;
+import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
 import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 

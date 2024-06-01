@@ -85,7 +85,7 @@ public class PushNotificationService {
         notificationRepository.save(pushNotificationEntity);
         String destination = "/org/" + organizationId + "/push";
         messagingTemplate.convertAndSend(destination, pushNotificationEntity);
-        List<Long> employeeIdList = userDetailsRepository.findAllByOrganizationId(organizationId);
+        List<Long> employeeIdList = userDetailsRepository.findAllUserIdsByOrganizationId(organizationId);
         for (Long employeeId : employeeIdList) {
             if (!userIsOnline(employeeId)) {
                 queueNotification(employeeId, pushNotificationEntity);
@@ -95,7 +95,7 @@ public class PushNotificationService {
 
     private void queueNotification(Long userId, PushNotificationEntity body) {
         try {
-            redisTemplate.opsForList().leftPush(userId + "-notifications", objectMapper.writeValueAsString(body));
+            redisTemplate.opsForList().rightPush(userId + "-notifications", objectMapper.writeValueAsString(body));
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Could not serialize push notification", e);
         }
