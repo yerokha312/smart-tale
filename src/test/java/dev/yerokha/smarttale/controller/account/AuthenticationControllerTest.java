@@ -71,9 +71,7 @@ public class AuthenticationControllerTest {
                         .contentType(APP_JSON)
                         .content(json)
                 )
-                .andExpect(status().isCreated())
-                .andExpect(content().string(containsString("johndoe@example.com")));
-
+                .andExpect(status().isCreated());
         ArgumentCaptor<String> confirmationUrlCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(mailService).sendEmailVerificationCode(
                 eq("johndoe@example.com"),

@@ -4,7 +4,6 @@ import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
-import dev.yerokha.smarttale.service.interfaces.NotificationService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -21,7 +21,7 @@ import java.util.Map;
 
 
 @Service
-public class MailService implements NotificationService {
+public class MailService {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine engine;
@@ -36,7 +36,6 @@ public class MailService implements NotificationService {
         this.engine = engine;
     }
 
-    @Override
     public void send(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -51,6 +50,7 @@ public class MailService implements NotificationService {
         }
     }
 
+    @Async
     public void sendEmailVerificationCode(String to, String verificationCode) {
         Context context = new Context();
         context.setVariables(Map.of("verificationCode", verificationCode));
@@ -60,6 +60,7 @@ public class MailService implements NotificationService {
         send(to, "Код подтверждения почты", emailBody);
     }
 
+    @Async
     public void sendSubscriptionRequest(UserDetailsEntity user) {
         Context context = new Context();
         String name = user.getName();
@@ -73,6 +74,7 @@ public class MailService implements NotificationService {
         send(ADMIN_EMAIL, "Запрос на подписку", emailBody);
     }
 
+    @Async
     public void sendInvitation(String to, String name, OrganizationEntity organization, String position, String link) {
         Context context = new Context();
         context.setVariables(Map.of(
@@ -89,6 +91,7 @@ public class MailService implements NotificationService {
         send(ADMIN_EMAIL, "Приглашение в организацию", emailBody);
     }
 
+    @Async
     public void sendPurchaseRequest(PurchaseRequest request) {
         Context context = new Context();
         context.setVariables(Map.of(
@@ -107,6 +110,7 @@ public class MailService implements NotificationService {
         send(request.buyerEmail(), "Запрос о покупке", emailBody);
     }
 
+    @Async
     public void sendLoginCode(String to, String verificationCode) {
         Context context = new Context();
         context.setVariables(Map.of("verificationCode", verificationCode));
@@ -116,6 +120,7 @@ public class MailService implements NotificationService {
         send(to, "Код для входа", emailBody);
     }
 
+    @Async
     public void sendAcceptanceRequest(String email, AcceptanceRequest request, String encryptedCode) {
         Context context = new Context();
         context.setVariables(Map.of(

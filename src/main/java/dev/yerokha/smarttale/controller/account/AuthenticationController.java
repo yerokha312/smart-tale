@@ -49,7 +49,13 @@ public class AuthenticationController {
             throw new IllegalArgumentException("Name fields should be either all Latin or all Cyrillic");
         }
 
-        return new ResponseEntity<>(authenticationService.register(request, code), HttpStatus.CREATED);
+        if (code != null && !code.isEmpty()) {
+            authenticationService.register(request, code);
+        } else {
+            authenticationService.register(request);
+        }
+
+        return new ResponseEntity<>("Registered successfully. Please log in", HttpStatus.CREATED);
     }
 
     @Operation(
@@ -123,7 +129,11 @@ public class AuthenticationController {
     @PostMapping(value = "/login", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> login(@RequestBody @Valid @Email String email,
                                         @RequestParam(name = "code", required = false) String code) {
-        return ResponseEntity.ok(authenticationService.login(email, code));
+        if (code != null && !code.isEmpty()) {
+            return ResponseEntity.ok(authenticationService.login(email, code));
+        } else {
+            return ResponseEntity.ok(authenticationService.login(email));
+        }
     }
 
     @Operation(
