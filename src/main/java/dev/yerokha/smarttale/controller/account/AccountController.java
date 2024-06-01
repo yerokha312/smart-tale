@@ -1,5 +1,7 @@
 package dev.yerokha.smarttale.controller.account;
 
+import dev.yerokha.smarttale.dto.CustomPage;
+import dev.yerokha.smarttale.dto.Invitation;
 import dev.yerokha.smarttale.dto.Profile;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
 import dev.yerokha.smarttale.service.UserService;
@@ -13,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,11 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
+import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 
 @Tag(name = "Account", description = "Controller for personal account")
 @RestController
@@ -96,28 +96,6 @@ public class AccountController {
         return ResponseEntity.ok("Avatar updated successfully!");
     }
 
-    public static void validateImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File is not provided");
-        }
-
-        if (!Objects.requireNonNull(file.getContentType()).startsWith("image/")) {
-            throw new IllegalArgumentException("Uploaded file is not an image");
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null || originalFilename.isEmpty()) {
-            throw new IllegalArgumentException("Uploaded file has no name");
-        }
-
-        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
-        List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png");
-
-        if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
-            throw new IllegalArgumentException("Uploaded file is not a supported image (JPG, JPEG, PNG)");
-        }
-    }
-
     @Operation(
             summary = "Subscription", description = "Send subscription request to admin",
             tags = {"post", "user", "profile", "account"},
@@ -135,5 +113,35 @@ public class AccountController {
         return ResponseEntity.ok("The subscription is on the way, our administrator will contact you");
     }
 
+    @Operation(
+            summary = "Get user's invitations", tags = {"get", "invitation", "account"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized")
+            }
+    )
+    @GetMapping("/invitations")
+    public ResponseEntity<CustomPage<Invitation>> getInvitations(Authentication authentication,
+                                                                 @RequestParam(required = false, defaultValue = "0") int page,
+                                                                 @RequestParam(required = false, defaultValue = "5") int size) {
+        return ResponseEntity.ok(userService.getInvitations(getUserIdFromAuthToken(authentication), page, size));
+    }
+
+    @Operation(
+            summary = "Accept invitation", tags = {"post", "invitation", "account"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "Still has assigned tasks"),
+                    @ApiResponse(responseCode = "404", description = "Invitation not found or expired")
+            }
+    )
+    @PostMapping("/invitations/{invitationId}")
+    public ResponseEntity<String> acceptInvitation(Authentication authentication,
+                                                   @PathVariable Long invitationId) {
+        userService.acceptInvitation(getUserIdFromAuthToken(authentication), invitationId);
+
+        return ResponseEntity.ok("Invitation accepted");
+    }
 
 }

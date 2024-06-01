@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,9 +50,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
-import static dev.yerokha.smarttale.service.AdvertisementService.getCustomPage;
+import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
 import static java.lang.Integer.parseInt;
 import static java.time.LocalDate.parse;
 
@@ -275,12 +277,26 @@ public class OrganizationService {
                 .orElseThrow(() -> new NotFoundException("Position not found"));
 
         UserDetailsEntity invitee = getInvitee(request);
-        InvitationEntity invitation = new InvitationEntity(
-                LocalDate.now(), inviter, invitee, organization, position);
+
+        Optional<InvitationEntity> existingInvitationOpt = invitationRepository
+                .findByInviteeIdAndOrganizationId(invitee.getUserId(), organization.getOrganizationId());
+
+        InvitationEntity invitation;
+        if (existingInvitationOpt.isPresent()) {
+            invitation = existingInvitationOpt.get();
+            invitation.setInvitedAt(LocalDateTime.now());
+            invitation.setInviter(inviter);
+            invitation.setPosition(position);
+        } else {
+            invitation = new InvitationEntity(
+                    LocalDateTime.now(), inviter, invitee, organization, position);
+        }
+
         invitationRepository.save(invitation);
 
         String name = invitee.getName();
-        String code = EncryptionUtil.encrypt(String.valueOf(invitation.getInvitationId()));
+        Long invitationId = invitation.getInvitationId();
+        String code = EncryptionUtil.encrypt(String.valueOf(invitationId));
         String link = REG_PAGE + "?code=" + code;
         if (name != null) {
             link = LOGIN_PAGE + "?code=" + code;
@@ -298,7 +314,7 @@ public class OrganizationService {
         data.put("orgId", organization.getOrganizationId().toString());
         data.put("orgName", organization.getName());
         data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
-        data.put("code", code);
+        data.put("invId", invitationId.toString());
 
         return new PushNotification(
                 invitee.getUserId(),

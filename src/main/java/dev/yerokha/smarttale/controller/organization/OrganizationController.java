@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.controller.organization;
 
-import dev.yerokha.smarttale.controller.account.AccountController;
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Employee;
@@ -41,6 +40,7 @@ import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
+import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 
 @Tag(name = "Organization", description = "Organization controller EPs")
 @RestController
@@ -81,7 +81,7 @@ public class OrganizationController {
                                                      Authentication authentication) {
 
         if (file != null) {
-            AccountController.validateImage(file);
+            validateImage(file);
         }
 
         organizationService.createOrganization(request, file, getUserIdFromAuthToken(authentication));
@@ -104,7 +104,7 @@ public class OrganizationController {
                                                      Authentication authentication) {
 
         if (file != null) {
-            AccountController.validateImage(file);
+            validateImage(file);
         }
 
         organizationService.updateOrganization(request, file, getOrgIdFromAuthToken(authentication));

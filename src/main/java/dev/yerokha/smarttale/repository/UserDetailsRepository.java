@@ -20,11 +20,13 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
 
     Optional<UserDetailsEntity> findByEmail(String email);
 
-    @Query("SELECT DISTINCT ud FROM UserDetailsEntity ud " +
+    @Query("SELECT ud " +
+           "FROM UserDetailsEntity ud " +
            "LEFT JOIN ud.invitations inv " +
            "LEFT JOIN ud.organization org " +
            "WHERE org.organizationId = :orgId OR (inv.organization.organizationId = :orgId " +
-           "AND inv.invitedAt + 7 DAY >= CURRENT_DATE)")
+           "AND inv.invitedAt + 7 DAY >= CURRENT_DATE) " +
+           "ORDER BY CASE WHEN org.organizationId = :orgId THEN 0 ELSE 1 END ASC")
     Page<UserDetailsEntity> findAllEmployeesAndInvitees(@Param("orgId") Long orgId, Pageable pageable);
 
     @Query("SELECT u " +
@@ -58,4 +60,6 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "AND (:orgId IS NULL OR ud.organization.organizationId = :orgId)")
     Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("orgId") Long orgId, Pageable pageable);
 
+    @Query("SELECT COUNT(o) > 0 FROM UserDetailsEntity u JOIN u.assignedTasks o WHERE u.userId = :userId")
+    boolean existsAssignedTasks(Long userId);
 }

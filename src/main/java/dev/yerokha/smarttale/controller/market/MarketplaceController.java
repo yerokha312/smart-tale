@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.controller.market;
 
-import dev.yerokha.smarttale.controller.account.AccountController;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdRequest;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
+import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 
 @Tag(name = "Marketplace", description = "EPs for marketplace")
 @RestController
@@ -137,7 +137,7 @@ public class MarketplaceController {
                 throw new IllegalArgumentException("You can not upload more than 5 images");
             }
             for (MultipartFile file : files) {
-                AccountController.validateImage(file);
+                validateImage(file);
             }
         }
 

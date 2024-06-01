@@ -164,7 +164,7 @@ public class TokenService {
             throw new InvalidTokenException("Invalid token");
         }
     }
-    
+
     private Jwt decodeToken(String token) {
         if (!token.startsWith("Bearer ")) {
             throw new InvalidTokenException("Invalid token format");
