@@ -61,7 +61,7 @@ public class AuthenticationService {
         this.objectMapper = objectMapper;
     }
 
-    private String register(RegistrationRequest request) {
+    public void register(RegistrationRequest request) {
         String email = request.email().toLowerCase();
         boolean userIsInvited = isUserInvited(email);
         if (!isEmailAvailable(email) && !userIsInvited) {
@@ -104,8 +104,6 @@ public class AuthenticationService {
         setValue("details:" + email, detailsJson, 15, TimeUnit.MINUTES);
 
         sendVerificationEmail(email);
-
-        return email;
     }
 
     public boolean isPhoneAvailable(String phoneNumber) {
@@ -213,7 +211,7 @@ public class AuthenticationService {
                 .collect(Collectors.joining());
     }
 
-    private String login(String email) {
+    public String login(String email) {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new NotFoundException(String.format("User with email %s not found", email)));
@@ -259,11 +257,7 @@ public class AuthenticationService {
 
 
     @Transactional
-    public String register(RegistrationRequest request, String code) {
-        if (code == null) {
-            return register(request);
-        }
-
+    public void register(RegistrationRequest request, String code) {
         UserEntity user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new NotFoundException("User not found"));
         UserDetailsEntity details = user.getDetails();
@@ -288,16 +282,10 @@ public class AuthenticationService {
 
         userRepository.save(user);
         invitationRepository.deleteAllByInvitee_UserIdJPQL(user.getUserId());
-
-        return "Registered successfully. Please log in";
     }
 
     @Transactional
     public String login(String email, String code) {
-        if (code == null) {
-            return login(email);
-        }
-
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new NotFoundException(String.format("User with email %s not found", email)));
