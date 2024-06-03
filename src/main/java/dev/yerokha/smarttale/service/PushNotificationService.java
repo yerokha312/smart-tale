@@ -21,14 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static dev.yerokha.smarttale.config.WebSocketConfig.userIsOnline;
 import static dev.yerokha.smarttale.enums.RecipientType.ORGANIZATION;
@@ -44,17 +43,19 @@ public class PushNotificationService {
     private final UserDetailsRepository userDetailsRepository;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final ObjectMapper objectMapper;
+    private final TransactionalNotificationService transactionalNotificationService;
 
     public PushNotificationService(SimpMessagingTemplate messagingTemplate,
                                    NotificationRepository notificationRepository,
                                    RedisTemplate<String, String> redisTemplate,
                                    UserDetailsRepository userDetailsRepository,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper, TransactionalNotificationService transactionalNotificationService) {
         this.messagingTemplate = messagingTemplate;
         this.notificationRepository = notificationRepository;
         this.redisTemplate = redisTemplate;
         this.userDetailsRepository = userDetailsRepository;
         this.objectMapper = objectMapper;
+        this.transactionalNotificationService = transactionalNotificationService;
     }
 
     public void sendToUser(Long userId, Map<String, String> body) {
@@ -101,14 +102,13 @@ public class PushNotificationService {
         }
     }
 
-    @Transactional
     public void sendQueuedNotification(Long userId) {
         // Retrieve and delete Redis notifications
         List<String> queuedRedisNotifications = getQueuedRedisNotifications(userId);
 
         // Retrieve unsent database notifications and mark them as sent
         List<PushNotificationEntity> unsentDatabaseNotifications = getUnsentDatabaseNotifications(userId);
-        markNotificationsAsSent(unsentDatabaseNotifications);
+        transactionalNotificationService.markNotificationsAsSent(unsentDatabaseNotifications);
 
         // Combine all notifications to Set, convert back to List sorted by timestamp desc and send
         List<PushNotificationEntity> notificationsToSend = combineNotifications(queuedRedisNotifications, unsentDatabaseNotifications);
@@ -131,23 +131,17 @@ public class PushNotificationService {
 
     private List<PushNotificationEntity> combineNotifications(List<String> redisNotifications,
                                                               List<PushNotificationEntity> dbNotifications) {
-        Set<PushNotificationEntity> combinedNotificationsSet = new HashSet<>();
 
-        combinedNotificationsSet.addAll(redisNotifications.stream()
-                .map(n -> {
-                    try {
-                        return objectMapper.readValue(n, PushNotificationEntity.class);
-                    } catch (JsonProcessingException e) {
-                        throw new IllegalArgumentException("Could not deserialize push notification", e);
-                    }
-                })
-                .collect(Collectors.toSet()));
-        combinedNotificationsSet.addAll(dbNotifications);
-
-        List<PushNotificationEntity> combinedNotifications = new ArrayList<>(combinedNotificationsSet);
-        combinedNotifications.sort((n1, n2) -> n2.getTimestamp().compareTo(n1.getTimestamp()));
-
-        return combinedNotifications;
+        return Stream.concat(
+                        redisNotifications.stream()
+                                .map(this::deserializeNotification),
+                        dbNotifications.stream()
+                )
+                .distinct()
+                .sorted(Comparator
+                        .comparing(PushNotificationEntity::getTimestamp)
+                        .reversed())
+                .toList();
     }
 
     private void sendNotifications(Long userId, List<PushNotificationEntity> notificationsToSend) {
@@ -155,17 +149,7 @@ public class PushNotificationService {
                 messagingTemplate.convertAndSendToUser(userId.toString(), "/push", n));
     }
 
-    private void markNotificationsAsSent(List<PushNotificationEntity> unsentNotifications) {
-        unsentNotifications.forEach(n -> {
-            if (!n.isSent()) {
-                n.setSent(true);
-                notificationRepository.markAsSent(n.getNotificationId());
-            }
-        });
-    }
-
     @EventListener
-    @Transactional
     public void handleUserConnected(UserConnectedEvent event) {
         scheduler.schedule(() -> sendQueuedNotification(event.getUserId()), 1, TimeUnit.SECONDS);
         log.info("User {} connected", event.getUserId());
@@ -176,7 +160,6 @@ public class PushNotificationService {
         notificationRepository.markAsRead(notificationId);
     }
 
-    @Transactional
     public void getHistory(NotificationHistoryRequest request) {
         Pageable pageable = PageRequest.of(request.page(), request.size());
         Slice<PushNotificationEntity> history = notificationRepository
@@ -187,7 +170,16 @@ public class PushNotificationService {
                 content,
                 history.hasNext()
         );
-        markNotificationsAsSent(content);
+
+        transactionalNotificationService.markNotificationsAsSent(content);
         messagingTemplate.convertAndSendToUser(request.userId().toString(), "/push", container);
+    }
+
+    private PushNotificationEntity deserializeNotification(String n) {
+        try {
+            return objectMapper.readValue(n, PushNotificationEntity.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Could not deserialize push notification", e);
+        }
     }
 }

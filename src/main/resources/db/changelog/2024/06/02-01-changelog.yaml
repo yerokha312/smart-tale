@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1717341123398-4
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: price
+                  type: DECIMAL
+            tableName: orders
+  - changeSet:
+      id: 1717341123398-5
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: price
+                  type: DECIMAL
+            tableName: products
+  - changeSet:
+      id: 1717341123398-6
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: price
+            tableName: abstract_advertisements
+  - changeSet:
+      id: 1717341123398-1
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: salary
+            newDataType: DECIMAL
+            tableName: jobs

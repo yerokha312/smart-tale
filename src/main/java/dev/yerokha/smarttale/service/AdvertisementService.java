@@ -3,7 +3,10 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
-import dev.yerokha.smarttale.dto.CreateAdRequest;
+import dev.yerokha.smarttale.dto.CreateAdInterface;
+import dev.yerokha.smarttale.dto.CreateJobRequest;
+import dev.yerokha.smarttale.dto.CreateOrderRequest;
+import dev.yerokha.smarttale.dto.CreateProductRequest;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.ImageOperation;
@@ -16,6 +19,7 @@ import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
+import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.advertisement.PurchaseEntity;
@@ -29,6 +33,7 @@ import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
 import dev.yerokha.smarttale.repository.AcceptanceRepository;
 import dev.yerokha.smarttale.repository.AdvertisementRepository;
+import dev.yerokha.smarttale.repository.JobRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.ProductRepository;
@@ -39,6 +44,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,6 +69,8 @@ import static dev.yerokha.smarttale.mapper.AdMapper.mapToFullCard;
 import static dev.yerokha.smarttale.mapper.AdMapper.toFullDto;
 import static dev.yerokha.smarttale.mapper.AdMapper.toOrderDto;
 import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
+import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
+import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 import static java.lang.Integer.parseInt;
 
 @Service
@@ -85,6 +93,7 @@ public class AdvertisementService {
     private static final byte DELETE = 3;
     private static final byte RESTORE = 4;
     private final OrganizationService organizationService;
+    private final JobRepository jobRepository;
 
     public AdvertisementService(ProductRepository productRepository,
                                 OrderRepository orderRepository,
@@ -94,7 +103,7 @@ public class AdvertisementService {
                                 MailService mailService,
                                 PurchaseRepository purchaseRepository,
                                 TaskKeyGeneratorService taskKeyGeneratorService,
-                                OrganizationRepository organizationRepository, AcceptanceRepository acceptanceRepository, UserDetailsRepository userDetailsRepository, OrganizationService organizationService) {
+                                OrganizationRepository organizationRepository, AcceptanceRepository acceptanceRepository, UserDetailsRepository userDetailsRepository, OrganizationService organizationService, JobRepository jobRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
@@ -107,6 +116,7 @@ public class AdvertisementService {
         this.acceptanceRepository = acceptanceRepository;
         this.userDetailsRepository = userDetailsRepository;
         this.organizationService = organizationService;
+        this.jobRepository = jobRepository;
     }
 
     // get Ads in Personal account -> My advertisements
@@ -207,10 +217,14 @@ public class AdvertisementService {
 
         advertisement.setTitle(request.title());
         advertisement.setDescription(request.description());
-        advertisement.setPrice(request.price());
         if (advertisement instanceof OrderEntity order) {
             order.setDeadlineAt(request.deadlineAt());
             order.setSize(request.size());
+            order.setPrice(request.price());
+        } else if (advertisement instanceof ProductEntity product) {
+            product.setPrice(request.price());
+        } else {
+            throw new IllegalArgumentException("Unsupported advertisement type");
         }
 
         if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
@@ -467,18 +481,46 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public String createAd(CreateAdRequest request, List<MultipartFile> files, Long userId) {
-        if (request.type().equalsIgnoreCase("order")) {
-            return createOrder(request, files, userId);
+    public String createAd(CreateAdInterface request, List<MultipartFile> files, Authentication authentication) {
+        if (request instanceof CreateJobRequest job) {
+            return createJob(job, files, getUserIdFromAuthToken(authentication), getOrgIdFromAuthToken(authentication));
+        } else if (request instanceof CreateOrderRequest order) {
+            return createOrder(order, files, getUserIdFromAuthToken(authentication));
+        } else if (request instanceof CreateProductRequest product) {
+            return createProduct(product, files, getUserIdFromAuthToken(authentication));
         }
-
-        return createProduct(request, files, userId);
+        throw new IllegalArgumentException("Unknown advertisement type");
     }
 
-    private String createOrder(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+    private String createJob(CreateJobRequest request, List<MultipartFile> files, Long userId, Long orgId) {
+        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
+        OrganizationEntity organization = organizationRepository.getReferenceById(orgId);
+        List<Image> images = files != null && !files.isEmpty()
+                ? files.stream().map(imageService::processImage).toList()
+                : Collections.emptyList();
+        JobEntity job = new JobEntity(
+                LocalDateTime.now(),
+                user,
+                request.title(),
+                request.description(),
+                images,
+                request.contactInfo(),
+                organization,
+                request.jobType(),
+                request.location(),
+                request.salary(),
+                request.applicationDeadline()
+        );
+
+        jobRepository.save(job);
+
+        return "Job created";
+    }
+
+    private String createOrder(CreateOrderRequest request, List<MultipartFile> files, Long userId) {
         OrderEntity order = new OrderEntity();
 
-        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
 
         order.setPublishedBy(user);
         order.setTitle(request.title());
@@ -500,10 +542,10 @@ public class AdvertisementService {
         return "Order created";
     }
 
-    private String createProduct(CreateAdRequest request, List<MultipartFile> files, Long userId) {
+    private String createProduct(CreateProductRequest request, List<MultipartFile> files, Long userId) {
         ProductEntity product = new ProductEntity();
 
-        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
+        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
 
         product.setPublishedBy(user);
         product.setTitle(request.title());

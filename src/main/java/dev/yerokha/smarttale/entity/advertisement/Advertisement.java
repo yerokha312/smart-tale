@@ -19,10 +19,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,13 +43,10 @@ public class Advertisement {
     private UserDetailsEntity publishedBy;
 
     @Column(name = "title", nullable = false, length = 250)
-    private String title; //sort
+    private String title;
 
     @Column(name = "description", nullable = false, length = 1000)
     private String description;
-
-    @Column(name = "price")
-    private BigDecimal price; //sort
 
     @ManyToMany
     @JoinTable(
@@ -77,4 +71,20 @@ public class Advertisement {
     @Column(name = "is_closed", columnDefinition = "boolean default false")
     private boolean isClosed = false;
 
+    public Advertisement() {
+    }
+
+    public Advertisement(LocalDateTime publishedAt,
+                         UserDetailsEntity publishedBy,
+                         String title,
+                         String description,
+                         List<Image> images,
+                         ContactInfo contactInfo) {
+        this.publishedAt = publishedAt;
+        this.publishedBy = publishedBy;
+        this.title = title;
+        this.description = description;
+        this.images = images;
+        this.contactInfo = contactInfo;
+    }
 }

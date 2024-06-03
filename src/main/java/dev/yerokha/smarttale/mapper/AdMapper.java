@@ -53,17 +53,18 @@ public class AdMapper {
                     acceptancesCount,
                     order.isClosed()
             );
+        } else if (advertisement instanceof ProductEntity product) {
+            return new Product(
+                    product.getAdvertisementId(),
+                    product.getTitle(),
+                    truncatedDescription,
+                    product.getPrice() == null ? BigDecimal.ZERO : product.getPrice(),
+                    images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
+                    product.getPublishedAt(),
+                    product.isClosed()
+            );
         }
-
-        return new Product(
-                advertisement.getAdvertisementId(),
-                advertisement.getTitle(),
-                truncatedDescription,
-                advertisement.getPrice() == null ? BigDecimal.ZERO : advertisement.getPrice(),
-                images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
-                advertisement.getPublishedAt(),
-                advertisement.isClosed()
-        );
+        throw new IllegalArgumentException("Unknown advertisement type");
     }
 
     public static AdvertisementInterface toFullDto(Advertisement advertisement) {
@@ -139,12 +140,18 @@ public class AdMapper {
         String description = advertisement.getDescription();
         String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
         List<Image> images = advertisement.getImages();
+        BigDecimal price = BigDecimal.ZERO;
+        if (advertisement instanceof OrderEntity order) {
+            price = order.getPrice() == null ? BigDecimal.ZERO : order.getPrice();
+        } else if (advertisement instanceof ProductEntity product) {
+            price = product.getPrice() == null ? BigDecimal.ZERO : product.getPrice();
+        }
         return new Card(
                 advertisement.getAdvertisementId(),
                 advertisement.getPublishedAt(),
                 advertisement.getTitle(),
                 truncatedDescription,
-                advertisement.getPrice() == null ? BigDecimal.ZERO : advertisement.getPrice(),
+                price,
                 images == null || images.isEmpty() ? "" : getImageUrl(advertisement.getImages().get(0)),
                 publishedBy.getUserId(),
                 publishedBy.getName(),

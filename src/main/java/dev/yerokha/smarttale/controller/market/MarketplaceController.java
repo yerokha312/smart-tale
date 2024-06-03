@@ -2,15 +2,20 @@ package dev.yerokha.smarttale.controller.market;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
-import dev.yerokha.smarttale.dto.CreateAdRequest;
+import dev.yerokha.smarttale.dto.CreateAdInterface;
+import dev.yerokha.smarttale.dto.CreateJobRequest;
+import dev.yerokha.smarttale.dto.CreateOrderRequest;
+import dev.yerokha.smarttale.dto.CreateProductRequest;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
+import dev.yerokha.smarttale.util.Authorities;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
+import static dev.yerokha.smarttale.service.TokenService.getUserAuthoritiesFromToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 
@@ -124,11 +130,15 @@ public class MarketplaceController {
                     @ApiResponse(responseCode = "201", description = "Ad created"),
                     @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "Employee does not have permission to create job ad", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content),
-            }
+            },
+            requestBody = @RequestBody(content = @Content(schema = @Schema(anyOf = {
+                    CreateProductRequest.class, CreateOrderRequest.class, CreateJobRequest.class
+            })))
     )
     @PostMapping
-    public ResponseEntity<String> placeAdvertisement(@RequestPart("dto") @Valid CreateAdRequest request,
+    public ResponseEntity<String> placeAdvertisement(@RequestPart("dto") @Valid CreateAdInterface request,
                                                      @RequestPart(value = "images", required = false) List<MultipartFile> files,
                                                      Authentication authentication) {
 
@@ -141,9 +151,20 @@ public class MarketplaceController {
             }
         }
 
+        if (request instanceof CreateJobRequest) {
+            if (!hasInviteEmployeePermission(authentication)) {
+                return new ResponseEntity<>("User does not have permission to create job advertisements", HttpStatus.FORBIDDEN);
+            }
+        }
+
         return new ResponseEntity<>(advertisementService.createAd(
                 request,
                 files,
-                getUserIdFromAuthToken(authentication)), HttpStatus.CREATED);
+                authentication), HttpStatus.CREATED);
+    }
+
+    private boolean hasInviteEmployeePermission(Authentication authentication) {
+        int userAuthorities = getUserAuthoritiesFromToken(authentication);
+        return (userAuthorities & Authorities.INVITE_EMPLOYEE.getBitmask()) > 0;
     }
 }

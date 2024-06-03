@@ -108,7 +108,6 @@ create table abstract_advertisements
     contact_information smallint,
     is_closed           boolean default false,
     is_deleted          boolean default false,
-    price               numeric(38, 2),
     advertisement_id    bigserial,
     published_at        timestamp(6),
     published_by        bigint,
@@ -156,6 +155,7 @@ create table orders
     accepted_at      date,
     completed_at     date,
     deadline_at      date,
+    price               numeric(38, 2),
     status           smallint,
     accepted_by      bigint,
     advertisement_id bigint not null,
@@ -190,6 +190,7 @@ alter table organizations
 
 create table products
 (
+    price               numeric(38, 2),
     advertisement_id bigint not null,
     primary key (advertisement_id),
     constraint fkrlasy6vsu39rymr339s3esa6p
@@ -246,6 +247,36 @@ create sequence notifications_notification_id_seq
     increment by 5;
 create index recipient_idx
     on notifications (recipient_id);
+
+create table jobs
+(
+    application_deadline date,
+    job_type             varchar(255)
+        constraint jobs_job_type_check
+            check (job_type IN
+                   ('FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN', 'TEMPORARY')),
+    location             varchar(255),
+    salary               numeric(38, 2),
+    advertisement_id     bigint not null
+        primary key
+        constraint fk6d8msioynvly32v7ooxycbkxp
+            references abstract_advertisements,
+    organization_id      bigint
+        constraint fkrj84ptwt9tksbcnduv0fo8t0r
+            references organizations
+);
+
+create table job_applicant_junction
+(
+    job_id  bigint not null
+        constraint fktbv5e4mu6xyqph7s22ci5al63
+            references jobs,
+    user_id bigint not null
+        constraint fkmni204iaiitjgw33ufkjnck4n
+            references user_details
+);
+
+
 
 
 
