@@ -1,7 +1,7 @@
 package dev.yerokha.smarttale.entity.advertisement;
 
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
-import enums.ApplicationStatus;
+import dev.yerokha.smarttale.enums.ApplicationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,17 +41,13 @@ public class ApplicationEntity {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
 
-    @Column(name = "notes", length = 1000)
-    private String notes;
-
     public ApplicationEntity() {
     }
 
-    public ApplicationEntity(JobEntity job, UserDetailsEntity applicant, LocalDateTime applicationDate, ApplicationStatus status, String notes) {
+    public ApplicationEntity(JobEntity job, UserDetailsEntity applicant, LocalDateTime applicationDate, ApplicationStatus status) {
         this.job = job;
         this.applicant = applicant;
         this.applicationDate = applicationDate;
         this.status = status;
-        this.notes = notes;
     }
 }

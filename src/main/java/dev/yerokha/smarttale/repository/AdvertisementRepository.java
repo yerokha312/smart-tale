@@ -19,6 +19,8 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
 
     Optional<Advertisement> findByPublishedByUserIdAndAdvertisementIdAndIsDeletedFalse(Long userId, Long advertisementId);
 
+    Optional<Advertisement> findByAdvertisementIdAndIsDeletedFalseAndIsClosedFalse(Long advertisementId);
+
     @Modifying
     @Query("UPDATE Advertisement a SET a.views = a.views + 1 WHERE a.advertisementId = :advertisementId")
     void incrementViewsCount(Long advertisementId);

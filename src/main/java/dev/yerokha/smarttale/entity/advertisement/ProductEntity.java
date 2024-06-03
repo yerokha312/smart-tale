@@ -32,4 +32,9 @@ public class ProductEntity extends Advertisement {
 
     @Transient
     private LocalDateTime purchasedAt;
+
+    public void addPurchase(PurchaseEntity purchase) {
+        purchases.add(purchase);
+
+    }
 }

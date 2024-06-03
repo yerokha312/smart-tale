@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-// used in paged purchases of user and marketplace
-public record Card(
+// used in paged purchases of user
+public record PurchaseCard(
         @NotNull
         Long advertisementId,
         @NotNull

@@ -70,4 +70,8 @@ public class JobEntity extends Advertisement {
         this.salary = salary;
         this.applicationDeadline = applicationDeadline;
     }
+
+    public void addApplication(ApplicationEntity application) {
+        applications.add(application);
+    }
 }

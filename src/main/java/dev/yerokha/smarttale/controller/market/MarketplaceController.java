@@ -1,7 +1,6 @@
 package dev.yerokha.smarttale.controller.market;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdInterface;
 import dev.yerokha.smarttale.dto.CreateJobRequest;
 import dev.yerokha.smarttale.dto.CreateOrderRequest;
@@ -9,6 +8,7 @@ import dev.yerokha.smarttale.dto.CreateProductRequest;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProductCard;
+import dev.yerokha.smarttale.dto.MarketCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import dev.yerokha.smarttale.util.Authorities;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,12 +21,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -37,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 import static dev.yerokha.smarttale.service.TokenService.getUserAuthoritiesFromToken;
-import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 
 @Tag(name = "Marketplace", description = "EPs for marketplace")
@@ -52,8 +49,8 @@ public class MarketplaceController {
     }
 
     @Operation(
-            summary = "Get ads", description = "Get orders and products by mandatory \"type\" param",
-            tags = {"get", "order", "product", "market", "advertisement"},
+            summary = "Get ads", description = "Get orders, products or jobs by mandatory \"type\" param",
+            tags = {"get", "order", "product", "jobs", "market", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad param", content = @Content)
@@ -65,14 +62,15 @@ public class MarketplaceController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage<Card>> getAds(@RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<MarketCard>> getAds(@RequestParam(required = false) Map<String, String> params,
+                                                         Authentication authentication) {
 
-        return ResponseEntity.ok(advertisementService.getAds(params));
+        return ResponseEntity.ok(advertisementService.getMarketAds(params, authentication));
     }
 
     @Operation(
-            summary = "Get one ad", description = "Get order or product by id",
-            tags = {"get", "order", "product", "market", "advertisement"},
+            summary = "Get one ad", description = "Get order, product or job by id",
+            tags = {"get", "order", "product", "job", "market", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
                             anyOf = {FullProductCard.class, FullOrderCard.class}))),
@@ -87,7 +85,8 @@ public class MarketplaceController {
     }
 
     @Operation(
-            summary = "Purchase product", description = "Buy a product by ad id", tags = {"post", "market", "product"},
+            summary = "Handle advertisement", description = "Purchase product, accept order or apply job",
+            tags = {"post", "market", "advertisement", "product", "order", "job"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -96,31 +95,9 @@ public class MarketplaceController {
             }
     )
     @PostMapping("/{advertisementId}")
-    public ResponseEntity<String> purchaseProduct(@PathVariable Long advertisementId,
+    public ResponseEntity<String> handleAdvertisementAction(@PathVariable Long advertisementId,
                                                   Authentication authentication) {
-
-        advertisementService.purchaseProduct(advertisementId, getUserIdFromAuthToken(authentication));
-
-        return ResponseEntity.ok("Purchase success");
-    }
-
-    @Operation(
-            summary = "Accept order", description = "Accept order by it's id", tags = {"put", "market", "order"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Not found", content = @Content),
-                    @ApiResponse(responseCode = "410", description = "Already accepted", content = @Content),
-            }
-    )
-    @PutMapping("/{advertisementId}")
-    @PreAuthorize("hasRole('EMPLOYEE') && hasPermission(authentication, 'CREATE_ORDER')")
-    public ResponseEntity<String> acceptOrder(@PathVariable Long advertisementId,
-                                              Authentication authentication) {
-
-        advertisementService.acceptOrder(advertisementId, getUserIdFromAuthToken(authentication));
-
-        return ResponseEntity.ok("Order accepted");
+        return ResponseEntity.ok(advertisementService.handleAdvertisement(advertisementId, authentication));
     }
 
     @Operation(

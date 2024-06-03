@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.repository;
 
+import dev.yerokha.smarttale.dto.MarketCard;
 import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
@@ -22,7 +23,23 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     Page<OrderEntity> findAllByPublishedByUserIdAndAcceptedByIsNotNullAndCompletedAtIsNull(Long userId, Pageable pageable);
 
-    Page<OrderEntity> findAllByAcceptedByIsNullAndIsClosedFalseAndIsDeletedFalse(Pageable pageable);
+    @Query("SELECT new dev.yerokha.smarttale.dto.MarketCard(" +
+           "o.advertisementId, " +
+           "o.publishedAt, " +
+           "SUBSTRING(o.title, 1, 60), " +
+           "SUBSTRING(o.description, 1, 120), " +
+           "COALESCE(o.price, 0), " +
+           "COALESCE((SELECT i.imageUrl FROM Image i WHERE i MEMBER OF o.images ORDER BY i.imageId ASC), ''), " +
+           "o.publishedBy.userId, " +
+           "CONCAT(o.publishedBy.lastName, ' ', o.publishedBy.firstName), " +
+           "COALESCE(pubImg.imageUrl, ''), " +
+           "CASE WHEN NOT EXISTS (SELECT ae FROM AcceptanceEntity ae " +
+           "WHERE ae.order = o AND ae.organization.organizationId = :orgId) " +
+           "THEN true ELSE false END)" +
+           "FROM OrderEntity o " +
+           "LEFT JOIN o.publishedBy.image pubImg " +
+           "WHERE o.isDeleted = false AND o.isClosed = false AND o.acceptedAt IS NULL")
+    Page<MarketCard> findMarketOrders(Long orgId, Pageable pageable);
 
     Optional<OrderEntity> findByPublishedByUserIdAndAdvertisementId(Long userId, Long orderId);
 

@@ -3,7 +3,6 @@ package dev.yerokha.smarttale.mapper;
 import dev.yerokha.smarttale.dto.AcceptanceRequestDto;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.AssignedEmployee;
-import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullOrderCard;
@@ -14,6 +13,7 @@ import dev.yerokha.smarttale.dto.Order;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Product;
+import dev.yerokha.smarttale.dto.PurchaseCard;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.entity.Image;
@@ -134,25 +134,20 @@ public class AdMapper {
         );
     }
 
-    public static Card mapToCards(Advertisement advertisement) {
-        UserDetailsEntity publishedBy = advertisement.getPublishedBy();
+    public static PurchaseCard mapToPurchases(ProductEntity product) {
+        UserDetailsEntity publishedBy = product.getPublishedBy();
         String avatarUrl = getImageUrl(publishedBy.getImage());
-        String description = advertisement.getDescription();
+        String description = product.getDescription();
         String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
-        List<Image> images = advertisement.getImages();
-        BigDecimal price = BigDecimal.ZERO;
-        if (advertisement instanceof OrderEntity order) {
-            price = order.getPrice() == null ? BigDecimal.ZERO : order.getPrice();
-        } else if (advertisement instanceof ProductEntity product) {
-            price = product.getPrice() == null ? BigDecimal.ZERO : product.getPrice();
-        }
-        return new Card(
-                advertisement.getAdvertisementId(),
-                advertisement.getPublishedAt(),
-                advertisement.getTitle(),
+        List<Image> images = product.getImages();
+        BigDecimal price = product.getPrice() == null ? BigDecimal.ZERO : product.getPrice();
+        return new PurchaseCard(
+                product.getAdvertisementId(),
+                product.getPublishedAt(),
+                product.getTitle(),
                 truncatedDescription,
                 price,
-                images == null || images.isEmpty() ? "" : getImageUrl(advertisement.getImages().get(0)),
+                images == null || images.isEmpty() ? "" : getImageUrl(product.getImages().get(0)),
                 publishedBy.getUserId(),
                 publishedBy.getName(),
                 avatarUrl

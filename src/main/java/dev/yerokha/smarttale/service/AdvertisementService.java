@@ -2,7 +2,8 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.MarketCard;
+import dev.yerokha.smarttale.dto.PurchaseCard;
 import dev.yerokha.smarttale.dto.CreateAdInterface;
 import dev.yerokha.smarttale.dto.CreateJobRequest;
 import dev.yerokha.smarttale.dto.CreateOrderRequest;
@@ -19,12 +20,14 @@ import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
+import dev.yerokha.smarttale.entity.advertisement.ApplicationEntity;
 import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.advertisement.PurchaseEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.enums.ApplicationStatus;
 import dev.yerokha.smarttale.enums.OrderStatus;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.ForbiddenException;
@@ -39,6 +42,7 @@ import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.ProductRepository;
 import dev.yerokha.smarttale.repository.PurchaseRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
+import dev.yerokha.smarttale.util.Authorities;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -64,12 +68,13 @@ import static dev.yerokha.smarttale.enums.OrderStatus.COMPLETED;
 import static dev.yerokha.smarttale.enums.OrderStatus.IN_PROGRESS;
 import static dev.yerokha.smarttale.enums.OrderStatus.NEW;
 import static dev.yerokha.smarttale.enums.OrderStatus.PENDING;
-import static dev.yerokha.smarttale.mapper.AdMapper.mapToCards;
+import static dev.yerokha.smarttale.mapper.AdMapper.mapToPurchases;
 import static dev.yerokha.smarttale.mapper.AdMapper.mapToFullCard;
 import static dev.yerokha.smarttale.mapper.AdMapper.toFullDto;
 import static dev.yerokha.smarttale.mapper.AdMapper.toOrderDto;
 import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
 import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
+import static dev.yerokha.smarttale.service.TokenService.getUserAuthoritiesFromToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 import static java.lang.Integer.parseInt;
 
@@ -255,17 +260,17 @@ public class AdvertisementService {
         }
     }
 
-    public CustomPage<Card> getPurchases(Long userId, Map<String, String> params) {
+    public CustomPage<PurchaseCard> getPurchases(Long userId, Map<String, String> params) {
         Pageable pageable = PageRequest.of(
-                Integer.parseInt(params.getOrDefault("page", "0")),
-                Integer.parseInt(params.getOrDefault("size", "8")),
+                parseInt(params.getOrDefault("page", "0")),
+                parseInt(params.getOrDefault("size", "8")),
                 Sort.by(Sort.Direction.DESC, "purchasedAt"));
 
-        Page<Card> page = purchaseRepository.findAllByPurchasedByUserId(userId, pageable)
+        Page<PurchaseCard> page = purchaseRepository.findAllByPurchasedByUserId(userId, pageable)
                 .map(purchase -> {
                     ProductEntity product = purchase.getProduct();
                     product.setAdvertisementId(purchase.getPurchaseId());
-                    return mapToCards(product);
+                    return mapToPurchases(product);
                 });
         return getCustomPage(page);
     }
@@ -286,8 +291,8 @@ public class AdvertisementService {
         Sort sort = getSortProps(params);
         if (params.get("q").equals("active")) {
             Pageable pageable = PageRequest.of(
-                    Integer.parseInt(params.getOrDefault("page", "0")),
-                    Integer.parseInt(params.getOrDefault("size", "12")),
+                    parseInt(params.getOrDefault("page", "0")),
+                    parseInt(params.getOrDefault("size", "12")),
                     sort);
             Page<SmallOrder> page = orderRepository.findAllByPublishedByUserIdAndAcceptedByIsNotNullAndCompletedAtIsNull(userId, pageable)
                     .map(AdMapper::toSmallOrder);
@@ -295,8 +300,8 @@ public class AdvertisementService {
         }
 
         Pageable pageable = PageRequest.of(
-                Integer.parseInt(params.getOrDefault("page", "0")),
-                Integer.parseInt(params.getOrDefault("size", "12")),
+                parseInt(params.getOrDefault("page", "0")),
+                parseInt(params.getOrDefault("size", "12")),
                 sort);
         Page<SmallOrder> page = orderRepository.findAllByPublishedByUserIdAndCompletedAtNotNull(userId, pageable)
                 .map(AdMapper::toSmallOrder);
@@ -328,26 +333,31 @@ public class AdvertisementService {
                 Sort.by(Sort.Direction.DESC, "publishedAt"));
     }
 
-    private Advertisement getAdById(Long advertisementId) {
+    private Advertisement getAdByIdNotDeletedNotClosed(Long advertisementId) {
         return advertisementRepository
-                .findById(advertisementId)
+                .findByAdvertisementIdAndIsDeletedFalseAndIsClosedFalse(advertisementId)
                 .orElseThrow(() -> new NotFoundException("Advertisement not found"));
     }
 
-    // get Ads for marketplace
-    public CustomPage<Card> getAds(Map<String, String> params) {
+    public CustomPage<MarketCard> getMarketAds(Map<String, String> params, Authentication authentication) {
         Pageable pageable = getPageable(params);
 
-        String query = params.get("type");
+        String type = params.get("type");
 
-        Page<Card> page;
-        page = switch (query) {
-            case "orders" -> orderRepository
-                    .findAllByAcceptedByIsNullAndIsClosedFalseAndIsDeletedFalse(pageable)
-                    .map(AdMapper::mapToCards);
-            case "products" -> productRepository
-                    .findAllByIsClosedFalseAndIsDeletedFalse(pageable)
-                    .map(AdMapper::mapToCards);
+        Page<MarketCard> page;
+        page = switch (type) {
+            case "orders" -> {
+                Long orgId = getOrgIdFromAuthToken(authentication);
+                yield orderRepository.findMarketOrders(orgId, pageable);
+            }
+            case "products" -> {
+                Long userId = getUserIdFromAuthToken(authentication);
+                yield productRepository.findMarketProducts(userId, pageable);
+            }
+            case "jobs" -> {
+                Long orgId = getOrgIdFromAuthToken(authentication);
+                yield jobRepository.findMarketJobs(orgId, pageable);
+            }
             default -> Page.empty();
         };
 
@@ -356,7 +366,7 @@ public class AdvertisementService {
 
     // get Ad for marketplace
     public AdvertisementInterface getAd(Long advertisementId) {
-        Advertisement advertisement = getAdById(advertisementId);
+        Advertisement advertisement = getAdByIdNotDeletedNotClosed(advertisementId);
         if (advertisement.isClosed() || advertisement.isDeleted()) {
             throw new NotFoundException("Advertisement not found");
         }
@@ -369,13 +379,49 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public void purchaseProduct(Long advertisementId, Long buyerId) {
-        ProductEntity product = (ProductEntity) getAdById(advertisementId);
-
-        if (product.isClosed() || product.isDeleted()) {
-            throw new NotFoundException("Advertisement not found");
+    public String handleAdvertisement(Long advertisementId, Authentication authentication) {
+        Advertisement advertisement = getAdByIdNotDeletedNotClosed(advertisementId);
+        Long userId = getUserIdFromAuthToken(authentication);
+        if (advertisement instanceof JobEntity job) {
+            applyForJob(job, userId);
+            return "Job applied";
+        } else if (advertisement instanceof OrderEntity order) {
+            if (order.getAcceptedAt() != null) {
+                throw new MissedException("You are late!");
+            }
+            if (order.getPublishedBy().getUserId().equals(userId)) {
+                throw new ForbiddenException("You are not allowed to accept your own order");
+            }
+            int authorities = getUserAuthoritiesFromToken(authentication);
+            if ((authorities & Authorities.CREATE_ORDER.getBitmask()) == 0) {
+                throw new ForbiddenException("You have no permission to accept orders");
+            }
+            Long organizationId = getOrgIdFromAuthToken(authentication);
+            acceptOrder(order, organizationId);
+            return "Order accepted";
+        } else if (advertisement instanceof ProductEntity product) {
+            purchaseProduct(product, userId);
+            return "Product purchased";
         }
 
+        throw new IllegalArgumentException("Unknown advertisement type");
+    }
+
+    private void applyForJob(JobEntity job, Long applicantId) {
+        UserDetailsEntity applicant = userDetailsRepository.getReferenceById(applicantId);
+        ApplicationEntity application = new ApplicationEntity(
+                job,
+                applicant,
+                LocalDateTime.now(),
+                ApplicationStatus.APPLIED
+        );
+
+        job.addApplication(application);
+
+        jobRepository.save(job);
+    }
+
+    private void purchaseProduct(ProductEntity product, Long buyerId) {
         UserDetailsEntity buyer = userService.getUserDetailsEntity(buyerId);
         UserDetailsEntity seller = product.getPublishedBy();
 
@@ -383,11 +429,13 @@ public class AdvertisementService {
             throw new ForbiddenException("You are not allowed to purchase your own product");
         }
 
-        product.getPurchases().add(new PurchaseEntity(
+        PurchaseEntity purchase = new PurchaseEntity(
                 buyer,
                 product,
                 LocalDateTime.now()
-        ));
+        );
+
+        product.addPurchase(purchase);
 
         productRepository.save(product);
 
@@ -407,29 +455,12 @@ public class AdvertisementService {
         ));
     }
 
-    @Transactional
-    public PushNotification acceptOrder(Long advertisementId, Long userId) {
-        OrderEntity order = (OrderEntity) getAdById(advertisementId);
-
-        if (order.isClosed() || order.isDeleted()) {
-            throw new NotFoundException("Advertisement not found");
-        }
-
-        if (order.getAcceptedAt() != null) {
-            throw new MissedException("You are late!");
-        }
-
-        if (order.getPublishedBy().getUserId().equals(userId)) {
-            throw new ForbiddenException("You are not allowed to accept your own order");
-        }
-
-        OrganizationEntity organization = organizationService.getOrganizationByEmployeeId(userId);
-        if (acceptanceRepository
-                .existsByOrganization_OrganizationIdAndOrder_AdvertisementId(
-                        organization.getOrganizationId(), advertisementId)) {
+    public PushNotification acceptOrder(OrderEntity order, Long organizationId) {
+        OrganizationEntity organization = organizationService.getOrganizationEntity(organizationId);
+        if (acceptanceRepository.existsByOrganization_OrganizationIdAndOrder_AdvertisementId(
+                        organization.getOrganizationId(), order.getAdvertisementId())) {
             throw new AlreadyTakenException("An acceptance request has already been sent by this organization");
         }
-
 
         AcceptanceEntity acceptance = new AcceptanceEntity(
                 order, organization, LocalDate.now()

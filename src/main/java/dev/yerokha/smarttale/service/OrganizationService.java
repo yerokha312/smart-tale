@@ -416,14 +416,13 @@ public class OrganizationService {
         return mapToOrganization(organizationEntity);
     }
 
-    private OrganizationEntity getOrganizationEntity(Long organizationId) {
+    OrganizationEntity getOrganizationEntity(Long organizationId) {
         return organizationRepository.findById(organizationId).orElseThrow(
                 () -> new NotFoundException("Organization not found"));
     }
 
     @Transactional
     public String createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
-//        UserDetailsEntity user = getUserDetailsEntity(userId);
         UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
         if (!user.isSubscribed() || user.getOrganization() != null) {
             throw new ForbiddenException("User is not subscribed or already has an organization");

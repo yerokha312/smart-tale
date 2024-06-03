@@ -1,7 +1,7 @@
 package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.PurchaseCard;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
@@ -48,8 +48,8 @@ public class PurchaseController {
 
     )
     @GetMapping
-    public ResponseEntity<CustomPage<Card>> getPurchases(Authentication authentication,
-                                                         @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<PurchaseCard>> getPurchases(Authentication authentication,
+                                                                 @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(advertisementService.getPurchases(getUserIdFromAuthToken(authentication), params));
     }
 
