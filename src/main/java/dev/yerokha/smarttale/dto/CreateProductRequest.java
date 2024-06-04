@@ -15,7 +15,7 @@ public record CreateProductRequest(
         @NotNull @NotEmpty
         @Length(min = 5, max = 1000, message = "Description length must be between 5 and 1000")
         String description,
-        @PositiveOrZero
+        @PositiveOrZero @NotNull
         BigDecimal price,
         @NotNull
         ContactInfo contactInfo

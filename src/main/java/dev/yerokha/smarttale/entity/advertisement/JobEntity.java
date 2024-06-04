@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.entity.advertisement;
 
-import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.ContactInfo;
@@ -56,14 +56,14 @@ public class JobEntity extends Advertisement {
                      UserDetailsEntity publishedBy,
                      String title,
                      String description,
-                     List<Image> images,
+                     List<AdvertisementImage> advertisementImages,
                      ContactInfo contactInfo,
                      OrganizationEntity organization,
                      JobType jobType,
                      String location,
                      BigDecimal salary,
                      LocalDate applicationDeadline) {
-        super(publishedAt, publishedBy, title, description, images, contactInfo);
+        super(publishedAt, publishedBy, title, description, advertisementImages, contactInfo);
         this.organization = organization;
         this.jobType = jobType;
         this.location = location;

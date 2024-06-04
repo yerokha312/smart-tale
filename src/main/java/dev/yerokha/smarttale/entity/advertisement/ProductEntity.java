@@ -24,8 +24,11 @@ import java.util.List;
 @OnDelete(action = OnDeleteAction.CASCADE)
 public class ProductEntity extends Advertisement {
 
-    @Column(name = "price")
+    @Column(name = "price", nullable = false)
     private BigDecimal price; //sort
+
+    @Column(name = "quantity", nullable = false, columnDefinition = "INT default 0")
+    private int quantity;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PurchaseEntity> purchases = new ArrayList<>();

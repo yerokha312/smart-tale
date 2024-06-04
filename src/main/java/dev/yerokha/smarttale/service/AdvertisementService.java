@@ -2,8 +2,7 @@ package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.MarketCard;
-import dev.yerokha.smarttale.dto.PurchaseCard;
+import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdInterface;
 import dev.yerokha.smarttale.dto.CreateJobRequest;
 import dev.yerokha.smarttale.dto.CreateOrderRequest;
@@ -13,10 +12,13 @@ import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderDto;
+import dev.yerokha.smarttale.dto.Purchase;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
+import dev.yerokha.smarttale.dto.PurchaseSummary;
 import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
+import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
@@ -62,16 +64,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static dev.yerokha.smarttale.enums.OrderStatus.CHECKING;
 import static dev.yerokha.smarttale.enums.OrderStatus.COMPLETED;
 import static dev.yerokha.smarttale.enums.OrderStatus.IN_PROGRESS;
 import static dev.yerokha.smarttale.enums.OrderStatus.NEW;
 import static dev.yerokha.smarttale.enums.OrderStatus.PENDING;
-import static dev.yerokha.smarttale.mapper.AdMapper.mapToPurchases;
-import static dev.yerokha.smarttale.mapper.AdMapper.mapToFullCard;
-import static dev.yerokha.smarttale.mapper.AdMapper.toFullDto;
-import static dev.yerokha.smarttale.mapper.AdMapper.toOrderDto;
 import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
 import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserAuthoritiesFromToken;
@@ -92,7 +91,7 @@ public class AdvertisementService {
     private final OrganizationRepository organizationRepository;
     private final AcceptanceRepository acceptanceRepository;
     private final UserDetailsRepository userDetailsRepository;
-
+    private final AdMapper adMapper;
     private static final byte CLOSE = 1;
     private static final byte DISCLOSE = 2;
     private static final byte DELETE = 3;
@@ -108,7 +107,12 @@ public class AdvertisementService {
                                 MailService mailService,
                                 PurchaseRepository purchaseRepository,
                                 TaskKeyGeneratorService taskKeyGeneratorService,
-                                OrganizationRepository organizationRepository, AcceptanceRepository acceptanceRepository, UserDetailsRepository userDetailsRepository, OrganizationService organizationService, JobRepository jobRepository) {
+                                OrganizationRepository organizationRepository,
+                                AcceptanceRepository acceptanceRepository,
+                                UserDetailsRepository userDetailsRepository,
+                                AdMapper adMapper,
+                                OrganizationService organizationService,
+                                JobRepository jobRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
@@ -120,12 +124,13 @@ public class AdvertisementService {
         this.organizationRepository = organizationRepository;
         this.acceptanceRepository = acceptanceRepository;
         this.userDetailsRepository = userDetailsRepository;
+        this.adMapper = adMapper;
         this.organizationService = organizationService;
         this.jobRepository = jobRepository;
     }
 
     // get Ads in Personal account -> My advertisements
-    public CustomPage<AdvertisementInterface> getAds(Long userId, Map<String, String> params) {
+    public CustomPage<AdvertisementInterface> getPersonalAds(Long userId, Map<String, String> params) {
         Pageable pageable = getPageable(params);
 
         String query = params.get("q");
@@ -146,26 +151,22 @@ public class AdvertisementService {
 
     // get Ads in Personal account -> My advertisements
     private Page<AdvertisementInterface> getAllAds(Long userId, Pageable pageable) {
-        return advertisementRepository
-                .findAllByPublishedByUserIdAndIsDeletedFalse(userId, pageable)
-                .map(AdMapper::toDto);
+        return advertisementRepository.findPersonalAds(userId, pageable);
     }
 
     // get Products in Personal account -> My advertisements
     private Page<AdvertisementInterface> getProducts(Long userId, Pageable pageable) {
-        return productRepository.findAllByPublishedByUserIdAndIsDeletedFalse(userId, pageable)
-                .map(AdMapper::toDto);
+        return productRepository.findPersonalProducts(userId, pageable);
     }
 
     // get Orders in Personal account -> My advertisements
     private Page<AdvertisementInterface> getOrders(Long userId, Pageable pageable) {
-        return orderRepository.findAllByPublishedByUserIdAndIsDeletedFalse(userId, pageable)
-                .map(AdMapper::toDto);
+        return orderRepository.findPersonalOrders(userId, pageable);
     }
 
     // get one Ad of user in Personal account -> My advertisements
-    public AdvertisementInterface getAd(Long userId, Long advertisementId) {
-        return toFullDto(getAdEntity(userId, advertisementId));
+    public AdvertisementInterface getAdvertisement(Long userId, Long advertisementId) {
+        return adMapper.toFullDto(getAdEntity(userId, advertisementId));
     }
 
     public String interactWithAd(Long userId, Long advertisementId, byte actionId) {
@@ -233,57 +234,66 @@ public class AdvertisementService {
         }
 
         if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
-            List<Image> images = advertisement.getImages();
-            updateImages(images, files, request.imageOperations());
+            List<AdvertisementImage> advertisementImages = advertisement.getAdvertisementImages();
+            updateImages(advertisement, advertisementImages, files, request.imageOperations());
         }
 
         advertisementRepository.save(advertisement);
     }
 
-    private void updateImages(List<Image> existingImages, List<MultipartFile> files, List<ImageOperation> imageOperationList) {
+    private void updateImages(Advertisement advertisement, List<AdvertisementImage> existingImages, List<MultipartFile> files, List<ImageOperation> imageOperationList) {
         for (ImageOperation imageOperation : imageOperationList) {
             switch (imageOperation.action()) {
                 case ADD -> {
                     if (existingImages.size() >= 5) {
                         throw new IllegalArgumentException("You can not upload more than 5 images");
                     }
-
-                    existingImages.add(imageOperation.targetPosition(), imageService.processImage(files.get(imageOperation.filePosition())));
+                    Image newImage = imageService.processImage(files.get(imageOperation.filePosition()));
+                    AdvertisementImage productImage = new AdvertisementImage();
+                    productImage.setImage(newImage);
+                    productImage.setIndex(imageOperation.targetPosition());
+                    productImage.setAdvertisement(advertisement);
+                    existingImages.add(productImage);
                 }
-                case MOVE ->
-                        Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
-                case REMOVE -> existingImages.remove(imageOperation.arrayPosition());
-                case REPLACE ->
-                        existingImages.set(imageOperation.arrayPosition(), imageService.processImage(files.get(imageOperation.filePosition())));
+                case MOVE -> {
+                    if (imageOperation.arrayPosition() >= existingImages.size() || imageOperation.targetPosition() >= existingImages.size()) {
+                        throw new IllegalArgumentException("Invalid image positions for MOVE operation");
+                    }
+                    Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
+                }
+                case REMOVE -> {
+                    if (imageOperation.arrayPosition() >= existingImages.size()) {
+                        throw new IllegalArgumentException("Invalid image position for REMOVE operation");
+                    }
+                    existingImages.remove(imageOperation.arrayPosition());
+                }
+                case REPLACE -> {
+                    if (imageOperation.arrayPosition() >= existingImages.size()) {
+                        throw new IllegalArgumentException("Invalid image position for REPLACE operation");
+                    }
+                    Image newImage = imageService.processImage(files.get(imageOperation.filePosition()));
+                    AdvertisementImage productImage = existingImages.get(imageOperation.arrayPosition());
+                    productImage.setImage(newImage);
+                }
             }
-
         }
+
+        IntStream.range(0, existingImages.size()).forEach(i -> existingImages.get(i).setIndex(i));
     }
 
-    public CustomPage<PurchaseCard> getPurchases(Long userId, Map<String, String> params) {
+    public CustomPage<PurchaseSummary> getPurchases(Long userId, Map<String, String> params) {
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
                 parseInt(params.getOrDefault("size", "8")),
                 Sort.by(Sort.Direction.DESC, "purchasedAt"));
 
-        Page<PurchaseCard> page = purchaseRepository.findAllByPurchasedByUserId(userId, pageable)
-                .map(purchase -> {
-                    ProductEntity product = purchase.getProduct();
-                    product.setAdvertisementId(purchase.getPurchaseId());
-                    return mapToPurchases(product);
-                });
+        Page<PurchaseSummary> page = purchaseRepository.findAllByPurchasedUserId(userId, pageable);
         return getCustomPage(page);
     }
 
-    public AdvertisementInterface getPurchase(Long purchaseId) {
-        PurchaseEntity purchase = purchaseRepository.findById(purchaseId)
+    public Purchase getPurchase(Long purchaseId, Long userId) {
+        return purchaseRepository.findByPurchaseIdAndUserId(purchaseId, userId)
                 .orElseThrow(() -> new NotFoundException("Purchase not found"));
-        ProductEntity product = purchase.getProduct();
-
-        product.setPurchasedAt(purchase.getPurchasedAt());
-        product.setAdvertisementId(purchaseId);
-
-        return mapToFullCard(product);
     }
 
     // in Personal account -> My orders
@@ -295,7 +305,7 @@ public class AdvertisementService {
                     parseInt(params.getOrDefault("size", "12")),
                     sort);
             Page<SmallOrder> page = orderRepository.findAllByPublishedByUserIdAndAcceptedByIsNotNullAndCompletedAtIsNull(userId, pageable)
-                    .map(AdMapper::toSmallOrder);
+                    .map(adMapper::toSmallOrder);
             return getCustomPage(page);
         }
 
@@ -304,7 +314,7 @@ public class AdvertisementService {
                 parseInt(params.getOrDefault("size", "12")),
                 sort);
         Page<SmallOrder> page = orderRepository.findAllByPublishedByUserIdAndCompletedAtNotNull(userId, pageable)
-                .map(AdMapper::toSmallOrder);
+                .map(adMapper::toSmallOrder);
         return getCustomPage(page);
     }
 
@@ -322,7 +332,7 @@ public class AdvertisementService {
 
     // in Personal account -> My orders
     public OrderDto getOrder(Long userId, Long orderId) {
-        return toOrderDto(orderRepository.findByPublishedByUserIdAndAdvertisementId(userId, orderId)
+        return adMapper.toOrderDto(orderRepository.findByPublishedByUserIdAndAdvertisementId(userId, orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found")));
     }
 
@@ -339,12 +349,12 @@ public class AdvertisementService {
                 .orElseThrow(() -> new NotFoundException("Advertisement not found"));
     }
 
-    public CustomPage<MarketCard> getMarketAds(Map<String, String> params, Authentication authentication) {
+    public CustomPage<Card> getMarketAds(Map<String, String> params, Authentication authentication) {
         Pageable pageable = getPageable(params);
 
         String type = params.get("type");
 
-        Page<MarketCard> page;
+        Page<Card> page;
         page = switch (type) {
             case "orders" -> {
                 Long orgId = getOrgIdFromAuthToken(authentication);
@@ -364,18 +374,14 @@ public class AdvertisementService {
         return getCustomPage(page);
     }
 
-    // get Ad for marketplace
-    public AdvertisementInterface getAd(Long advertisementId) {
+    public AdvertisementInterface getMarketAd(Long advertisementId, Authentication authentication) {
         Advertisement advertisement = getAdByIdNotDeletedNotClosed(advertisementId);
-        if (advertisement.isClosed() || advertisement.isDeleted()) {
-            throw new NotFoundException("Advertisement not found");
-        }
 
         if (advertisement instanceof OrderEntity order && order.getAcceptedAt() != null) {
             throw new NotFoundException("Advertisement not found");
         }
 
-        return mapToFullCard(advertisement);
+        return adMapper.mapToFullCard(advertisement, authentication);
     }
 
     @Transactional
@@ -458,7 +464,7 @@ public class AdvertisementService {
     public PushNotification acceptOrder(OrderEntity order, Long organizationId) {
         OrganizationEntity organization = organizationService.getOrganizationEntity(organizationId);
         if (acceptanceRepository.existsByOrganization_OrganizationIdAndOrder_AdvertisementId(
-                        organization.getOrganizationId(), order.getAdvertisementId())) {
+                organization.getOrganizationId(), order.getAdvertisementId())) {
             throw new AlreadyTakenException("An acceptance request has already been sent by this organization");
         }
 
@@ -473,7 +479,7 @@ public class AdvertisementService {
 
         String encryptedCode = "?code=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
         sendAcceptanceRequest(acceptance, encryptedCode);
-        String imageUrl = order.getImages() == null || order.getImages().isEmpty() ? "" : order.getImages().get(0).getImageUrl();
+        String imageUrl = getFirstImageUrl(order);
 
         Map<String, String> data = new HashMap<>();
         data.put("sub", "Запрос о принятии заказа");
@@ -489,6 +495,19 @@ public class AdvertisementService {
                 order.getPublishedBy().getUserId(),
                 data
         );
+    }
+
+    public String getFirstImageUrl(Advertisement advertisement) {
+        if (advertisement.getAdvertisementImages() == null || advertisement.getAdvertisementImages().isEmpty()) {
+            return "";
+        }
+
+        return advertisement.getAdvertisementImages().stream()
+                .filter(ai -> ai.getIndex() == 0)
+                .map(AdvertisementImage::getImage)
+                .map(Image::getImageUrl)
+                .findFirst()
+                .orElse("");
     }
 
     private void sendAcceptanceRequest(AcceptanceEntity acceptance, String encryptedCode) {
@@ -526,15 +545,13 @@ public class AdvertisementService {
     private String createJob(CreateJobRequest request, List<MultipartFile> files, Long userId, Long orgId) {
         UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
         OrganizationEntity organization = organizationRepository.getReferenceById(orgId);
-        List<Image> images = files != null && !files.isEmpty()
-                ? files.stream().map(imageService::processImage).toList()
-                : Collections.emptyList();
+        List<AdvertisementImage> advertisementImages = null;
         JobEntity job = new JobEntity(
                 LocalDateTime.now(),
                 user,
                 request.title(),
                 request.description(),
-                images,
+                advertisementImages,
                 request.contactInfo(),
                 organization,
                 request.jobType(),
@@ -542,6 +559,19 @@ public class AdvertisementService {
                 request.salary(),
                 request.applicationDeadline()
         );
+        if (files != null && !files.isEmpty()) {
+            advertisementImages = IntStream.range(0, files.size())
+                    .mapToObj(i -> {
+                        Image image = imageService.processImage(files.get(i));
+                        AdvertisementImage productImage = new AdvertisementImage();
+                        productImage.setImage(image);
+                        productImage.setIndex(i);
+                        productImage.setAdvertisement(job);
+                        return productImage;
+                    })
+                    .toList();
+            job.setAdvertisementImages(advertisementImages);
+        }
 
         jobRepository.save(job);
 
@@ -563,9 +593,17 @@ public class AdvertisementService {
         order.setContactInfo(request.contactInfo());
 
         if (files != null && !files.isEmpty()) {
-            order.setImages(files.stream()
-                    .map(imageService::processImage)
-                    .toList());
+            List<AdvertisementImage> advertisementImages = IntStream.range(0, files.size())
+                    .mapToObj(i -> {
+                        Image image = imageService.processImage(files.get(i));
+                        AdvertisementImage productImage = new AdvertisementImage();
+                        productImage.setImage(image);
+                        productImage.setIndex(i);
+                        productImage.setAdvertisement(order);
+                        return productImage;
+                    })
+                    .toList();
+            order.setAdvertisementImages(advertisementImages);
         }
 
         orderRepository.save(order);
@@ -586,9 +624,17 @@ public class AdvertisementService {
         product.setContactInfo(request.contactInfo());
 
         if (files != null && !files.isEmpty()) {
-            product.setImages(files.stream()
-                    .map(imageService::processImage)
-                    .toList());
+            List<AdvertisementImage> advertisementImages = IntStream.range(0, files.size())
+                    .mapToObj(i -> {
+                        Image image = imageService.processImage(files.get(i));
+                        AdvertisementImage productImage = new AdvertisementImage();
+                        productImage.setImage(image);
+                        productImage.setIndex(i);
+                        productImage.setAdvertisement(product);
+                        return productImage;
+                    })
+                    .toList();
+            product.setAdvertisementImages(advertisementImages);
         }
 
         productRepository.save(product);
@@ -649,7 +695,7 @@ public class AdvertisementService {
         UserDetailsEntity user = userService.getUserDetailsEntity(userId);
         OrganizationEntity organization = user.getOrganization();
         return orderRepository.findAllDashboardOrders(organization.getOrganizationId(), COMPLETED).stream()
-                .map(AdMapper::toDashboardOrder)
+                .map(adMapper::toDashboardOrder)
                 .sorted(Comparator.comparing(DashboardOrder::status))
                 .toList();
     }
@@ -663,7 +709,7 @@ public class AdvertisementService {
             throw new NotFoundException("Order not found");
         }
 
-        return AdMapper.mapToMonitoringOrder(order);
+        return adMapper.mapToMonitoringOrder(order);
     }
 
     @Transactional

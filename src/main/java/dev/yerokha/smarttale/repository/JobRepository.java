@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.repository;
 
-import dev.yerokha.smarttale.dto.MarketCard;
+import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,13 +12,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface JobRepository extends JpaRepository<JobEntity, Long> {
 
-    @Query("SELECT new dev.yerokha.smarttale.dto.MarketCard(" +
+    @Query("SELECT new dev.yerokha.smarttale.dto.Card(" +
            "j.advertisementId, " +
            "j.publishedAt, " +
            "SUBSTRING(j.title, 1, 60), " +
            "SUBSTRING(j.description, 1, 120), " +
            "COALESCE(j.salary, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM Image i WHERE i MEMBER OF j.images ORDER BY i.imageUrl ASC), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = j AND ai.index = 0), ''), " +
            "j.organization.organizationId, " +
            "j.organization.name, " +
            "COALESCE(orgImg.imageUrl, ''), " +
@@ -27,5 +27,5 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
            "FROM JobEntity j " +
            "LEFT JOIN j.organization.image orgImg " +
            "WHERE j.isDeleted = false AND j.isClosed = false AND j.applicationDeadline >= CURRENT DATE")
-    Page<MarketCard> findMarketJobs(Long orgId, Pageable pageable);
+    Page<Card> findMarketJobs(Long orgId, Pageable pageable);
 }

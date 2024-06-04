@@ -1,13 +1,17 @@
 package dev.yerokha.smarttale.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 @Entity
@@ -27,4 +31,7 @@ public class Image {
 
     @Column(name = "hash", unique = true)
     private String hash;
+
+    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AdvertisementImage> advertisementImages;
 }

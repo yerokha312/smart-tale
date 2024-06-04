@@ -1,0 +1,88 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1717477201056-6
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  autoIncrement: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: index
+                  type: INT
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717477201056-8
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  defaultValueNumeric: !!float '0'
+                  name: quantity
+                  type: INT
+            tableName: products
+  - changeSet:
+      id: 1717477201056-9
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addNotNullConstraint:
+            columnName: quantity
+            tableName: products
+  - changeSet:
+      id: 1717477201056-10
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  name: status_changed_at
+                  type: DATETIME
+            tableName: purchases
+  - changeSet:
+      id: 1717477201056-12
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addPrimaryKey:
+            columnNames: id
+            constraintName: pk_advertisement_image_junction
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717477201056-1
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: advertisement_id
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717477201056-2
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: image_id
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717477201056-3
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addNotNullConstraint:
+            columnDataType: DECIMAL
+            columnName: price
+            tableName: products
+            validate: true
+

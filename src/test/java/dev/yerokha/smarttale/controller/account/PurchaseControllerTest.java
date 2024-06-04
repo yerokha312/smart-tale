@@ -107,7 +107,7 @@ class PurchaseControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.title").value("Product 5"),
-                        jsonPath("$.publisherName").value("Second Existing Profile")
+                        jsonPath("$.publisherName").value("Second Existing")
                 );
     }
 

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record MarketCard(
+public record Card(
         @NotNull Long advertisementId,
         @NotNull LocalDateTime publishedAt,
         @NotNull String title,

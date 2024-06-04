@@ -8,14 +8,10 @@ import java.time.LocalDate;
 
 // in get my orders
 public record SmallOrder(
-        @NotNull
-        Long orderId,
-        @NotNull
-        String title,
-        @NotNull
-        BigDecimal price,
-        @NotNull
-        LocalDate acceptedAt,
+        @NotNull Long orderId,
+        @NotNull String title,
+        @NotNull BigDecimal price,
+        @NotNull LocalDate acceptedAt,
         LocalDate deadlineAt,
         LocalDate completedAt,
         OrderStatus status

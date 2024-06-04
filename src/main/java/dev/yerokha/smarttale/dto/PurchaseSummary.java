@@ -1,26 +1,23 @@
 package dev.yerokha.smarttale.dto;
 
+import dev.yerokha.smarttale.enums.PurchaseStatus;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
-// in get market/id
-public record FullProductCard(
+public record PurchaseSummary(
+        @NotNull Long purchaseId,
+        @NotNull LocalDateTime purchasedAt,
+        @NotNull PurchaseStatus status,
         @NotNull Long productId,
-        @NotNull LocalDateTime publishedAt,
         @NotNull String title,
         @NotNull String description,
         @NotNull BigDecimal price,
-        @NotNull List<String> imageUrls,
-        @NotNull LocalDateTime purchasedAt,
+        @NotNull String imageUrl,
         @NotNull Long publishedBy,
         @NotNull String publisherName,
         @NotNull String publisherAvatarUrl,
-        @NotNull String publisherPhoneNumber,
-        @NotNull String publisherEmail,
-        @NotNull long views,
-        @NotNull boolean canPurchase
-) implements AdvertisementInterface {
+        @NotNull boolean canRepeatPurchase
+) {
 }

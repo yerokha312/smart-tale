@@ -409,7 +409,7 @@ class MarketplaceControllerTest {
     @Order(15)
     void getMarketProducts_AfterPlaceProduct() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/market")
-                .param("type", "products"))
+                        .param("type", "products"))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
@@ -468,7 +468,7 @@ class MarketplaceControllerTest {
     @Order(35)
     void getMarketJobs() throws Exception {
         mockMvc.perform(get("/v1/market")
-                .param("type", "jobs"))
+                        .param("type", "jobs"))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
@@ -481,7 +481,7 @@ class MarketplaceControllerTest {
     void applyForJob() throws Exception {
         login("existing8@example.com");
         mockMvc.perform(post("/v1/market/3")
-                .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         content().string("Job applied")
