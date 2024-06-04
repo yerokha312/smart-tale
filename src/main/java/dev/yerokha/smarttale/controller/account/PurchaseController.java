@@ -1,9 +1,8 @@
 package dev.yerokha.smarttale.controller.account;
 
-import dev.yerokha.smarttale.dto.AdvertisementInterface;
-import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CustomPage;
-import dev.yerokha.smarttale.dto.FullProductCard;
+import dev.yerokha.smarttale.dto.Purchase;
+import dev.yerokha.smarttale.dto.PurchaseSummary;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +34,7 @@ public class PurchaseController {
     }
 
     @Operation(
-            summary = "All purchases", description = "Returns products purchased by user, id of product replaced by purchase id",
+            summary = "All purchases", description = "Returns purchases with product in it",
             tags = {"purchase", "user", "get", "account", "product"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
@@ -48,24 +47,24 @@ public class PurchaseController {
 
     )
     @GetMapping
-    public ResponseEntity<CustomPage<Card>> getPurchases(Authentication authentication,
-                                                         @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<PurchaseSummary>> getPurchases(Authentication authentication,
+                                                                    @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(advertisementService.getPurchases(getUserIdFromAuthToken(authentication), params));
     }
 
     @Operation(
-            summary = "One purchase", description = "Get one product ad by unique id of purchase",
+            summary = "One purchase", description = "Returns purchase with details and product in it",
             tags = {"purchase", "user", "get", "account", "product"},
             responses = {
 
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(
-                            schema = @Schema(implementation = FullProductCard.class))),
+                            schema = @Schema(implementation = Purchase.class))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "Purchase not found", content = @Content),
             }
     )
     @GetMapping("/{productId}")
-    public ResponseEntity<AdvertisementInterface> getPurchase(@PathVariable Long productId) {
-        return ResponseEntity.ok(advertisementService.getPurchase(productId));
+    public ResponseEntity<Purchase> getPurchase(@PathVariable Long productId, Authentication authentication) {
+        return ResponseEntity.ok(advertisementService.getPurchase(productId, getUserIdFromAuthToken(authentication)));
     }
 }

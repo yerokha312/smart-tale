@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.entity.user;
 
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
+import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -66,6 +67,9 @@ public class OrganizationEntity {
 
     @OneToMany(mappedBy = "organization")
     private Set<InvitationEntity> invitations = new HashSet<>();
+
+    @OneToMany(mappedBy = "organization")
+    private List<JobEntity> jobs;
 
     @Column(name = "is_deleted", columnDefinition = "boolean default false")
     private boolean isDeleted = false;

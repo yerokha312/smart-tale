@@ -3,76 +3,59 @@ package dev.yerokha.smarttale.mapper;
 import dev.yerokha.smarttale.dto.AcceptanceRequestDto;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.AssignedEmployee;
-import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.DashboardOrder;
+import dev.yerokha.smarttale.dto.FullJobCard;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
-import dev.yerokha.smarttale.dto.Order;
 import dev.yerokha.smarttale.dto.OrderDto;
-import dev.yerokha.smarttale.dto.OrderSummary;
-import dev.yerokha.smarttale.dto.Product;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.Task;
+import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
+import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
+import dev.yerokha.smarttale.repository.AdvertisementRepository;
 import dev.yerokha.smarttale.util.EncryptionUtil;
-import org.hibernate.Hibernate;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
+import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 import static java.util.Collections.emptyList;
 
+
+@Component
 public class AdMapper {
 
-    private static final int DESC_LENGTH = 120;
+    private final int DESC_LENGTH = 120;
+    private final AdvertisementRepository advertisementRepository;
 
-    public static AdvertisementInterface toDto(Advertisement advertisement) {
-        String description = advertisement.getDescription();
-        String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
-        List<Image> images = advertisement.getImages();
-        if (advertisement instanceof OrderEntity order) {
-            int acceptancesCount = Hibernate.size(order.getAcceptanceEntities());
-            return new Order(
-                    order.getAdvertisementId(),
-                    order.getTitle(),
-                    truncatedDescription,
-                    order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
-                    images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
-                    order.getPublishedAt(),
-                    acceptancesCount,
-                    order.isClosed()
-            );
-        }
-
-        return new Product(
-                advertisement.getAdvertisementId(),
-                advertisement.getTitle(),
-                truncatedDescription,
-                advertisement.getPrice() == null ? BigDecimal.ZERO : advertisement.getPrice(),
-                images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
-                advertisement.getPublishedAt(),
-                advertisement.isClosed()
-        );
+    public AdMapper(AdvertisementRepository advertisementRepository) {
+        this.advertisementRepository = advertisementRepository;
     }
 
-    public static AdvertisementInterface toFullDto(Advertisement advertisement) {
-        List<String> imageUrls = advertisement.getImages().stream()
+    public AdvertisementInterface toFullDto(Advertisement advertisement) {
+        List<String> imageUrls = advertisement.getAdvertisementImages().stream()
+                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
+                .map(AdvertisementImage::getImage)
                 .map(Image::getImageUrl)
                 .toList();
 
         if (imageUrls.isEmpty()) {
-            imageUrls = Collections.emptyList();
+            imageUrls = emptyList();
         }
 
         if (advertisement instanceof OrderEntity order) {
@@ -84,7 +67,7 @@ public class AdMapper {
         throw new IllegalArgumentException("Unsupported advertisement type");
     }
 
-    private static FullOrder mapToFullOrder(OrderEntity order, List<String> imageUrls) {
+    private FullOrder mapToFullOrder(OrderEntity order, List<String> imageUrls) {
         boolean isAccepted = order.getAcceptedBy() != null;
         return new FullOrder(
                 order.getAdvertisementId(),
@@ -106,7 +89,7 @@ public class AdMapper {
         );
     }
 
-    private static List<AcceptanceRequestDto> mapToAcceptanceDto(Set<AcceptanceEntity> entities) {
+    private List<AcceptanceRequestDto> mapToAcceptanceDto(Set<AcceptanceEntity> entities) {
         return entities.stream().map(e -> {
                     OrganizationEntity organization = e.getOrganization();
                     return new AcceptanceRequestDto(
@@ -119,7 +102,7 @@ public class AdMapper {
                 .toList();
     }
 
-    private static FullProduct mapToFullProduct(ProductEntity product, List<String> imageUrls) {
+    private FullProduct mapToFullProduct(ProductEntity product, List<String> imageUrls) {
         return new FullProduct(
                 product.getAdvertisementId(),
                 product.getPublishedAt(),
@@ -133,67 +116,84 @@ public class AdMapper {
         );
     }
 
-    public static Card mapToCards(Advertisement advertisement) {
-        UserDetailsEntity publishedBy = advertisement.getPublishedBy();
-        String avatarUrl = getImageUrl(publishedBy.getImage());
-        String description = advertisement.getDescription();
-        String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
-        List<Image> images = advertisement.getImages();
-        return new Card(
-                advertisement.getAdvertisementId(),
-                advertisement.getPublishedAt(),
-                advertisement.getTitle(),
-                truncatedDescription,
-                advertisement.getPrice() == null ? BigDecimal.ZERO : advertisement.getPrice(),
-                images == null || images.isEmpty() ? "" : getImageUrl(advertisement.getImages().get(0)),
-                publishedBy.getUserId(),
-                publishedBy.getName(),
-                avatarUrl
-        );
-    }
+    public AdvertisementInterface mapToFullCard(Advertisement advertisement, Authentication authentication) {
+        String contact = advertisement.getContactInfo().toString();
+        List<String> imageUrls = advertisement.getAdvertisementImages().stream()
+                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
+                .map(AdvertisementImage::getImage)
+                .map(Image::getImageUrl)
+                .toList();
 
-    public static AdvertisementInterface mapToFullCard(Advertisement entity) {
-        Result result = getResult(entity);
-        String contact = entity.getContactInfo().toString();
-        if (entity instanceof OrderEntity order) {
-            OrganizationEntity acceptedBy = order.getAcceptedBy();
-            boolean isAccepted = acceptedBy != null;
+        if (imageUrls.isEmpty()) {
+            imageUrls = emptyList();
+        }
+        UserDetailsEntity publishedBy = advertisement.getPublishedBy();
+        if (advertisement instanceof OrderEntity order) {
+            Long orgId = getOrgIdFromAuthToken(authentication);
+            boolean canAccept = advertisementRepository.canAcceptOrder(orgId, order.getAdvertisementId());
             return new FullOrderCard(
                     order.getAdvertisementId(),
+                    order.getPublishedAt(),
                     order.getTitle(),
                     order.getDescription(),
                     order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
-                    result.imageUrls(),
+                    imageUrls,
                     order.getSize() == null ? "" : order.getSize(),
-                    order.getPublishedAt(),
                     order.getDeadlineAt(),
-                    isAccepted ? acceptedBy.getOrganizationId() : 0,
-                    isAccepted ? acceptedBy.getName() : "",
-                    isAccepted ? getImageUrl(acceptedBy.getImage()) : "",
-                    result.user().getUserId(),
-                    result.publisherName(),
-                    result.avatarUrl(),
-                    contact.contains("PHONE") ? result.user().getPhoneNumber() : "",
-                    contact.contains("EMAIL") ? result.user().getEmail() : "",
-                    order.getViews()
+                    publishedBy.getUserId(),
+                    publishedBy.getName(),
+                    getImageUrl(publishedBy.getImage()),
+                    contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
+                    contact.contains("EMAIL") ? publishedBy.getEmail() : "",
+                    order.getViews(),
+                    canAccept
             );
-        }
-
-        if (entity instanceof ProductEntity product) {
+        } else if (advertisement instanceof ProductEntity product) {
+            Long userId = getUserIdFromAuthToken(authentication);
+            boolean canPurchase = false;
+            if (userId != null) {
+                canPurchase = !userId.equals(product.getPublishedBy().getUserId());
+            }
             return new FullProductCard(
                     product.getAdvertisementId(),
+                    product.getPublishedAt(),
                     product.getTitle(),
                     product.getDescription(),
                     product.getPrice(),
-                    result.imageUrls(),
-                    product.getPublishedAt(),
+                    imageUrls,
                     product.getPurchasedAt(),
-                    result.user().getUserId(),
-                    result.publisherName(),
-                    result.avatarUrl(),
-                    contact.contains("PHONE") ? result.user().getPhoneNumber() : "",
-                    contact.contains("EMAIL") ? result.user().getEmail() : "",
-                    product.getViews()
+                    publishedBy.getUserId(),
+                    publishedBy.getName(),
+                    getImageUrl(publishedBy.getImage()),
+                    contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
+                    contact.contains("EMAIL") ? publishedBy.getEmail() : "",
+                    product.getViews(),
+                    canPurchase
+            );
+        } else if (advertisement instanceof JobEntity job) {
+            OrganizationEntity organization = job.getOrganization();
+            Long orgId = getOrgIdFromAuthToken(authentication);
+            return new FullJobCard(
+                    job.getAdvertisementId(),
+                    job.getPublishedAt(),
+                    job.getTitle(),
+                    job.getDescription(),
+                    job.getSalary() == null ? BigDecimal.ZERO : job.getSalary(),
+                    imageUrls,
+                    publishedBy.getUserId(),
+                    publishedBy.getName(),
+                    getImageUrl(publishedBy.getImage()),
+                    contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
+                    contact.contains("EMAIL") ? publishedBy.getEmail() : "",
+                    organization.getOrganizationId(),
+                    organization.getName(),
+                    getImageUrl(organization.getImage()),
+                    job.getJobType(),
+                    advertisementRepository.countApplicantsByJobId(job.getAdvertisementId()),
+                    job.getLocation() == null ? "" : job.getLocation(),
+                    job.getApplicationDeadline(),
+                    job.getViews(),
+                    !orgId.equals(organization.getOrganizationId())
             );
         }
 
@@ -201,7 +201,7 @@ public class AdMapper {
 
     }
 
-    public static SmallOrder toSmallOrder(OrderEntity order) {
+    public SmallOrder toSmallOrder(OrderEntity order) {
         return new SmallOrder(
                 order.getAdvertisementId(),
                 order.getTitle(),
@@ -213,8 +213,17 @@ public class AdMapper {
         );
     }
 
-    public static OrderDto toOrderDto(OrderEntity entity) {
-        Result result = getResult(entity);
+    public OrderDto toOrderDto(OrderEntity entity) {
+        List<String> imageUrls = entity.getAdvertisementImages().stream()
+                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
+                .map(AdvertisementImage::getImage)
+                .map(Image::getImageUrl)
+                .toList();
+
+        if (imageUrls.isEmpty()) {
+            imageUrls = emptyList();
+        }
+
         OrganizationEntity acceptedOrganization = entity.getAcceptedBy();
         String logoUrl = getImageUrl(acceptedOrganization.getImage());
         return new OrderDto(
@@ -230,28 +239,11 @@ public class AdMapper {
                 entity.getAcceptedAt(),
                 entity.getDeadlineAt(),
                 entity.getCompletedAt(),
-                result.imageUrls()
+                imageUrls
         );
     }
 
-    private static Result getResult(Advertisement entity) {
-        List<String> imageUrls = entity.getImages().stream()
-                .map(AdMapper::getImageUrl)
-                .toList();
-
-        if (imageUrls.isEmpty()) {
-            imageUrls = emptyList();
-        }
-        UserDetailsEntity user = entity.getPublishedBy();
-        String avatarUrl = getImageUrl(user.getImage());
-        String publisherName = user.getLastName() + " " + user.getFirstName() + " " + user.getMiddleName();
-        return new Result(imageUrls, avatarUrl, user, publisherName);
-    }
-
-    private record Result(List<String> imageUrls, String avatarUrl, UserDetailsEntity user, String publisherName) {
-    }
-
-    public static DashboardOrder toDashboardOrder(OrderEntity order) {
+    public DashboardOrder toDashboardOrder(OrderEntity order) {
         String comment = null;
         if (order.getComment() == null) {
             String description = order.getDescription();
@@ -268,12 +260,18 @@ public class AdMapper {
         );
     }
 
-    public static MonitoringOrder mapToMonitoringOrder(OrderEntity order) {
+    public MonitoringOrder mapToMonitoringOrder(OrderEntity order) {
         UserDetailsEntity author = order.getPublishedBy();
         String contact = order.getContactInfo().toString();
-        List<String> list = order.getImages() != null ?
-                order.getImages().stream().map(AdMapper::getImageUrl).toList() :
-                Collections.emptyList();
+        List<String> imageUrls = order.getAdvertisementImages().stream()
+                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
+                .map(AdvertisementImage::getImage)
+                .map(Image::getImageUrl)
+                .toList();
+
+        if (imageUrls.isEmpty()) {
+            imageUrls = emptyList();
+        }
         return new MonitoringOrder(
                 order.getAdvertisementId(),
                 order.getPublishedAt(),
@@ -283,7 +281,7 @@ public class AdMapper {
                 order.getTitle(),
                 order.getDescription(),
                 order.getSize() == null ? "" : order.getSize(),
-                list,
+                imageUrls,
                 order.getStatus(),
                 author.getUserId(),
                 getImageUrl(author.getImage()),
@@ -301,7 +299,7 @@ public class AdMapper {
         );
     }
 
-    public static Task toTask(OrderEntity order) {
+    public Task toTask(OrderEntity order) {
         return new Task(
                 order.getAdvertisementId(),
                 order.getStatus(),
@@ -326,7 +324,7 @@ public class AdMapper {
         );
     }
 
-    private static String getImageUrl(Image image) {
+    private String getImageUrl(Image image) {
         if (image != null) {
             return image.getImageUrl();
         } else {
@@ -334,20 +332,4 @@ public class AdMapper {
         }
     }
 
-    public static OrderSummary toOrderSummary(OrderEntity order) {
-        List<Image> images = order.getImages();
-        String description = order.getDescription();
-        String truncatedDescription = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
-        return new OrderSummary(
-                order.getAdvertisementId(),
-                order.getTaskKey() == null ? "" : order.getTaskKey(),
-                order.getTitle(),
-                truncatedDescription,
-                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
-                images == null || images.isEmpty() ? "" : getImageUrl(images.get(0)),
-                order.getStatus(),
-                order.getAcceptedAt(),
-                order.getDeadlineAt(),
-                order.getCompletedAt());
-    }
 }

@@ -17,6 +17,7 @@ import lombok.ToString;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -39,6 +40,9 @@ public class OrderEntity extends Advertisement {
 
     @Column(name = "status")
     private OrderStatus status; //sort
+
+    @Column(name = "price")
+    private BigDecimal price; //sort
 
     @ManyToOne
     @JoinColumn(name = "accepted_by")

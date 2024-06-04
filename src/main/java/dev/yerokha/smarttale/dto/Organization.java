@@ -6,21 +6,13 @@ import java.time.LocalDate;
 
 // in get organizations/id
 public record Organization(
-        @NotNull
-        Long organizationId,
-        @NotNull
-        String name,
-        @NotNull
-        String description,
-        @NotNull
-        String logoUrl,
-        @NotNull
-        Long ownerId,
-        @NotNull
-        String ownerName,
-        @NotNull
-        String ownerAvatarUrl,
-        @NotNull
-        LocalDate registeredAt
+        @NotNull Long organizationId,
+        @NotNull String name,
+        @NotNull String description,
+        @NotNull String logoUrl,
+        @NotNull Long ownerId,
+        @NotNull String ownerName,
+        @NotNull String ownerAvatarUrl,
+        @NotNull LocalDate registeredAt
 ) {
 }

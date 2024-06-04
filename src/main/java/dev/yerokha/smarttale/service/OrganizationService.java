@@ -15,6 +15,8 @@ import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
+import dev.yerokha.smarttale.entity.AdvertisementImage;
+import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
@@ -70,6 +72,7 @@ public class OrganizationService {
     private final OrganizationRepository organizationRepository;
     private final ImageService imageService;
     private final AuthenticationService authenticationService;
+    private final AdMapper adMapper;
 
 
     public OrganizationService(OrderRepository orderRepository,
@@ -79,7 +82,7 @@ public class OrganizationService {
                                PositionRepository positionRepository,
                                OrganizationRepository organizationRepository,
                                ImageService imageService,
-                               AuthenticationService authenticationService) {
+                               AuthenticationService authenticationService, AdMapper adMapper) {
         this.orderRepository = orderRepository;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
@@ -88,6 +91,7 @@ public class OrganizationService {
         this.organizationRepository = organizationRepository;
         this.imageService = imageService;
         this.authenticationService = authenticationService;
+        this.adMapper = adMapper;
     }
 
     public CustomPage<OrderSummary> getOrders(Long organizationId, Map<String, String> params) {
@@ -104,18 +108,12 @@ public class OrganizationService {
         if (dateType != null) {
             LocalDate dateFrom = parse(params.get("dateFrom"));
             LocalDate dateTo = parse(params.get("dateTo"));
-            Page<OrderSummary> page = orderRepository.findByDateRange(organizationId,
-                            isActive,
-                            dateType,
-                            dateFrom,
-                            dateTo,
-                            pageable)
-                    .map(AdMapper::toOrderSummary);
+            Page<OrderSummary> page = orderRepository.findByDateRange(
+                    organizationId, isActive, dateType, dateFrom, dateTo, pageable);
             return getCustomPage(page);
         }
 
-        Page<OrderSummary> page = orderRepository.findByActiveStatus(organizationId, isActive, pageable)
-                .map(AdMapper::toOrderSummary);
+        Page<OrderSummary> page = orderRepository.findByActiveStatus(organizationId, isActive, pageable);
         return getCustomPage(page);
     }
 
@@ -157,7 +155,7 @@ public class OrganizationService {
 
     private Employee mapToEmployee(UserDetailsEntity user, Long organizationId) {
         String name = user.getName();
-        List<OrderSummary> orders = getCurrentOrders(user, organizationId);
+        List<OrderSummary> orders = getCurrentOrders(user.getUserId(), organizationId);
         String position = getPosition(user, organizationId);
         String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
 
@@ -239,7 +237,7 @@ public class OrganizationService {
         Pageable pageable = getPageable(params, sort);
 
         return orderRepository.findTasksByEmployeeId(employee.getUserId(), organizationId, isActive, pageable)
-                .map(AdMapper::toTask);
+                .map(adMapper::toTask);
     }
 
     private String getPosition(UserDetailsEntity employee, Long organizationId) {
@@ -255,18 +253,14 @@ public class OrganizationService {
         return employee.getPosition().getTitle();
     }
 
-    private List<OrderSummary> getCurrentOrders(UserDetailsEntity employee,
+    private List<OrderSummary> getCurrentOrders(Long employeeId,
                                                 Long organizationId) {
 
-        OrganizationEntity organization = employee.getOrganization();
-        if ((organization == null) || !organization.getOrganizationId().equals(organizationId)) {
+        boolean isEmployee = userDetailsRepository.existsInOrganization(employeeId, organizationId);
+        if (!isEmployee) {
             return null;
         }
-
-        return employee.getAssignedTasks().stream()
-                .filter(order -> order.getCompletedAt() == null)
-                .map(AdMapper::toOrderSummary)
-                .toList();
+        return orderRepository.findCurrentOrdersByEmployeeId(employeeId);
     }
 
     public PushNotification inviteEmployee(Long inviterId, InviteRequest request) {
@@ -416,14 +410,13 @@ public class OrganizationService {
         return mapToOrganization(organizationEntity);
     }
 
-    private OrganizationEntity getOrganizationEntity(Long organizationId) {
+    OrganizationEntity getOrganizationEntity(Long organizationId) {
         return organizationRepository.findById(organizationId).orElseThrow(
                 () -> new NotFoundException("Organization not found"));
     }
 
     @Transactional
     public String createOrganization(CreateOrgRequest request, MultipartFile file, Long userId) {
-//        UserDetailsEntity user = getUserDetailsEntity(userId);
         UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
         if (!user.isSubscribed() || user.getOrganization() != null) {
             throw new ForbiddenException("User is not subscribed or already has an organization");
@@ -552,8 +545,12 @@ public class OrganizationService {
             contractor.removeAssignedTask(order);
             userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
             userDetailsRepository.save(contractor);
-            String imageUrl = order.getImages() == null || order.getImages().isEmpty()
-                    ? "" : order.getImages().get(0).getImageUrl();
+            String imageUrl = order.getAdvertisementImages().stream()
+                    .filter(ai -> ai.getIndex() == 0)
+                    .map(AdvertisementImage::getImage)
+                    .map(Image::getImageUrl)
+                    .findFirst()
+                    .orElse("");
             Map<String, String> data = Map.of(
                     "sub", "Вас отстранили от заказа",
                     "orderId", order.getAdvertisementId().toString(),
@@ -583,8 +580,12 @@ public class OrganizationService {
             contractor.addAssignedTask(order);
             userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
             userDetailsRepository.save(contractor);
-            String imageUrl = order.getImages() == null || order.getImages().isEmpty()
-                    ? "" : order.getImages().get(0).getImageUrl();
+            String imageUrl = order.getAdvertisementImages().stream()
+                    .filter(ai -> ai.getIndex() == 0)
+                    .map(AdvertisementImage::getImage)
+                    .map(Image::getImageUrl)
+                    .findFirst()
+                    .orElse("");
             Map<String, String> data = Map.of(
                     "sub", "Вас назначили на заказ",
                     "orderId", order.getAdvertisementId().toString(),
