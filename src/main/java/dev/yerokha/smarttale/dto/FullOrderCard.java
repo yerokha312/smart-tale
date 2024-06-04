@@ -9,38 +9,20 @@ import java.util.List;
 
 // get market/id
 public record FullOrderCard(
-        @NotNull
-        Long advertisementId,
-        @NotNull
-        String title,
-        @NotNull
-        String description,
-        @NotNull
-        BigDecimal price,
-        @NotNull
-        List<String> imageUrls,
-        @NotNull
-        String size,
-        @NotNull
-        LocalDateTime publishedAt,
+        @NotNull Long orderId,
+        @NotNull LocalDateTime publishedAt,
+        @NotNull String title,
+        @NotNull String description,
+        @NotNull BigDecimal price,
+        @NotNull List<String> imageUrls,
+        @NotNull String size,
         LocalDate deadlineAt,
-        @NotNull
-        Long acceptedBy,
-        @NotNull
-        String organizationName,
-        @NotNull
-        String organizationLogoUrl,
-        @NotNull
-        Long publishedBy,
-        @NotNull
-        String publisherName,
-        @NotNull
-        String publisherAvatarUrl,
-        @NotNull
-        String publisherPhoneNumber,
-        @NotNull
-        String publisherEmail,
-        @NotNull
-        long views
+        @NotNull Long publishedBy,
+        @NotNull String publisherName,
+        @NotNull String publisherAvatarUrl,
+        @NotNull String publisherPhoneNumber,
+        @NotNull String publisherEmail,
+        @NotNull long views,
+        @NotNull boolean canAccept
 ) implements AdvertisementInterface {
 }

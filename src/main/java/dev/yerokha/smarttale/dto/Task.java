@@ -9,32 +9,19 @@ import java.util.List;
 
 // in EmployeeTaskResponse
 public record Task(
-        @NotNull
-        Long orderId,
-        @NotNull
-        OrderStatus status,
-        @NotNull
-        String title,
-        @NotNull
-        String key,
-        @NotNull
-        String description,
-        @NotNull
-        BigDecimal price,
-        @NotNull
-        String comment,
-        @NotNull
-        LocalDate date,
-        @NotNull
-        List<AssignedEmployee> employees,
-        @NotNull
-        Long publisherId,
-        @NotNull
-        String publisherName,
-        @NotNull
-        String publisherAvatarUrl,
-        @NotNull
-        String publisherPhoneNumber
+        @NotNull Long orderId,
+        @NotNull OrderStatus status,
+        @NotNull String title,
+        @NotNull String key,
+        @NotNull String description,
+        @NotNull BigDecimal price,
+        @NotNull String comment,
+        @NotNull LocalDate date,
+        @NotNull List<AssignedEmployee> employees,
+        @NotNull Long publisherId,
+        @NotNull String publisherName,
+        @NotNull String publisherAvatarUrl,
+        @NotNull String publisherPhoneNumber
 
 ) {
 }

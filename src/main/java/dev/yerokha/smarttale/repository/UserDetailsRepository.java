@@ -60,6 +60,9 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "AND (:orgId IS NULL OR ud.organization.organizationId = :orgId)")
     Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("orgId") Long orgId, Pageable pageable);
 
-    @Query("SELECT COUNT(o) > 0 FROM UserDetailsEntity u JOIN u.assignedTasks o WHERE u.userId = :userId")
+    @Query("SELECT COUNT(at.advertisementId) > 0 FROM UserDetailsEntity u JOIN u.assignedTasks at WHERE u.userId = :userId")
     boolean existsAssignedTasks(Long userId);
+
+    @Query("SELECT COUNT (e.userId) > 0 FROM OrganizationEntity o JOIN o.employees e WHERE o.organizationId = :orgId AND e.userId = :userId")
+    boolean existsInOrganization(Long userId, Long orgId);
 }

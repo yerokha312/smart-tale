@@ -5,9 +5,7 @@ import org.springframework.data.domain.Page;
 
 // used in get employees/id
 public record EmployeeTasksResponse(
-        @NotNull
-        EmployeeDto employee,
-        @NotNull
-        Page<Task> tasks
+        @NotNull EmployeeDto employee,
+        @NotNull Page<Task> tasks
 ) {
 }

@@ -6,33 +6,21 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// in get my purchases/id
 // in get market/id
 public record FullProductCard(
-        @NotNull
-        Long advertisementId,
-        @NotNull
-        String title,
-        @NotNull
-        String description,
-        @NotNull
-        BigDecimal price,
-        @NotNull
-        List<String> imageUrls,
-        @NotNull
-        LocalDateTime publishedAt,
-        LocalDateTime purchasedAt,
-        @NotNull
-        Long publishedBy,
-        @NotNull
-        String publisherName,
-        @NotNull
-        String publisherAvatarUrl,
-        @NotNull
-        String publisherPhoneNumber,
-        @NotNull
-        String publisherEmail,
-        @NotNull
-        long views
+        @NotNull Long productId,
+        @NotNull LocalDateTime publishedAt,
+        @NotNull String title,
+        @NotNull String description,
+        @NotNull BigDecimal price,
+        @NotNull List<String> imageUrls,
+        @NotNull LocalDateTime purchasedAt,
+        @NotNull Long publishedBy,
+        @NotNull String publisherName,
+        @NotNull String publisherAvatarUrl,
+        @NotNull String publisherPhoneNumber,
+        @NotNull String publisherEmail,
+        @NotNull long views,
+        @NotNull boolean canPurchase
 ) implements AdvertisementInterface {
 }

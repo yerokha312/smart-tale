@@ -66,10 +66,10 @@ public class AdvertisementController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage<AdvertisementInterface>> getAds(Authentication authentication,
-                                                                     @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<? extends AdvertisementInterface>> getAds(Authentication authentication,
+                                                                               @RequestParam(required = false) Map<String, String> params) {
 
-        return ResponseEntity.ok(advertisementService.getAds(getUserIdFromAuthToken(authentication), params));
+        return ResponseEntity.ok(advertisementService.getPersonalAds(getUserIdFromAuthToken(authentication), params));
     }
 
     @Operation(
@@ -87,7 +87,7 @@ public class AdvertisementController {
     public ResponseEntity<AdvertisementInterface> getAd(Authentication authentication,
                                                         @PathVariable Long advertisementId) {
 
-        return ResponseEntity.ok(advertisementService.getAd(getUserIdFromAuthToken(authentication),
+        return ResponseEntity.ok(advertisementService.getAdvertisement(getUserIdFromAuthToken(authentication),
                 advertisementId));
     }
 

@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1717430549386-6
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: job_applicant_junction
+            constraintName: fkmni204iaiitjgw33ufkjnck4n
+  - changeSet:
+      id: 1717430549386-7
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: job_applicant_junction
+            constraintName: fktbv5e4mu6xyqph7s22ci5al63
+  - changeSet:
+      id: 1717430549386-3
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_applications
+                  name: application_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: job_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  name: application_date
+                  type: DATETIME
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+            tableName: applications
+  - changeSet:
+      id: 1717430549386-4
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: job_id
+            baseTableName: applications
+            constraintName: FK_APPLICATIONS_ON_JOB
+            referencedColumnNames: advertisement_id
+            referencedTableName: jobs
+  - changeSet:
+      id: 1717430549386-5
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: user_id
+            baseTableName: applications
+            constraintName: FK_APPLICATIONS_ON_USER
+            referencedColumnNames: details_id
+            referencedTableName: user_details
+  - changeSet:
+      id: 1717430549386-8
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropTable:
+            cascadeConstraints: true
+            tableName: job_applicant_junction
+

@@ -9,30 +9,19 @@ import java.util.List;
 
 // account get my orders/id
 public record OrderDto(
-        @NotNull
-        Long orderId,
-        @NotNull
-        OrderStatus status,
-        @NotNull
-        String title,
-        @NotNull
-        String description,
-        @NotNull
-        BigDecimal price,
-        @NotNull
-        String size,
-        @NotNull
-        Long acceptedBy,
-        @NotNull
-        String organizationName,
-        @NotNull
-        String organizationLogoUrl,
-        @NotNull
-        LocalDate acceptedAt,
+        @NotNull Long orderId,
+        @NotNull OrderStatus status,
+        @NotNull String title,
+        @NotNull String description,
+        @NotNull BigDecimal price,
+        @NotNull String size,
+        @NotNull Long acceptedBy,
+        @NotNull String organizationName,
+        @NotNull String organizationLogoUrl,
+        @NotNull LocalDate acceptedAt,
         LocalDate deadlineAt,
         LocalDate completedAt,
-        @NotNull
-        List<String> imageUrls
+        @NotNull List<String> imageUrls
 
 ) {
 }

@@ -1,5 +1,7 @@
 package dev.yerokha.smarttale.repository;
 
+import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import org.springframework.data.domain.Page;
@@ -13,17 +15,40 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
-    Page<ProductEntity> findAllByPublishedByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
+    @Query("SELECT new dev.yerokha.smarttale.dto.Product(" +
+           "p.advertisementId, " +
+           "SUBSTRING(p.title, 1, 60), " +
+           "SUBSTRING(p.description, 1, 120), " +
+           "COALESCE(p.price, 0), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = p AND ai.index = 0), ''), " +
+           "p.publishedAt, " +
+           "p.isClosed) " +
+           "FROM ProductEntity p " +
+           "WHERE p.publishedBy.userId = :userId AND p.isDeleted = false")
+    Page<AdvertisementInterface> findPersonalProducts(@Param("userId") Long userId, Pageable pageable);
 
-
-    Page<ProductEntity> findAllByIsClosedFalseAndIsDeletedFalse(Pageable pageable);
-
+    @Query("SELECT new dev.yerokha.smarttale.dto.Card(" +
+           "p.advertisementId, " +
+           "p.publishedAt, " +
+           "SUBSTRING(p.title, 1, 60), " +
+           "SUBSTRING(p.description, 1, 120), " +
+           "COALESCE(p.price, 0), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = p AND ai.index = 0), ''), " +
+           "p.publishedBy.userId, " +
+           "CONCAT(p.publishedBy.lastName, ' ', p.publishedBy.firstName), " +
+           "COALESCE(pubImg.imageUrl, ''), " +
+           "CASE WHEN p.publishedBy.userId = :userId THEN false ELSE true END" +
+           ") " +
+           "FROM ProductEntity p " +
+           "LEFT JOIN p.publishedBy.image pubImg " +
+           "WHERE p.isDeleted = false AND p.isClosed = false")
+    Page<Card> findMarketProducts(Long userId, Pageable pageable);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
            "p.advertisementId, " +
            "dev.yerokha.smarttale.enums.ContextType.PRODUCT, " +
            "p.title, " +
-           "(SELECT i.imageUrl FROM Image i WHERE i IN elements(p.images) ORDER BY i.imageId ASC)" +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = p AND ai.index = 0), '')" +
            ") " +
            "FROM ProductEntity p " +
            "WHERE (lower(p.title) LIKE %:query% " +
