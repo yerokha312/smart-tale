@@ -3,19 +3,26 @@ package dev.yerokha.smarttale.dto;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// get my advertisements/id
-public record FullProduct(
-        @NotNull Long productId,
+// get market/id
+public record OrderCard(
+        @NotNull Long orderId,
         @NotNull LocalDateTime publishedAt,
         @NotNull String title,
         @NotNull String description,
         @NotNull BigDecimal price,
         @NotNull List<String> imageUrls,
+        @NotNull String size,
+        LocalDate deadlineAt,
+        @NotNull Long publishedBy,
+        @NotNull String publisherName,
+        @NotNull String publisherAvatarUrl,
+        @NotNull String publisherPhoneNumber,
+        @NotNull String publisherEmail,
         @NotNull long views,
-        @NotNull boolean isDeleted,
-        @NotNull boolean isClosed
+        @NotNull boolean canAccept
 ) implements AdvertisementInterface {
 }

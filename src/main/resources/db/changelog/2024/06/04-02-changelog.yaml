@@ -1,0 +1,323 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1717519269760-1
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: advertisement_image_junction
+            constraintName: fkd9jrdlwb5q5t0ugxpgva4d9r0
+  - changeSet:
+      id: 1717519269760-3
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: orders
+            constraintName: fkfc4g9w56mvotr4du2iitbvc17
+  - changeSet:
+      id: 1717519269760-5
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: advertisement_image_junction
+            constraintName: fkldye6v9oxi1swj3fs4og92xni
+  - changeSet:
+      id: 1717519269760-7
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: products
+            constraintName: fkrlasy6vsu39rymr339s3esa6p
+  - changeSet:
+      id: 1717519269760-13
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: advertisement_image_junction_id_seq
+  - changeSet:
+      id: 1717519269760-14
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: applications_application_id_seq
+  - changeSet:
+      id: 1717519269760-15
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_applications
+                  name: application_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: job_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  name: application_date
+                  type: timestamp
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+            tableName: applications
+  - changeSet:
+      id: 1717519269760-16
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  name: application_deadline
+                  type: date
+              - column:
+                  name: job_type
+                  type: VARCHAR(255)
+              - column:
+                  name: location
+                  type: VARCHAR(255)
+              - column:
+                  name: salary
+                  type: NUMBER(38, 2)
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: jobs_pkey
+                  name: advertisement_id
+                  type: BIGINT
+              - column:
+                  name: organization_id
+                  type: BIGINT
+            tableName: jobs
+  - changeSet:
+      id: 1717519269760-17
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                  name: id
+                  type: bigint
+              - column:
+                  name: index
+                  type: integer
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717519269760-19
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: price
+                  type: numeric(38, 2)
+            tableName: orders
+#  - changeSet:
+#      id: 1717519269760-20
+#      author: yerbolatyergaliyev
+#      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+#      changes:
+#        - addColumn:
+#            columns:
+#              - column:
+#                  constraints:
+#                    nullable: false
+#                  name: price
+#                  type: numeric(38, 2)
+#                  defaultValue: '0'
+#              - column:
+#                  constraints:
+#                    nullable: false
+#                  defaultValue: '0'
+#                  name: quantity
+#                  type: integer
+#            tableName: products
+  - changeSet:
+      id: 1717519269760-22
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: status
+                  type: varchar(255)
+              - column:
+                  name: status_changed_at
+                  type: timestamp
+            tableName: purchases
+  - changeSet:
+      id: 1717519269760-24
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addPrimaryKey:
+            columnNames: id
+            constraintName: pk_advertisement_image_junction
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717519269760-25
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: advertisement_id
+            baseTableName: jobs
+            constraintName: fk6d8msioynvly32v7ooxycbkxp
+            onDelete: NO ACTION
+            referencedColumnNames: advertisement_id
+            referencedTableName: abstract_advertisements
+  - changeSet:
+      id: 1717519269760-26
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: job_id
+            baseTableName: applications
+            constraintName: fk_applications_on_job
+            onDelete: NO ACTION
+            referencedColumnNames: advertisement_id
+            referencedTableName: jobs
+  - changeSet:
+      id: 1717519269760-27
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: user_id
+            baseTableName: applications
+            constraintName: fk_applications_on_user
+            onDelete: NO ACTION
+            referencedColumnNames: details_id
+            referencedTableName: user_details
+  - changeSet:
+      id: 1717519269760-28
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: organization_id
+            baseTableName: jobs
+            constraintName: fkrj84ptwt9tksbcnduv0fo8t0r
+            onDelete: NO ACTION
+            referencedColumnNames: organization_id
+            referencedTableName: organizations
+  - changeSet:
+      id: 1717519269760-29
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: price
+            tableName: abstract_advertisements
+  - changeSet:
+      id: 1717519269760-2
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: advertisement_id
+            baseTableName: advertisement_image_junction
+            constraintName: fkd9jrdlwb5q5t0ugxpgva4d9r0
+            onDelete: NO ACTION
+            referencedColumnNames: advertisement_id
+            referencedTableName: abstract_advertisements
+  - changeSet:
+      id: 1717519269760-4
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: advertisement_id
+            baseTableName: orders
+            constraintName: fkfc4g9w56mvotr4du2iitbvc17
+            onDelete: NO ACTION
+            referencedColumnNames: advertisement_id
+            referencedTableName: abstract_advertisements
+  - changeSet:
+      id: 1717519269760-6
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: image_id
+            baseTableName: advertisement_image_junction
+            constraintName: fkldye6v9oxi1swj3fs4og92xni
+            onDelete: NO ACTION
+            referencedColumnNames: image_id
+            referencedTableName: image
+  - changeSet:
+      id: 1717519269760-8
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: advertisement_id
+            baseTableName: products
+            constraintName: fkrlasy6vsu39rymr339s3esa6p
+            onDelete: NO ACTION
+            referencedColumnNames: advertisement_id
+            referencedTableName: abstract_advertisements
+  - changeSet:
+      id: 1717519269760-9
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: advertisement_id
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717519269760-10
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: image_id
+            tableName: advertisement_image_junction
+  - changeSet:
+      id: 1717519269760-11
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: invited_at
+            newDataType: timestamp
+            tableName: invitations
+  - changeSet:
+      id: 1717519269760-12
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: timestamp
+            newDataType: timestamp
+            tableName: notifications
+

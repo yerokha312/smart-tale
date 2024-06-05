@@ -7,8 +7,8 @@ import dev.yerokha.smarttale.dto.CreateJobRequest;
 import dev.yerokha.smarttale.dto.CreateOrderRequest;
 import dev.yerokha.smarttale.dto.CreateProductRequest;
 import dev.yerokha.smarttale.dto.CustomPage;
-import dev.yerokha.smarttale.dto.FullOrderCard;
-import dev.yerokha.smarttale.dto.FullProductCard;
+import dev.yerokha.smarttale.dto.OrderCard;
+import dev.yerokha.smarttale.dto.ProductCard;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import dev.yerokha.smarttale.util.Authorities;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,7 +73,7 @@ public class MarketplaceController {
             tags = {"get", "order", "product", "job", "market", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
-                            anyOf = {FullProductCard.class, FullOrderCard.class}))),
+                            anyOf = {ProductCard.class, OrderCard.class}))),
                     @ApiResponse(responseCode = "404", description = "Ad not found", content = @Content)
             }
     )

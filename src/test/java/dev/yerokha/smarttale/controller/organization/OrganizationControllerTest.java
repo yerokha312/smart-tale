@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.InviteRequest;
-import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.UpdateEmployeeRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
@@ -229,7 +229,7 @@ class OrganizationControllerTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        List<List<OrderSummary>> orders = JsonPath.read(content, "$.content[*].orderList");
+        List<List<OrderAccepted>> orders = JsonPath.read(content, "$.content[*].orderList");
         for (int i = 1; i < orders.size(); i++) {
             assert orders.get(i - 1).size() >= orders.get(i).size();
         }
@@ -298,6 +298,38 @@ class OrganizationControllerTest {
                 eq("Position 2"),
                 linkCaptor.capture());
 
+    }
+
+    @Test
+    @Order(6)
+    void getInvitations() throws Exception {
+        mockMvc.perform(get("/v1/organization/invitations")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(3)
+                );
+    }
+
+    @Test
+    @Order(6)
+    void deleteInvitation() throws Exception {
+        mockMvc.perform(delete("/v1/organization/invitations/100001")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk()
+                );
+    }
+
+    @Test
+    @Order(6)
+    void deleteInvitation_Should404() throws Exception {
+        mockMvc.perform(delete("/v1/organization/invitations/100004")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isNotFound()
+                );
     }
 
     @Test

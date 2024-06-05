@@ -5,6 +5,7 @@ import dev.yerokha.smarttale.enums.JobType;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.hibernate.validator.constraints.Length;
 
@@ -12,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record CreateJobRequest(
+        @NotNull @Positive
+        Long positionId,
         @NotNull @NotEmpty
         @Length(min = 5, max = 250, message = "Title length must be between 5 and 250")
         String title,

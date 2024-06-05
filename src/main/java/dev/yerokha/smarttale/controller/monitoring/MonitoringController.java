@@ -1,9 +1,9 @@
 package dev.yerokha.smarttale.controller.monitoring;
 
 import dev.yerokha.smarttale.dto.CustomPage;
-import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
-import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.OrderAccepted;
+import dev.yerokha.smarttale.dto.OrderDashboard;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import dev.yerokha.smarttale.service.OrganizationService;
@@ -55,8 +55,8 @@ public class MonitoringController {
             }
     )
     @GetMapping
-    public ResponseEntity<List<DashboardOrder>> getDashboard(Authentication authentication) {
-        return ResponseEntity.ok(advertisementService.getDashboard(getUserIdFromAuthToken(authentication)));
+    public ResponseEntity<List<OrderDashboard>> getDashboard(Authentication authentication) {
+        return ResponseEntity.ok(advertisementService.getDashboard(getOrgIdFromAuthToken(authentication)));
     }
 
     @Operation(
@@ -116,8 +116,8 @@ public class MonitoringController {
             }
     )
     @GetMapping("/orders")
-    public ResponseEntity<CustomPage<OrderSummary>> getOrdersHistory(Authentication authentication,
-                                                                     @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<OrderAccepted>> getOrdersHistory(Authentication authentication,
+                                                                      @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(organizationService.getOrders(
                 getOrgIdFromAuthToken(authentication),

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 // in get organizations/orders
-public record OrderSummary(
+public record OrderAccepted(
         @NotNull Long orderId,
         @NotNull String key,
         @NotNull String title,

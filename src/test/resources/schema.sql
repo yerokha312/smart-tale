@@ -165,7 +165,7 @@ create table orders
     comment          varchar(255),
     size             varchar(255),
     task_key         varchar(255),
-    price            numeric,
+    price            numeric(38,2),
     primary key (advertisement_id),
     constraint fko7oqmrhjyu78foflci8xhw9u5
         foreign key (accepted_by) references organizations,
@@ -195,7 +195,7 @@ alter table organizations
 create table products
 (
     advertisement_id bigint            not null,
-    price            numeric           not null,
+    price            numeric(38,2)           not null,
     quantity         integer default 0 not null,
     primary key (advertisement_id),
     constraint fkrlasy6vsu39rymr339s3esa6p
@@ -258,9 +258,10 @@ create index recipient_idx
 create table jobs
 (
     application_deadline date,
+    position_id          bigint,
     job_type             varchar(255),
     location             varchar(255),
-    salary               numeric,
+    salary               numeric(38,2),
     advertisement_id     bigint not null,
     organization_id      bigint,
     primary key (advertisement_id),
