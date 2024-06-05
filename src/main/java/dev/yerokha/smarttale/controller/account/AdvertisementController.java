@@ -2,10 +2,10 @@ package dev.yerokha.smarttale.controller.account;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.CustomPage;
-import dev.yerokha.smarttale.dto.FullOrder;
-import dev.yerokha.smarttale.dto.FullProduct;
-import dev.yerokha.smarttale.dto.Order;
+import dev.yerokha.smarttale.dto.OrderFull;
+import dev.yerokha.smarttale.dto.OrderSummaryPersonal;
 import dev.yerokha.smarttale.dto.Product;
+import dev.yerokha.smarttale.dto.ProductFull;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,7 +51,7 @@ public class AdvertisementController {
             tags = {"advertisement", "user", "get", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(
-                            schema = @Schema(allOf = {Order.class, Product.class, CustomPage.class}))),
+                            schema = @Schema(allOf = {OrderSummaryPersonal.class, Product.class, CustomPage.class}))),
                     @ApiResponse(responseCode = "400", description = "Bad request param", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
@@ -78,7 +78,7 @@ public class AdvertisementController {
             tags = {"advertisement", "user", "get", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success", content = @Content(schema = @Schema(
-                            anyOf = {FullOrder.class, FullProduct.class}))),
+                            anyOf = {OrderFull.class, ProductFull.class}))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User or Ad not found", content = @Content)
             }

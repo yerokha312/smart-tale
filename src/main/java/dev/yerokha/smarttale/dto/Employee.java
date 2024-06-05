@@ -9,7 +9,7 @@ public record Employee(
         @NotNull Long employeeId,
         @NotNull String name,
         @NotNull String email,
-        @NotNull List<OrderSummary> orderList,
+        @NotNull List<OrderAccepted> orderList,
         @NotNull String position,
         @NotNull String status
 ) {

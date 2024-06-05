@@ -2,7 +2,7 @@ package dev.yerokha.smarttale.controller.monitoring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import dev.yerokha.smarttale.dto.DashboardOrder;
+import dev.yerokha.smarttale.dto.OrderDashboard;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
@@ -103,8 +103,8 @@ class MonitoringControllerTest {
                         jsonPath("$", hasSize(20)))
                 .andReturn();
 
-        List<DashboardOrder> orders = Arrays.asList(objectMapper
-                .readValue(result.getResponse().getContentAsString(), DashboardOrder[].class));
+        List<OrderDashboard> orders = Arrays.asList(objectMapper
+                .readValue(result.getResponse().getContentAsString(), OrderDashboard[].class));
 
         for (int i = 1; i < orders.size(); i++) {
             assert orders.get(i - 1).status().compareTo(orders.get(i).status()) <= 0;

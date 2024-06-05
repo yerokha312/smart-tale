@@ -52,9 +52,9 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "AND ae.organization.organizationId = :orgId")
     boolean canAcceptOrder(Long orgId, Long orderId);
 
-    @Query("SELECT COUNT(ae.applicationId) " +
+    @Query("SELECT COUNT(jae.applicationId) " +
            "FROM JobEntity j " +
-           "JOIN ApplicationEntity ae " +
+           "JOIN JobApplicationEntity jae " +
            "WHERE j.advertisementId = :jobId")
     int countApplicantsByJobId(Long jobId);
 
@@ -68,7 +68,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "WHEN ProductEntity THEN dev.yerokha.smarttale.enums.ContextType.PRODUCT " +
            "ELSE dev.yerokha.smarttale.enums.ContextType.ADVERTISEMENT END, " +
            "a.title, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = a.advertisementId ORDER BY ai.index ASC LIMIT 1), '')" +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = a AND ai.index = 0), '')" +
            ") " +
            "FROM Advertisement a " +
            "WHERE (lower(a.title) LIKE %:query% OR lower(a.description) LIKE %:query%) " +

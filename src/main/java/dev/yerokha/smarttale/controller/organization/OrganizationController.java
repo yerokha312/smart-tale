@@ -6,7 +6,9 @@ import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.InviterInvitation;
-import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.Job;
+import dev.yerokha.smarttale.dto.JobSummary;
+import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
@@ -140,8 +142,8 @@ public class OrganizationController {
             }
     )
     @GetMapping("/orders")
-    public ResponseEntity<CustomPage<OrderSummary>> getOrders(Authentication authentication,
-                                                              @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<OrderAccepted>> getOrders(Authentication authentication,
+                                                               @RequestParam(required = false) Map<String, String> params) {
         return ResponseEntity.ok(organizationService.getOrders(getOrgIdFromAuthToken(authentication), params));
     }
 
@@ -393,6 +395,37 @@ public class OrganizationController {
         organizationService.updateEmployee(getOrgIdFromAuthToken(authentication), request.employeeId(), request.positionId());
 
         return ResponseEntity.ok("Employee position updated");
+    }
+
+    @Operation(
+            summary = "Get job ads of organization", description = "Returns all job ads of organization",
+            tags = {"get", "advertisement", "job", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "Has no EMPLOYEE role"),
+                    @ApiResponse(responseCode = "404", description = "Organization not found")
+            }
+    )
+    @GetMapping("/advertisements")
+    public ResponseEntity<CustomPage<JobSummary>> getAdvertisements(Authentication authentication,
+                                                                    @RequestParam(required = false) Map<String, String> params) {
+        return ResponseEntity.ok(organizationService.getJobAds(getOrgIdFromAuthToken(authentication), params));
+    }
+
+    @Operation(
+            summary = "Get one job ad", tags = {"get", "job", "organization", "advertisement"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "User has no EMPLOYEE role"),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+            }
+    )
+    @GetMapping("/advertisements/{advertisementId}")
+    public ResponseEntity<Job> getJobAdvertisement(Authentication authentication,
+                                                   @PathVariable Long advertisementId) {
+        return ResponseEntity.ok(organizationService.getOneJobAd(getOrgIdFromAuthToken(authentication), advertisementId));
     }
 
 

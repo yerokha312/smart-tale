@@ -41,7 +41,7 @@ public class OrderEntity extends Advertisement {
     @Column(name = "status")
     private OrderStatus status; //sort
 
-    @Column(name = "price")
+    @Column(name = "price", columnDefinition = "numeric(38,2) default 0")
     private BigDecimal price; //sort
 
     @ManyToOne

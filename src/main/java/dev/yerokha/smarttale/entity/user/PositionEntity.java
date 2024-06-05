@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.entity.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,7 +39,7 @@ public class PositionEntity {
     @OneToMany(mappedBy = "position")
     private Set<UserDetailsEntity> employees;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
 

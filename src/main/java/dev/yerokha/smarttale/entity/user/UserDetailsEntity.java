@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.yerokha.smarttale.entity.Image;
-import dev.yerokha.smarttale.entity.advertisement.ApplicationEntity;
+import dev.yerokha.smarttale.entity.advertisement.JobApplicationEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.advertisement.PurchaseEntity;
@@ -88,7 +88,7 @@ public class UserDetailsEntity {
 
     @ToString.Exclude
     @OneToMany(mappedBy = "applicant")
-    private List<ApplicationEntity> applications;
+    private List<JobApplicationEntity> applications;
 
     @ToString.Exclude
     @ManyToOne

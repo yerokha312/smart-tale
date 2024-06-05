@@ -1,0 +1,117 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1717598747738-12
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: position_id
+                  type: BIGINT
+            tableName: jobs
+  - changeSet:
+      id: 1717598747738-13
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: position_id
+            baseTableName: jobs
+            constraintName: FK_JOBS_ON_POSITION
+            referencedColumnNames: position_id
+            referencedTableName: positions
+  - changeSet:
+      id: 1717598747738-1
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: price
+            tableName: orders
+  - changeSet:
+      id: 1717598747738-2
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  defaultValueNumeric: !!float '0'
+                  name: price
+                  type: numeric(38,2)
+            tableName: orders
+  - changeSet:
+      id: 1717598747738-3
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addDefaultValue:
+            columnDataType: number(38,2)
+            columnName: price
+            defaultValueNumeric: '0'
+            tableName: orders
+  - changeSet:
+      id: 1717598747738-4
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: price
+            tableName: products
+  - changeSet:
+      id: 1717598747738-5
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    validateNullable: true
+                  defaultValueNumeric: !!float '0'
+                  name: price
+                  type: numeric(38,2)
+            tableName: products
+  - changeSet:
+      id: 1717598747738-6
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addDefaultValue:
+            columnDataType: number(38,2)
+            columnName: price
+            defaultValueNumeric: '0'
+            tableName: products
+  - changeSet:
+      id: 1717598747738-7
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: salary
+            tableName: jobs
+  - changeSet:
+      id: 1717598747738-8
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  defaultValueNumeric: !!float '0'
+                  name: salary
+                  type: numeric(38,2)
+            tableName: jobs
+  - changeSet:
+      id: 1717598747738-9
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addDefaultValue:
+            columnDataType: number(38,2)
+            columnName: salary
+            defaultValueNumeric: '0'
+            tableName: jobs
+

@@ -2,13 +2,11 @@ package dev.yerokha.smarttale.dto;
 
 import jakarta.validation.constraints.NotNull;
 
-// for inner usage
+// used in FullOrder to show who wants to accept the order
 public record AcceptanceRequest(
-        @NotNull String title,
-        @NotNull String description,
-        String price,
-        @NotNull String organizationUrl,
-        @NotNull String organizationName,
-        @NotNull String organizationLogo
+        @NotNull Long organizationId,
+        @NotNull String name,
+        @NotNull String logoUrl,
+        @NotNull String code
 ) {
 }

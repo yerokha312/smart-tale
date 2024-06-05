@@ -8,26 +8,24 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record FullJobCard(
+public record Job(
         @NotNull Long jobId,
         @NotNull LocalDateTime publishedAt,
-        @NotNull String title,
-        @NotNull String description,
-        @NotNull BigDecimal salary,
-        @NotNull List<String> imageUrls,
         @NotNull Long publishedBy,
         @NotNull String publisherName,
         @NotNull String publisherAvatarUrl,
-        @NotNull String publisherPhoneNumber,
-        @NotNull String publisherEmail,
-        @NotNull Long organizationId,
-        @NotNull String organizationName,
-        @NotNull String organizationLogoUrl,
+        @NotNull String title,
+        @NotNull Long positionId,
+        @NotNull String position,
         @NotNull JobType jobType,
-        @NotNull int applicantsCount,
         @NotNull String location,
+        @NotNull BigDecimal salary,
+        @NotNull String description,
+        @NotNull List<String> images,
+        @NotNull List<JobApplication> jobApplications,
         LocalDate applicationDeadline,
         @NotNull long views,
-        @NotNull boolean canApply
-) implements AdvertisementInterface {
+        @NotNull boolean isDeleted,
+        @NotNull boolean isClosed
+) {
 }
