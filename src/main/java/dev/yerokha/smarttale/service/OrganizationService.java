@@ -6,6 +6,7 @@ import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.InviterInvitation;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.OrganizationSummary;
@@ -686,5 +687,21 @@ public class OrganizationService {
                 employeeId,
                 data
         );
+    }
+
+    public CustomPage<InviterInvitation> getInvitations(Long orgId, int page, int size) {
+        Page<InviterInvitation> invitationPage = invitationRepository
+                .findAllByOrganizationId(orgId, PageRequest.of(page, size));
+        return getCustomPage(invitationPage);
+    }
+
+    public void deleteInvitation(Long orgId, Long invId) {
+        boolean belongsToOrganization = invitationRepository
+                .existsByInvitationIdAndOrganizationOrganizationId(invId, orgId);
+        if (belongsToOrganization) {
+            invitationRepository.deleteById(invId);
+        } else {
+            throw new NotFoundException("Invitation not found");
+        }
     }
 }

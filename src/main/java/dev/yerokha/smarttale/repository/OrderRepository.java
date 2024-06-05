@@ -43,7 +43,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.publishedBy.userId, " +
            "CONCAT(o.publishedBy.lastName, ' ', o.publishedBy.firstName), " +
            "COALESCE(pubImg.imageUrl, ''), " +
@@ -63,7 +63,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.status, " +
            "o.acceptedAt, " +
            "o.deadlineAt, " +
@@ -81,7 +81,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.status, " +
            "o.acceptedAt, " +
            "o.deadlineAt, " +
@@ -117,7 +117,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.status, " +
            "o.acceptedAt, " +
            "o.deadlineAt, " +
@@ -134,7 +134,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "o.advertisementId, " +
            "dev.yerokha.smarttale.enums.ContextType.ORDER, " +
            "o.title, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), '')" +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), '')" +
            ") " +
            "FROM OrderEntity o " +
            "WHERE (lower(o.title) LIKE %:query% " +
@@ -147,7 +147,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "o.advertisementId, " +
            "dev.yerokha.smarttale.enums.ContextType.ORDER, " +
            "o.title, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), '')" +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), '')" +
            ") " +
            "FROM OrderEntity o " +
            "WHERE (lower(o.title) LIKE %:query% " +

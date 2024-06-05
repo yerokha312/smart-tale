@@ -36,7 +36,7 @@ public class MailService {
         this.engine = engine;
     }
 
-    public void send(String to, String subject, String body) {
+    private void send(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);

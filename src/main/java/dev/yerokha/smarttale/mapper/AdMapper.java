@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.mapper;
 
 import dev.yerokha.smarttale.dto.AcceptanceRequestDto;
+import dev.yerokha.smarttale.dto.AdvertisementDto;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.AssignedEmployee;
 import dev.yerokha.smarttale.dto.DashboardOrder;
@@ -10,7 +11,9 @@ import dev.yerokha.smarttale.dto.FullOrderCard;
 import dev.yerokha.smarttale.dto.FullProduct;
 import dev.yerokha.smarttale.dto.FullProductCard;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
+import dev.yerokha.smarttale.dto.Order;
 import dev.yerokha.smarttale.dto.OrderDto;
+import dev.yerokha.smarttale.dto.Product;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.entity.AdvertisementImage;
@@ -24,6 +27,7 @@ import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.repository.AdvertisementRepository;
 import dev.yerokha.smarttale.util.EncryptionUtil;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import static dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER;
 import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 import static java.util.Collections.emptyList;
@@ -332,4 +337,30 @@ public class AdMapper {
         }
     }
 
+    public Page<AdvertisementInterface> mapToPersonalAds(Page<AdvertisementDto> personalAds) {
+        return personalAds
+                .map(ad -> {
+                    if (ad.type().equals(ORDER)) {
+                        return new Order(
+                                ad.advertisementId(),
+                                ad.title(),
+                                ad.description(),
+                                ad.price(),
+                                ad.imageUrl(),
+                                ad.publishedAt(),
+                                ad.acceptancesCount(),
+                                ad.isClosed());
+                    }
+
+                    return new Product(
+                            ad.advertisementId(),
+                            ad.title(),
+                            ad.description(),
+                            ad.price(),
+                            ad.imageUrl(),
+                            ad.publishedAt(),
+                            ad.isClosed()
+                    );
+                });
+    }
 }

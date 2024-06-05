@@ -26,6 +26,6 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
            ") " +
            "FROM JobEntity j " +
            "LEFT JOIN j.organization.image orgImg " +
-           "WHERE j.isDeleted = false AND j.isClosed = false AND j.applicationDeadline >= CURRENT DATE")
+           "WHERE j.isDeleted = false AND j.isClosed = false AND j.applicationDeadline >= CURRENT_DATE")
     Page<Card> findMarketJobs(Long orgId, Pageable pageable);
 }

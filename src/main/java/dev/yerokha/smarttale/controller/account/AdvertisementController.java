@@ -66,8 +66,8 @@ public class AdvertisementController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage<? extends AdvertisementInterface>> getAds(Authentication authentication,
-                                                                               @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<AdvertisementInterface>> getAds(Authentication authentication,
+                                                                     @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(advertisementService.getPersonalAds(getUserIdFromAuthToken(authentication), params));
     }

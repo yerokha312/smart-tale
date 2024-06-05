@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.service;
 
 import dev.yerokha.smarttale.dto.AcceptanceRequest;
+import dev.yerokha.smarttale.dto.AdvertisementDto;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdInterface;
@@ -151,7 +152,8 @@ public class AdvertisementService {
 
     // get Ads in Personal account -> My advertisements
     private Page<AdvertisementInterface> getAllAds(Long userId, Pageable pageable) {
-        return advertisementRepository.findPersonalAds(userId, pageable);
+        Page<AdvertisementDto> personalAds = advertisementRepository.findPersonalAds(userId, pageable);
+        return adMapper.mapToPersonalAds(personalAds);
     }
 
     // get Products in Personal account -> My advertisements

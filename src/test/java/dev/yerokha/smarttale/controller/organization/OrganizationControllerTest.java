@@ -302,6 +302,38 @@ class OrganizationControllerTest {
 
     @Test
     @Order(6)
+    void getInvitations() throws Exception {
+        mockMvc.perform(get("/v1/organization/invitations")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(3)
+                );
+    }
+
+    @Test
+    @Order(6)
+    void deleteInvitation() throws Exception {
+        mockMvc.perform(delete("/v1/organization/invitations/100001")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk()
+                );
+    }
+
+    @Test
+    @Order(6)
+    void deleteInvitation_Should404() throws Exception {
+        mockMvc.perform(delete("/v1/organization/invitations/100004")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isNotFound()
+                );
+    }
+
+    @Test
+    @Order(6)
     void getEmployees_AfterInvite() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/organization/employees?name=asc")
                         .header("Authorization", "Bearer " + accessToken))

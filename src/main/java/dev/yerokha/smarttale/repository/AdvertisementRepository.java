@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.repository;
 
-import dev.yerokha.smarttale.dto.AdvertisementInterface;
+import dev.yerokha.smarttale.dto.AdvertisementDto;
 import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import org.springframework.data.domain.Page;
@@ -19,8 +19,8 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
 
     @Query("SELECT new dev.yerokha.smarttale.dto.AdvertisementDto(" +
            "CASE TYPE (a) " +
-           "WHEN OrderEntity THEN 'order' " +
-           "WHEN ProductEntity THEN 'product'" +
+           "WHEN OrderEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER " +
+           "WHEN ProductEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.PRODUCT " +
            "END, " +
            "a.advertisementId, " +
            "SUBSTRING(a.title, 1, 60), " +
@@ -39,7 +39,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            ") " +
            "FROM Advertisement a " +
            "WHERE a.publishedBy.userId = :userId AND a.isDeleted = false")
-    Page<AdvertisementInterface> findPersonalAds(Long userId, Pageable pageable);
+    Page<AdvertisementDto> findPersonalAds(Long userId, Pageable pageable);
 
     Optional<Advertisement> findByPublishedByUserIdAndAdvertisementIdAndIsDeletedFalse(Long userId, Long advertisementId);
 

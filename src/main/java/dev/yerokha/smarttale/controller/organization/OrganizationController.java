@@ -5,6 +5,7 @@ import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.InviterInvitation;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.Position;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,6 +51,7 @@ public class OrganizationController {
 
     private final OrganizationService organizationService;
 
+    @Autowired
     public OrganizationController(OrganizationService organizationService) {
         this.organizationService = organizationService;
     }
@@ -298,6 +301,41 @@ public class OrganizationController {
                 .data().get("email");
 
         return new ResponseEntity<>(String.format("Invite sent to %s", email), HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Get invitations", description = "Returns inv-s sent by current org",
+            tags = {"get", "invitation", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "Has no role EMPLOYEE")
+            }
+    )
+    @GetMapping("/invitations")
+    public ResponseEntity<CustomPage<InviterInvitation>> getInvitations(Authentication authentication,
+                                                                        @RequestParam(required = false,
+                                                                                defaultValue = "0") int page,
+                                                                        @RequestParam(required = false,
+                                                                                defaultValue = "5") int size) {
+        return ResponseEntity.ok(organizationService.getInvitations(getOrgIdFromAuthToken(authentication), page, size));
+    }
+
+    @Operation(
+            summary = "Revoke invitation", description = "Deletes sent invitation. Requires DELETE_EMPLOYEE permission",
+            tags = {"delete", "invitation", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Deletion success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "Has no permission"),
+                    @ApiResponse(responseCode = "404", description = "Not found or does not belong to current org"),
+            }
+    )
+    @DeleteMapping("/invitations/{invId}")
+    @PreAuthorize("hasPermission(#invId, 'Invitation', 'DELETE_EMPLOYEE')")
+    public ResponseEntity<String> deleteInvitation(Authentication authentication, @PathVariable Long invId) {
+        organizationService.deleteInvitation(getOrgIdFromAuthToken(authentication), invId);
+        return ResponseEntity.ok("Invitation revoked");
     }
 
     @Operation(

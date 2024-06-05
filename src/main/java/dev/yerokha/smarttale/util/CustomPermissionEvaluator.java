@@ -3,10 +3,12 @@ package dev.yerokha.smarttale.util;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
+import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
 import dev.yerokha.smarttale.exception.NotFoundException;
+import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
@@ -37,6 +39,8 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     private UserDetailsRepository userDetailsRepository;
     @Autowired
     private OrderRepository orderRepository;
+    @Autowired
+    private InvitationRepository invitationRepository;
 
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
@@ -122,6 +126,12 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                 yield hasPermission(order, userCanMoveFromChecking);
             }
             case "DELETE_EMPLOYEE" -> {
+                if (targetType.equals("Invitation")) {
+                    Long invId = (Long) targetId;
+                    InvitationEntity invitation = getInvitation(invId);
+                    PositionEntity position = invitation.getPosition();
+                    yield hasPermission(position, userHierarchy, userAuthorities);
+                }
                 Long employeeId = (Long) targetId;
                 UserDetailsEntity employee = getEmployee(employeeId);
 
@@ -158,16 +168,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         };
     }
 
-    private PositionEntity getPosition(Long positionId) {
-        return positionRepository.findById(positionId)
-                .orElseThrow(() -> new NotFoundException("Position nof found"));
-    }
-
-    private UserDetailsEntity getEmployee(Long employeeId) {
-        return userDetailsRepository.findById(employeeId)
-                .orElseThrow(() -> new NotFoundException("Employee not found"));
-    }
-
+    // evaluates permission for deleting employees and invitations
     private static boolean hasPermission(PositionEntity employeePosition, int userHierarchy, int userAuthorities) {
         int employeeHierarchy = employeePosition.getHierarchy();
         int employeeAuthorities = employeePosition.getAuthorities();
@@ -197,5 +198,20 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         int positionAuthorities = position.getAuthorities();
         return userHierarchy < position.getHierarchy()
                && ((positionAuthorities & userAuthorities) == positionAuthorities);
+    }
+
+    private InvitationEntity getInvitation(Long invId) {
+        return invitationRepository.findById(invId)
+                .orElseThrow(() -> new NotFoundException("Invitation not found"));
+    }
+
+    private PositionEntity getPosition(Long positionId) {
+        return positionRepository.findById(positionId)
+                .orElseThrow(() -> new NotFoundException("Position nof found"));
+    }
+
+    private UserDetailsEntity getEmployee(Long employeeId) {
+        return userDetailsRepository.findById(employeeId)
+                .orElseThrow(() -> new NotFoundException("Employee not found"));
     }
 }
