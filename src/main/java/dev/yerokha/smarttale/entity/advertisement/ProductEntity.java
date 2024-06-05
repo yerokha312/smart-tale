@@ -24,7 +24,7 @@ import java.util.List;
 @OnDelete(action = OnDeleteAction.CASCADE)
 public class ProductEntity extends Advertisement {
 
-    @Column(name = "price", nullable = false)
+    @Column(name = "price", nullable = false, columnDefinition = "numeric(38,2) default 0")
     private BigDecimal price; //sort
 
     @Column(name = "quantity", nullable = false, columnDefinition = "INT default 0")

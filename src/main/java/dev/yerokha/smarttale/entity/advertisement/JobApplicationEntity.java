@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "applications")
-public class ApplicationEntity {
+public class JobApplicationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,10 +41,10 @@ public class ApplicationEntity {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
 
-    public ApplicationEntity() {
+    public JobApplicationEntity() {
     }
 
-    public ApplicationEntity(JobEntity job, UserDetailsEntity applicant, LocalDateTime applicationDate, ApplicationStatus status) {
+    public JobApplicationEntity(JobEntity job, UserDetailsEntity applicant, LocalDateTime applicationDate, ApplicationStatus status) {
         this.job = job;
         this.applicant = applicant;
         this.applicationDate = applicationDate;

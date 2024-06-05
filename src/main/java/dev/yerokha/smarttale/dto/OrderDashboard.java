@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 // used in list from monitoring dashboard
-public record DashboardOrder(
+public record OrderDashboard(
         @NotNull Long id,
         @NotNull OrderStatus status,
         @NotNull String title,

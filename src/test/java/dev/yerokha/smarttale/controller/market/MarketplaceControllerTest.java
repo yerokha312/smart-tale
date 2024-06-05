@@ -5,7 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.CreateJobRequest;
 import dev.yerokha.smarttale.dto.CreateOrderRequest;
 import dev.yerokha.smarttale.dto.CreateProductRequest;
-import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.enums.ContactInfo;
@@ -263,7 +263,7 @@ class MarketplaceControllerTest {
 
     @Test
     @Order(9)
-    void accept() throws Exception {
+    void acceptOrder() throws Exception {
         mockMvc.perform(post("/v1/market/100040")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk());
@@ -330,7 +330,7 @@ class MarketplaceControllerTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        List<List<OrderSummary>> orders = JsonPath.read(content, "$.content[*].orderList");
+        List<List<OrderAccepted>> orders = JsonPath.read(content, "$.content[*].orderList");
 
         for (int i = 1; i < orders.size(); i++) {
             if (orders.get(i - 1) == null || orders.get(i) == null) {
@@ -442,6 +442,7 @@ class MarketplaceControllerTest {
     @Order(30)
     void placeJob() throws Exception {
         CreateJobRequest job = new CreateJobRequest(
+                100001L,
                 "Job title",
                 "Job description",
                 BigDecimal.valueOf(1000),
@@ -478,6 +479,29 @@ class MarketplaceControllerTest {
 
     @Test
     @Order(36)
+    void getOrganizationJobAdvertisements() throws Exception {
+        mockMvc.perform(get("/v1/organization/advertisements")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content").isArray(),
+                        jsonPath("$.totalElements").value(1)
+                );
+    }
+
+    @Test
+    @Order(37)
+    void getOneJobAdvertisementOfOrganization_BeforeApply() throws Exception {
+        mockMvc.perform(get("/v1/organization/advertisements/3")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.jobApplications", hasSize(0))
+                );
+    }
+
+    @Test
+    @Order(40)
     void applyForJob() throws Exception {
         login("existing8@example.com");
         mockMvc.perform(post("/v1/market/3")
@@ -487,8 +511,18 @@ class MarketplaceControllerTest {
                         content().string("Job applied")
                 );
     }
-//
-//    @Test
-//    @Order(37)
-//    void
+
+    @Test
+    @Order(45)
+    void getOneJobAdvertisementOfOrganization_AfterApply() throws Exception {
+        login("existing4@example.com");
+        mockMvc.perform(get("/v1/organization/advertisements/3")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.jobApplications", hasSize(1)),
+                        jsonPath("$.images").isEmpty()
+                );
+    }
+
 }

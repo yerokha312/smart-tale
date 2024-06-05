@@ -6,7 +6,10 @@ import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
-import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.InviterInvitation;
+import dev.yerokha.smarttale.dto.Job;
+import dev.yerokha.smarttale.dto.JobSummary;
+import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.Organization;
 import dev.yerokha.smarttale.dto.OrganizationSummary;
 import dev.yerokha.smarttale.dto.Position;
@@ -17,6 +20,7 @@ import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.Image;
+import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
@@ -28,6 +32,7 @@ import dev.yerokha.smarttale.exception.ForbiddenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
 import dev.yerokha.smarttale.repository.InvitationRepository;
+import dev.yerokha.smarttale.repository.JobRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
@@ -73,6 +78,7 @@ public class OrganizationService {
     private final ImageService imageService;
     private final AuthenticationService authenticationService;
     private final AdMapper adMapper;
+    private final JobRepository jobRepository;
 
 
     public OrganizationService(OrderRepository orderRepository,
@@ -82,7 +88,7 @@ public class OrganizationService {
                                PositionRepository positionRepository,
                                OrganizationRepository organizationRepository,
                                ImageService imageService,
-                               AuthenticationService authenticationService, AdMapper adMapper) {
+                               AuthenticationService authenticationService, AdMapper adMapper, JobRepository jobRepository) {
         this.orderRepository = orderRepository;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
@@ -92,9 +98,10 @@ public class OrganizationService {
         this.imageService = imageService;
         this.authenticationService = authenticationService;
         this.adMapper = adMapper;
+        this.jobRepository = jobRepository;
     }
 
-    public CustomPage<OrderSummary> getOrders(Long organizationId, Map<String, String> params) {
+    public CustomPage<OrderAccepted> getOrders(Long organizationId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         Pageable pageable = PageRequest.of(
                 parseInt(params.getOrDefault("page", "0")),
@@ -108,12 +115,12 @@ public class OrganizationService {
         if (dateType != null) {
             LocalDate dateFrom = parse(params.get("dateFrom"));
             LocalDate dateTo = parse(params.get("dateTo"));
-            Page<OrderSummary> page = orderRepository.findByDateRange(
+            Page<OrderAccepted> page = orderRepository.findByDateRange(
                     organizationId, isActive, dateType, dateFrom, dateTo, pageable);
             return getCustomPage(page);
         }
 
-        Page<OrderSummary> page = orderRepository.findByActiveStatus(organizationId, isActive, pageable);
+        Page<OrderAccepted> page = orderRepository.findByActiveStatus(organizationId, isActive, pageable);
         return getCustomPage(page);
     }
 
@@ -155,7 +162,7 @@ public class OrganizationService {
 
     private Employee mapToEmployee(UserDetailsEntity user, Long organizationId) {
         String name = user.getName();
-        List<OrderSummary> orders = getCurrentOrders(user.getUserId(), organizationId);
+        List<OrderAccepted> orders = getCurrentOrders(user.getUserId(), organizationId);
         String position = getPosition(user, organizationId);
         String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
 
@@ -253,8 +260,8 @@ public class OrganizationService {
         return employee.getPosition().getTitle();
     }
 
-    private List<OrderSummary> getCurrentOrders(Long employeeId,
-                                                Long organizationId) {
+    private List<OrderAccepted> getCurrentOrders(Long employeeId,
+                                                 Long organizationId) {
 
         boolean isEmployee = userDetailsRepository.existsInOrganization(employeeId, organizationId);
         if (!isEmployee) {
@@ -687,4 +694,39 @@ public class OrganizationService {
                 data
         );
     }
+
+    public CustomPage<InviterInvitation> getInvitations(Long orgId, int page, int size) {
+        Page<InviterInvitation> invitationPage = invitationRepository
+                .findAllByOrganizationId(orgId, PageRequest.of(page, size));
+        return getCustomPage(invitationPage);
+    }
+
+    public void deleteInvitation(Long orgId, Long invId) {
+        boolean belongsToOrganization = invitationRepository
+                .existsByInvitationIdAndOrganizationOrganizationId(invId, orgId);
+        if (belongsToOrganization) {
+            invitationRepository.deleteById(invId);
+        } else {
+            throw new NotFoundException("Invitation not found");
+        }
+    }
+
+    public CustomPage<JobSummary> getJobAds(Long orgId, Map<String, String> params) {
+        Pageable pageable = PageRequest.of(
+                parseInt(params.getOrDefault("page", "0")),
+                parseInt(params.getOrDefault("size", "5")),
+                Sort.Direction.DESC, "publishedAt"
+        );
+
+        Page<JobSummary> jobSummaryPage = jobRepository.findAllByOrganizationId(orgId, pageable);
+
+        return getCustomPage(jobSummaryPage);
+    }
+
+    public Job getOneJobAd(Long orgId, Long jobId) {
+        JobEntity job = jobRepository.findByOrganization_OrganizationIdAndAdvertisementIdAndIsDeletedFalse(orgId, jobId)
+                .orElseThrow(() -> new NotFoundException("Job not found"));
+        return adMapper.mapToJob(job);
+    }
+
 }

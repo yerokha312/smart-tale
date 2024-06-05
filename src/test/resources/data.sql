@@ -54,6 +54,7 @@ INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, orga
 INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '2' DAY, 100003, 100007, 100003, 100000, 100003);
 INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '3' DAY, 100002, 100007, 100003, 100000, 100003);
 INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '4' DAY, 100001, 100007, 100003, 100000, 100003);
+INSERT INTO invitations (invited_at, invitation_id, invitee_id, inviter_id, organization_id, position_id) VALUES (current_date - interval '4' DAY, 100004, 100004, 100007, 100001, 100005);
 
 -- create 10 abstract ads --
 INSERT INTO abstract_advertisements (advertisement_id, published_at, published_by, title, description,

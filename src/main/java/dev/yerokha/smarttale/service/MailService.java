@@ -1,6 +1,6 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.dto.AcceptanceRequest;
+import dev.yerokha.smarttale.dto.AcceptanceRequestMail;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
@@ -36,7 +36,7 @@ public class MailService {
         this.engine = engine;
     }
 
-    public void send(String to, String subject, String body) {
+    private void send(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
@@ -121,7 +121,7 @@ public class MailService {
     }
 
     @Async
-    public void sendAcceptanceRequest(String email, AcceptanceRequest request, String encryptedCode) {
+    public void sendAcceptanceRequest(String email, AcceptanceRequestMail request, String encryptedCode) {
         Context context = new Context();
         context.setVariables(Map.of(
                 "title", request.title(),

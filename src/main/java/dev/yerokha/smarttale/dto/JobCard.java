@@ -1,26 +1,33 @@
 package dev.yerokha.smarttale.dto;
 
+import dev.yerokha.smarttale.enums.JobType;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// in get market/id
-public record FullProductCard(
-        @NotNull Long productId,
+public record JobCard(
+        @NotNull Long jobId,
         @NotNull LocalDateTime publishedAt,
         @NotNull String title,
         @NotNull String description,
-        @NotNull BigDecimal price,
+        @NotNull BigDecimal salary,
         @NotNull List<String> imageUrls,
-        @NotNull LocalDateTime purchasedAt,
         @NotNull Long publishedBy,
         @NotNull String publisherName,
         @NotNull String publisherAvatarUrl,
         @NotNull String publisherPhoneNumber,
         @NotNull String publisherEmail,
+        @NotNull Long organizationId,
+        @NotNull String organizationName,
+        @NotNull String organizationLogoUrl,
+        @NotNull JobType jobType,
+        @NotNull int applicantsCount,
+        @NotNull String location,
+        LocalDate applicationDeadline,
         @NotNull long views,
-        @NotNull boolean canPurchase
+        @NotNull boolean canApply
 ) implements AdvertisementInterface {
 }

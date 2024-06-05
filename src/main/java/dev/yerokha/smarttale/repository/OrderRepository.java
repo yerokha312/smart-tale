@@ -2,7 +2,8 @@ package dev.yerokha.smarttale.repository;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
-import dev.yerokha.smarttale.dto.OrderSummary;
+import dev.yerokha.smarttale.dto.OrderAccepted;
+import dev.yerokha.smarttale.dto.OrderDashboard;
 import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
@@ -20,7 +21,7 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
-    @Query("SELECT new dev.yerokha.smarttale.dto.Order(" +
+    @Query("SELECT new dev.yerokha.smarttale.dto.OrderSummaryPersonal(" +
            "o.advertisementId, " +
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
@@ -43,7 +44,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.publishedBy.userId, " +
            "CONCAT(o.publishedBy.lastName, ' ', o.publishedBy.firstName), " +
            "COALESCE(pubImg.imageUrl, ''), " +
@@ -57,13 +58,13 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     Optional<OrderEntity> findByPublishedByUserIdAndAdvertisementId(Long userId, Long orderId);
 
-    @Query("SELECT new dev.yerokha.smarttale.dto.OrderSummary(" +
+    @Query("SELECT new dev.yerokha.smarttale.dto.OrderAccepted(" +
            "o.advertisementId, " +
            "o.taskKey, " +
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.status, " +
            "o.acceptedAt, " +
            "o.deadlineAt, " +
@@ -73,15 +74,15 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "WHERE o.acceptedBy.organizationId = :organizationId " +
            "AND ((:isActive = true AND o.completedAt IS NULL) " +
            "OR (:isActive = false AND o.completedAt IS NOT NULL))")
-    Page<OrderSummary> findByActiveStatus(Long organizationId, boolean isActive, Pageable pageable);
+    Page<OrderAccepted> findByActiveStatus(Long organizationId, boolean isActive, Pageable pageable);
 
-    @Query("SELECT new dev.yerokha.smarttale.dto.OrderSummary(" +
+    @Query("SELECT new dev.yerokha.smarttale.dto.OrderAccepted(" +
            "o.advertisementId, " +
            "o.taskKey, " +
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.status, " +
            "o.acceptedAt, " +
            "o.deadlineAt, " +
@@ -94,14 +95,22 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "AND ((:property = 'accepted' AND o.acceptedAt BETWEEN :dateFrom AND :dateTo) " +
            "OR (:property = 'deadline' AND o.deadlineAt BETWEEN :dateFrom AND :dateTo) " +
            "OR (:property = 'completed' AND o.completedAt BETWEEN :dateFrom AND :dateTo))")
-    Page<OrderSummary> findByDateRange(Long organizationId, boolean isActive, String property, LocalDate dateFrom, LocalDate dateTo, Pageable pageable);
+    Page<OrderAccepted> findByDateRange(Long organizationId, boolean isActive, String property, LocalDate dateFrom, LocalDate dateTo, Pageable pageable);
 
-    @Query("SELECT DISTINCT o FROM OrderEntity o " +
+    @Query("SELECT new dev.yerokha.smarttale.dto.OrderDashboard(" +
+           "o.advertisementId, " +
+           "o.status, " +
+           "SUBSTRING(o.title, 1, 60), " +
+           "COALESCE(o.taskKey, ''), " +
+           "COALESCE(o.comment, SUBSTRING(o.description, 1, 120)), " +
+           "o.deadlineAt" +
+           ") " +
+           "FROM OrderEntity o " +
            "LEFT JOIN o.acceptanceEntities ae " +
            "LEFT JOIN o.acceptedBy org " +
            "WHERE (org.organizationId = :organizationId AND o.status != :orderStatus) " +
            "OR (ae.organization.organizationId = :organizationId AND ae.requestedAt + 7 DAY >= CURRENT_DATE)")
-    List<OrderEntity> findAllDashboardOrders(Long organizationId, OrderStatus orderStatus);
+    List<OrderDashboard> findAllDashboardOrders(Long organizationId, OrderStatus orderStatus);
 
     @Query("SELECT o " +
            "FROM OrderEntity o " +
@@ -111,13 +120,13 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "OR (:isActive = false AND o.completedAt IS NOT NULL))")
     Page<OrderEntity> findTasksByEmployeeId(Long employeeId, Long organizationId, boolean isActive, Pageable pageable);
 
-    @Query("SELECT new dev.yerokha.smarttale.dto.OrderSummary(" +
+    @Query("SELECT new dev.yerokha.smarttale.dto.OrderAccepted(" +
            "o.advertisementId, " +
            "o.taskKey, " +
            "SUBSTRING(o.title, 1, 60), " +
            "SUBSTRING(o.description, 1, 120), " +
            "COALESCE(o.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), ''), " +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), ''), " +
            "o.status, " +
            "o.acceptedAt, " +
            "o.deadlineAt, " +
@@ -126,7 +135,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "FROM OrderEntity o " +
            "JOIN o.contractors c " +
            "WHERE c.userId = :userId AND o.completedAt IS NULL")
-    List<OrderSummary> findCurrentOrdersByEmployeeId(Long userId);
+    List<OrderAccepted> findCurrentOrdersByEmployeeId(Long userId);
 
     Optional<OrderEntity> findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(Long organizationId, Long orderId);
 
@@ -134,7 +143,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "o.advertisementId, " +
            "dev.yerokha.smarttale.enums.ContextType.ORDER, " +
            "o.title, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), '')" +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), '')" +
            ") " +
            "FROM OrderEntity o " +
            "WHERE (lower(o.title) LIKE %:query% " +
@@ -147,7 +156,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "o.advertisementId, " +
            "dev.yerokha.smarttale.enums.ContextType.ORDER, " +
            "o.title, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN Image i ON ai.image.imageId = i.imageId WHERE ai.advertisement.advertisementId = o.advertisementId ORDER BY ai.index ASC LIMIT 1), '')" +
+           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = o AND ai.index = 0), '')" +
            ") " +
            "FROM OrderEntity o " +
            "WHERE (lower(o.title) LIKE %:query% " +

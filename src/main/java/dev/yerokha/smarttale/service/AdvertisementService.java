@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.service;
 
-import dev.yerokha.smarttale.dto.AcceptanceRequest;
+import dev.yerokha.smarttale.dto.AcceptanceRequestMail;
+import dev.yerokha.smarttale.dto.AdvertisementDto;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
 import dev.yerokha.smarttale.dto.CreateAdInterface;
@@ -8,9 +9,9 @@ import dev.yerokha.smarttale.dto.CreateJobRequest;
 import dev.yerokha.smarttale.dto.CreateOrderRequest;
 import dev.yerokha.smarttale.dto.CreateProductRequest;
 import dev.yerokha.smarttale.dto.CustomPage;
-import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.ImageOperation;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
+import dev.yerokha.smarttale.dto.OrderDashboard;
 import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Purchase;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
@@ -22,12 +23,13 @@ import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
-import dev.yerokha.smarttale.entity.advertisement.ApplicationEntity;
+import dev.yerokha.smarttale.entity.advertisement.JobApplicationEntity;
 import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.advertisement.PurchaseEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
+import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.ApplicationStatus;
 import dev.yerokha.smarttale.enums.OrderStatus;
@@ -41,6 +43,7 @@ import dev.yerokha.smarttale.repository.AdvertisementRepository;
 import dev.yerokha.smarttale.repository.JobRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.OrganizationRepository;
+import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.ProductRepository;
 import dev.yerokha.smarttale.repository.PurchaseRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
@@ -98,6 +101,7 @@ public class AdvertisementService {
     private static final byte RESTORE = 4;
     private final OrganizationService organizationService;
     private final JobRepository jobRepository;
+    private final PositionRepository positionRepository;
 
     public AdvertisementService(ProductRepository productRepository,
                                 OrderRepository orderRepository,
@@ -112,7 +116,7 @@ public class AdvertisementService {
                                 UserDetailsRepository userDetailsRepository,
                                 AdMapper adMapper,
                                 OrganizationService organizationService,
-                                JobRepository jobRepository) {
+                                JobRepository jobRepository, PositionRepository positionRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
@@ -127,6 +131,7 @@ public class AdvertisementService {
         this.adMapper = adMapper;
         this.organizationService = organizationService;
         this.jobRepository = jobRepository;
+        this.positionRepository = positionRepository;
     }
 
     // get Ads in Personal account -> My advertisements
@@ -151,7 +156,8 @@ public class AdvertisementService {
 
     // get Ads in Personal account -> My advertisements
     private Page<AdvertisementInterface> getAllAds(Long userId, Pageable pageable) {
-        return advertisementRepository.findPersonalAds(userId, pageable);
+        Page<AdvertisementDto> personalAds = advertisementRepository.findPersonalAds(userId, pageable);
+        return adMapper.mapToPersonalAds(personalAds);
     }
 
     // get Products in Personal account -> My advertisements
@@ -166,7 +172,7 @@ public class AdvertisementService {
 
     // get one Ad of user in Personal account -> My advertisements
     public AdvertisementInterface getAdvertisement(Long userId, Long advertisementId) {
-        return adMapper.toFullDto(getAdEntity(userId, advertisementId));
+        return adMapper.mapToFullDto(getAdEntity(userId, advertisementId));
     }
 
     public String interactWithAd(Long userId, Long advertisementId, byte actionId) {
@@ -415,7 +421,7 @@ public class AdvertisementService {
 
     private void applyForJob(JobEntity job, Long applicantId) {
         UserDetailsEntity applicant = userDetailsRepository.getReferenceById(applicantId);
-        ApplicationEntity application = new ApplicationEntity(
+        JobApplicationEntity application = new JobApplicationEntity(
                 job,
                 applicant,
                 LocalDateTime.now(),
@@ -516,7 +522,7 @@ public class AdvertisementService {
         OrganizationEntity organization = acceptance.getOrganization();
         Image image = organization.getImage();
         String imageUrl = image == null ? "" : image.getImageUrl();
-        AcceptanceRequest request = new AcceptanceRequest(
+        AcceptanceRequestMail request = new AcceptanceRequestMail(
                 order.getTitle(),
                 order.getDescription(),
                 price,
@@ -545,6 +551,7 @@ public class AdvertisementService {
     private String createJob(CreateJobRequest request, List<MultipartFile> files, Long userId, Long orgId) {
         UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
         OrganizationEntity organization = organizationRepository.getReferenceById(orgId);
+        PositionEntity position = positionRepository.getReferenceById(request.positionId());
         List<AdvertisementImage> advertisementImages = null;
         JobEntity job = new JobEntity(
                 LocalDateTime.now(),
@@ -554,6 +561,7 @@ public class AdvertisementService {
                 advertisementImages,
                 request.contactInfo(),
                 organization,
+                position,
                 request.jobType(),
                 request.location(),
                 request.salary(),
@@ -666,7 +674,6 @@ public class AdvertisementService {
         order.setAcceptedAt(LocalDate.now());
         order.setStatus(NEW);
         order.setTaskKey(taskKeyGeneratorService.generateTaskKey(organization));
-//        order.getAcceptanceEntities().clear();
 
         orderRepository.save(order);
         acceptanceRepository.deleteAll(order.getAcceptanceEntities());
@@ -691,12 +698,9 @@ public class AdvertisementService {
         advertisementRepository.incrementViewsCount(advertisementId);
     }
 
-    public List<DashboardOrder> getDashboard(Long userId) {
-        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
-        OrganizationEntity organization = user.getOrganization();
-        return orderRepository.findAllDashboardOrders(organization.getOrganizationId(), COMPLETED).stream()
-                .map(adMapper::toDashboardOrder)
-                .sorted(Comparator.comparing(DashboardOrder::status))
+    public List<OrderDashboard> getDashboard(Long orgId) {
+        return orderRepository.findAllDashboardOrders(orgId, COMPLETED).stream()
+                .sorted(Comparator.comparing(OrderDashboard::status))
                 .toList();
     }
 
@@ -759,7 +763,6 @@ public class AdvertisementService {
                 data
         );
     }
-
 
     private OrderEntity getOrderEntity(Long orderId) {
         return orderRepository.findById(orderId)

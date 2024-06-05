@@ -1,6 +1,5 @@
 package dev.yerokha.smarttale.entity.user;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,7 +30,7 @@ public class InvitationEntity {
     @JoinColumn(name = "inviter_id")
     private UserDetailsEntity inviter;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "invitee_id")
     private UserDetailsEntity invitee;
 
