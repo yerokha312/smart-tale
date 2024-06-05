@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.repository;
 
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.Card;
+import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.OrderSummary;
 import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
@@ -96,12 +97,20 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "OR (:property = 'completed' AND o.completedAt BETWEEN :dateFrom AND :dateTo))")
     Page<OrderSummary> findByDateRange(Long organizationId, boolean isActive, String property, LocalDate dateFrom, LocalDate dateTo, Pageable pageable);
 
-    @Query("SELECT DISTINCT o FROM OrderEntity o " +
+    @Query("SELECT new dev.yerokha.smarttale.dto.DashboardOrder(" +
+           "o.advertisementId, " +
+           "o.status, " +
+           "SUBSTRING(o.title, 1, 60), " +
+           "COALESCE(o.taskKey, ''), " +
+           "COALESCE(o.comment, SUBSTRING(o.description, 1, 120)), " +
+           "o.deadlineAt" +
+           ") " +
+           "FROM OrderEntity o " +
            "LEFT JOIN o.acceptanceEntities ae " +
            "LEFT JOIN o.acceptedBy org " +
            "WHERE (org.organizationId = :organizationId AND o.status != :orderStatus) " +
            "OR (ae.organization.organizationId = :organizationId AND ae.requestedAt + 7 DAY >= CURRENT_DATE)")
-    List<OrderEntity> findAllDashboardOrders(Long organizationId, OrderStatus orderStatus);
+    List<DashboardOrder> findAllDashboardOrders(Long organizationId, OrderStatus orderStatus);
 
     @Query("SELECT o " +
            "FROM OrderEntity o " +

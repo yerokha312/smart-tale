@@ -168,7 +168,7 @@ public class AdvertisementService {
 
     // get one Ad of user in Personal account -> My advertisements
     public AdvertisementInterface getAdvertisement(Long userId, Long advertisementId) {
-        return adMapper.toFullDto(getAdEntity(userId, advertisementId));
+        return adMapper.mapToFullDto(getAdEntity(userId, advertisementId));
     }
 
     public String interactWithAd(Long userId, Long advertisementId, byte actionId) {
@@ -668,7 +668,6 @@ public class AdvertisementService {
         order.setAcceptedAt(LocalDate.now());
         order.setStatus(NEW);
         order.setTaskKey(taskKeyGeneratorService.generateTaskKey(organization));
-//        order.getAcceptanceEntities().clear();
 
         orderRepository.save(order);
         acceptanceRepository.deleteAll(order.getAcceptanceEntities());
@@ -693,11 +692,8 @@ public class AdvertisementService {
         advertisementRepository.incrementViewsCount(advertisementId);
     }
 
-    public List<DashboardOrder> getDashboard(Long userId) {
-        UserDetailsEntity user = userService.getUserDetailsEntity(userId);
-        OrganizationEntity organization = user.getOrganization();
-        return orderRepository.findAllDashboardOrders(organization.getOrganizationId(), COMPLETED).stream()
-                .map(adMapper::toDashboardOrder)
+    public List<DashboardOrder> getDashboard(Long orgId) {
+        return orderRepository.findAllDashboardOrders(orgId, COMPLETED).stream()
                 .sorted(Comparator.comparing(DashboardOrder::status))
                 .toList();
     }

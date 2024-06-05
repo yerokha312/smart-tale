@@ -56,7 +56,7 @@ public class MonitoringController {
     )
     @GetMapping
     public ResponseEntity<List<DashboardOrder>> getDashboard(Authentication authentication) {
-        return ResponseEntity.ok(advertisementService.getDashboard(getUserIdFromAuthToken(authentication)));
+        return ResponseEntity.ok(advertisementService.getDashboard(getOrgIdFromAuthToken(authentication)));
     }
 
     @Operation(

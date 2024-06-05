@@ -4,7 +4,6 @@ import dev.yerokha.smarttale.dto.AcceptanceRequestDto;
 import dev.yerokha.smarttale.dto.AdvertisementDto;
 import dev.yerokha.smarttale.dto.AdvertisementInterface;
 import dev.yerokha.smarttale.dto.AssignedEmployee;
-import dev.yerokha.smarttale.dto.DashboardOrder;
 import dev.yerokha.smarttale.dto.FullJobCard;
 import dev.yerokha.smarttale.dto.FullOrder;
 import dev.yerokha.smarttale.dto.FullOrderCard;
@@ -45,19 +44,14 @@ import static java.util.Collections.emptyList;
 @Component
 public class AdMapper {
 
-    private final int DESC_LENGTH = 120;
     private final AdvertisementRepository advertisementRepository;
 
     public AdMapper(AdvertisementRepository advertisementRepository) {
         this.advertisementRepository = advertisementRepository;
     }
 
-    public AdvertisementInterface toFullDto(Advertisement advertisement) {
-        List<String> imageUrls = advertisement.getAdvertisementImages().stream()
-                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
-                .map(AdvertisementImage::getImage)
-                .map(Image::getImageUrl)
-                .toList();
+    public AdvertisementInterface mapToFullDto(Advertisement advertisement) {
+        List<String> imageUrls = getImageUrls(advertisement);
 
         if (imageUrls.isEmpty()) {
             imageUrls = emptyList();
@@ -123,87 +117,95 @@ public class AdMapper {
 
     public AdvertisementInterface mapToFullCard(Advertisement advertisement, Authentication authentication) {
         String contact = advertisement.getContactInfo().toString();
-        List<String> imageUrls = advertisement.getAdvertisementImages().stream()
-                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
-                .map(AdvertisementImage::getImage)
-                .map(Image::getImageUrl)
-                .toList();
+        List<String> imageUrls = getImageUrls(advertisement);
 
         if (imageUrls.isEmpty()) {
             imageUrls = emptyList();
         }
         UserDetailsEntity publishedBy = advertisement.getPublishedBy();
         if (advertisement instanceof OrderEntity order) {
-            Long orgId = getOrgIdFromAuthToken(authentication);
-            boolean canAccept = advertisementRepository.canAcceptOrder(orgId, order.getAdvertisementId());
-            return new FullOrderCard(
-                    order.getAdvertisementId(),
-                    order.getPublishedAt(),
-                    order.getTitle(),
-                    order.getDescription(),
-                    order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
-                    imageUrls,
-                    order.getSize() == null ? "" : order.getSize(),
-                    order.getDeadlineAt(),
-                    publishedBy.getUserId(),
-                    publishedBy.getName(),
-                    getImageUrl(publishedBy.getImage()),
-                    contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
-                    contact.contains("EMAIL") ? publishedBy.getEmail() : "",
-                    order.getViews(),
-                    canAccept
-            );
+            return getFullOrderCard(authentication, order, imageUrls, publishedBy, contact);
         } else if (advertisement instanceof ProductEntity product) {
-            Long userId = getUserIdFromAuthToken(authentication);
-            boolean canPurchase = false;
-            if (userId != null) {
-                canPurchase = !userId.equals(product.getPublishedBy().getUserId());
-            }
-            return new FullProductCard(
-                    product.getAdvertisementId(),
-                    product.getPublishedAt(),
-                    product.getTitle(),
-                    product.getDescription(),
-                    product.getPrice(),
-                    imageUrls,
-                    product.getPurchasedAt(),
-                    publishedBy.getUserId(),
-                    publishedBy.getName(),
-                    getImageUrl(publishedBy.getImage()),
-                    contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
-                    contact.contains("EMAIL") ? publishedBy.getEmail() : "",
-                    product.getViews(),
-                    canPurchase
-            );
+            return getFullProductCard(authentication, product, imageUrls, publishedBy, contact);
         } else if (advertisement instanceof JobEntity job) {
-            OrganizationEntity organization = job.getOrganization();
-            Long orgId = getOrgIdFromAuthToken(authentication);
-            return new FullJobCard(
-                    job.getAdvertisementId(),
-                    job.getPublishedAt(),
-                    job.getTitle(),
-                    job.getDescription(),
-                    job.getSalary() == null ? BigDecimal.ZERO : job.getSalary(),
-                    imageUrls,
-                    publishedBy.getUserId(),
-                    publishedBy.getName(),
-                    getImageUrl(publishedBy.getImage()),
-                    contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
-                    contact.contains("EMAIL") ? publishedBy.getEmail() : "",
-                    organization.getOrganizationId(),
-                    organization.getName(),
-                    getImageUrl(organization.getImage()),
-                    job.getJobType(),
-                    advertisementRepository.countApplicantsByJobId(job.getAdvertisementId()),
-                    job.getLocation() == null ? "" : job.getLocation(),
-                    job.getApplicationDeadline(),
-                    job.getViews(),
-                    !orgId.equals(organization.getOrganizationId())
-            );
+            return getFullJobCard(authentication, job, imageUrls, publishedBy, contact);
         }
 
         throw new IllegalArgumentException("Unsupported advertisement type");
 
+    }
+
+    private FullJobCard getFullJobCard(Authentication authentication, JobEntity job, List<String> imageUrls, UserDetailsEntity publishedBy, String contact) {
+        OrganizationEntity organization = job.getOrganization();
+        Long orgId = getOrgIdFromAuthToken(authentication);
+        return new FullJobCard(
+                job.getAdvertisementId(),
+                job.getPublishedAt(),
+                job.getTitle(),
+                job.getDescription(),
+                job.getSalary() == null ? BigDecimal.ZERO : job.getSalary(),
+                imageUrls,
+                publishedBy.getUserId(),
+                publishedBy.getName(),
+                getImageUrl(publishedBy.getImage()),
+                contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
+                contact.contains("EMAIL") ? publishedBy.getEmail() : "",
+                organization.getOrganizationId(),
+                organization.getName(),
+                getImageUrl(organization.getImage()),
+                job.getJobType(),
+                advertisementRepository.countApplicantsByJobId(job.getAdvertisementId()),
+                job.getLocation() == null ? "" : job.getLocation(),
+                job.getApplicationDeadline(),
+                job.getViews(),
+                !orgId.equals(organization.getOrganizationId())
+        );
+    }
+
+    private FullProductCard getFullProductCard(Authentication authentication, ProductEntity product, List<String> imageUrls, UserDetailsEntity publishedBy, String contact) {
+        Long userId = getUserIdFromAuthToken(authentication);
+        boolean canPurchase = false;
+        if (userId != null) {
+            canPurchase = !userId.equals(product.getPublishedBy().getUserId());
+        }
+        return new FullProductCard(
+                product.getAdvertisementId(),
+                product.getPublishedAt(),
+                product.getTitle(),
+                product.getDescription(),
+                product.getPrice(),
+                imageUrls,
+                product.getPurchasedAt(),
+                publishedBy.getUserId(),
+                publishedBy.getName(),
+                getImageUrl(publishedBy.getImage()),
+                contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
+                contact.contains("EMAIL") ? publishedBy.getEmail() : "",
+                product.getViews(),
+                canPurchase
+        );
+    }
+
+    private FullOrderCard getFullOrderCard(Authentication authentication, OrderEntity order, List<String> imageUrls, UserDetailsEntity publishedBy, String contact) {
+        Long orgId = getOrgIdFromAuthToken(authentication);
+        boolean canAccept = advertisementRepository.canAcceptOrder(orgId, order.getAdvertisementId());
+        return new FullOrderCard(
+                order.getAdvertisementId(),
+                order.getPublishedAt(),
+                order.getTitle(),
+                order.getDescription(),
+                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
+                imageUrls,
+                order.getSize() == null ? "" : order.getSize(),
+                order.getDeadlineAt(),
+                publishedBy.getUserId(),
+                publishedBy.getName(),
+                getImageUrl(publishedBy.getImage()),
+                contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
+                contact.contains("EMAIL") ? publishedBy.getEmail() : "",
+                order.getViews(),
+                canAccept
+        );
     }
 
     public SmallOrder toSmallOrder(OrderEntity order) {
@@ -219,11 +221,7 @@ public class AdMapper {
     }
 
     public OrderDto toOrderDto(OrderEntity entity) {
-        List<String> imageUrls = entity.getAdvertisementImages().stream()
-                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
-                .map(AdvertisementImage::getImage)
-                .map(Image::getImageUrl)
-                .toList();
+        List<String> imageUrls = getImageUrls(entity);
 
         if (imageUrls.isEmpty()) {
             imageUrls = emptyList();
@@ -248,31 +246,10 @@ public class AdMapper {
         );
     }
 
-    public DashboardOrder toDashboardOrder(OrderEntity order) {
-        String comment = null;
-        if (order.getComment() == null) {
-            String description = order.getDescription();
-            comment = description.length() >= DESC_LENGTH ? description.substring(0, DESC_LENGTH) : description;
-        }
-
-        return new DashboardOrder(
-                order.getAdvertisementId(),
-                order.getStatus(),
-                order.getTitle(),
-                order.getTaskKey() == null ? "" : order.getTaskKey(),
-                comment,
-                order.getDeadlineAt()
-        );
-    }
-
     public MonitoringOrder mapToMonitoringOrder(OrderEntity order) {
         UserDetailsEntity author = order.getPublishedBy();
         String contact = order.getContactInfo().toString();
-        List<String> imageUrls = order.getAdvertisementImages().stream()
-                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
-                .map(AdvertisementImage::getImage)
-                .map(Image::getImageUrl)
-                .toList();
+        List<String> imageUrls = getImageUrls(order);
 
         if (imageUrls.isEmpty()) {
             imageUrls = emptyList();
@@ -362,5 +339,13 @@ public class AdMapper {
                             ad.isClosed()
                     );
                 });
+    }
+
+    private static List<String> getImageUrls(Advertisement advertisement) {
+        return advertisement.getAdvertisementImages().stream()
+                .sorted(Comparator.comparing(AdvertisementImage::getIndex))
+                .map(AdvertisementImage::getImage)
+                .map(Image::getImageUrl)
+                .toList();
     }
 }
