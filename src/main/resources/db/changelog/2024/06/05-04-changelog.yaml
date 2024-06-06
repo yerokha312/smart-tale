@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1717608047163-1
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: price
+            tableName: orders
+  - changeSet:
+      id: 1717608047163-2
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  defaultValueNumeric: !!float '0'
+                  name: price
+                  type: numeric(38,2)
+            tableName: orders
+  - changeSet:
+      id: 1717608047163-3
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: price
+            tableName: products
+  - changeSet:
+      id: 1717608047163-4
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    validateNullable: true
+                  defaultValueNumeric: !!float '0'
+                  name: price
+                  type: numeric(38,2)
+            tableName: products
+  - changeSet:
+      id: 1717608047163-5
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropColumn:
+            columnName: salary
+            tableName: jobs
+  - changeSet:
+      id: 1717608047163-6
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  defaultValueNumeric: !!float '0'
+                  name: salary
+                  type: numeric(38,2)
+            tableName: jobs
+

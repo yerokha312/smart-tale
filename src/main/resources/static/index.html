@@ -12,19 +12,8 @@
             crossorigin="anonymous"
     />
 
-    <!-- JS -->
-    <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"
-            integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-    ></script>
-    <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"
-            integrity="sha512-1QvjE7BtotQjkq8PxLeF6P46gEpBRXuskzIVgjFpekzFVF4yjRgrQvTG1MTOJ3yQgvTteKAcO7DSZI92+u/yZw=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-    ></script>
+    <!-- STOMP JS 7.0.0!!!!!!!!!!!!!!!!!!! -->
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
     <script
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
             integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
@@ -81,14 +70,67 @@
 </div>
 
 <script>
+    // Create and configure the STOMP client
+    const stompClient = new StompJs.Client({
+        brokerURL: 'ws://localhost:8080/ws',
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+        debug: function (str) {
+            console.log(str);
+        }
+    });
+
+    // Function to handle connection events
+    function onConnect(frame) {
+        console.log('Connected: ' + frame);
+
+        const accessToken = getItem("accessToken");
+        const decodedToken = jwt_decode(accessToken);
+        const userId = decodedToken.userId;
+        const orgId = decodedToken.orgId;
+        console.log(userId + " " + orgId);
+
+        // Subscribe to user-specific notifications
+        stompClient.subscribe(`/user/${userId}/push`, (message) => {
+            const notification = JSON.parse(message.body);
+            showNotification(notification);
+        });
+
+        // Subscribe to organization-specific notifications if applicable
+        if (orgId > 0) {
+            stompClient.subscribe(`/org/${orgId}/push`, (message) => {
+                const notification = JSON.parse(message.body);
+                showNotification(notification);
+            });
+        }
+    }
+
+    // Function to handle disconnection events
+    function onDisconnect() {
+        console.log('Disconnected');
+        setConnected(false);
+    }
+
+    // Set up connection lifecycle event handlers
+    stompClient.onConnect = onConnect;
+    stompClient.onStompError = function (frame) {
+        console.error('Broker reported error: ' + frame.headers['message']);
+        console.error('Additional details: ' + frame.body);
+    };
+    stompClient.onWebSocketClose = onDisconnect;
+
+    // Function to update the connection status UI
+    function setConnected(connected) {
+        $("#connect").text(connected ? "Connected" : "Connect").attr("disabled", connected);
+    }
+
+    // Function to get an item from local storage
     function getItem(key) {
         return localStorage.getItem(key);
     }
 
-    function setConnected(connected) {
-        $("#connect").text("Connected").attr("disabled", true);
-    }
-
+    // Handle login form submission to get access tokens
     $("#login-form").submit((e) => {
         e.preventDefault();
 
@@ -109,32 +151,17 @@
         })
     })
 
-    let stompClient = null;
+    // Handle connect button click to activate the STOMP client
     $("#connect").click(() => {
-        const socket = new SockJS("/ws");
-        stompClient = Stomp.over(socket);
-        let accessToken = getItem("accessToken");
-        stompClient.connect({Authorization: `Bearer ${accessToken}`}, (frame) => {
-            console.log(frame);
-            setConnected(true);
-
-            const decodedToken = jwt_decode(accessToken);
-            const userId = decodedToken.userId;
-            const orgId = decodedToken.orgId;
-            console.log(userId + " " + orgId);
-            stompClient.subscribe(`/user/${userId}/push`, (message) => {
-                const notification = JSON.parse(message.body);
-                showNotification(notification);
-            });
-            if (orgId > 0) {
-                stompClient.subscribe(`/org/${orgId}/push`, (message) => {
-                    const notification = JSON.parse(message.body);
-                    showNotification(notification);
-                });
-            }
-        });
+        const accessToken = getItem("accessToken");
+        stompClient.connectHeaders = {
+            Authorization: `Bearer ${accessToken}`
+        };
+        // вот где была загвоздка с твоим подключением
+        stompClient.activate();
     });
 
+    // Function to show notifications in the table
     function showNotification(notification) {
         const tbody = document.getElementById("tbody");
         const row = document.createElement("tr");
@@ -158,10 +185,15 @@
         tbody.appendChild(row);
     }
 
+    // Function to mark a notification as read
     function markAsRead(notificationId) {
-        stompClient.send("/app/notifications/markAsRead", {}, notificationId.toString());
+        stompClient.publish({
+            destination: "/app/notifications/markAsRead",
+            body: notificationId.toString()
+        });
     }
 
+    // Fetch notification history
     $("#fetch-history").click(() => {
         const decodedToken = jwt_decode(getItem("accessToken"));
         const userId = decodedToken.userId;
@@ -172,7 +204,10 @@
             page: 0,
             size: 5
         };
-        stompClient.send(`/app/notifications/history`, {}, JSON.stringify(request));
+        stompClient.publish({
+            destination: `/app/notifications/history`,
+            body: JSON.stringify(request)
+        });
     });
 </script>
 </body>
