@@ -19,6 +19,7 @@ import dev.yerokha.smarttale.dto.PurchaseSummary;
 import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
+import dev.yerokha.smarttale.dto.UpdateJobRequest;
 import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
@@ -98,7 +99,6 @@ public class AdvertisementService {
     private static final byte CLOSE = 1;
     private static final byte DISCLOSE = 2;
     private static final byte DELETE = 3;
-    private static final byte RESTORE = 4;
     private final OrganizationService organizationService;
     private final JobRepository jobRepository;
     private final PositionRepository positionRepository;
@@ -175,31 +175,24 @@ public class AdvertisementService {
         return adMapper.mapToFullDto(getAdEntity(userId, advertisementId));
     }
 
+    @Transactional
     public String interactWithAd(Long userId, Long advertisementId, byte actionId) {
         return switch (actionId) {
             case CLOSE -> closeAd(userId, advertisementId);
             case DISCLOSE -> discloseAd(userId, advertisementId);
             case DELETE -> deleteAd(userId, advertisementId);
-            case RESTORE -> restoreAd(userId, advertisementId);
             default -> throw new IllegalArgumentException("Unsupported action id");
         };
     }
-
-    private String restoreAd(Long userId, Long advertisementId) {
-        Advertisement advertisement = getAdEntity(userId, advertisementId);
-        advertisement.setDeleted(false);
-        advertisementRepository.save(advertisement);
-        return "Ad restored";
-    }
-
     private String deleteAd(Long userId, Long advertisementId) {
-        Advertisement advertisement = getAdEntity(userId, advertisementId);
-        if (advertisement instanceof OrderEntity order && order.getAcceptedBy() != null) {
-            throw new ForbiddenException("You are not allowed to delete an accepted order");
+        boolean hasAcceptedOrder = advertisementRepository.existsAcceptedOrder(advertisementId, userId);
+
+        if (!hasAcceptedOrder) {
+            advertisementRepository.setDeleted(advertisementId, userId);
+            return "Ad deleted";
         }
-        advertisement.setDeleted(true);
-        advertisementRepository.save(advertisement);
-        return "Ad deleted";
+
+        throw new ForbiddenException("You can not delete already accepted order");
     }
 
     private String discloseAd(Long userId, Long advertisementId) {
@@ -223,12 +216,10 @@ public class AdvertisementService {
 
     public void updateAd(Long userId, UpdateAdRequest request, List<MultipartFile> files) {
         Advertisement advertisement = getAdEntity(userId, request.advertisementId());
-        if (!advertisement.getPublishedBy().getUserId().equals(userId)) {
-            throw new ForbiddenException("It is not your ad");
-        }
 
         advertisement.setTitle(request.title());
         advertisement.setDescription(request.description());
+        advertisement.setContactInfo(request.contactInfo());
         if (advertisement instanceof OrderEntity order) {
             order.setDeadlineAt(request.deadlineAt());
             order.setSize(request.size());
@@ -241,13 +232,20 @@ public class AdvertisementService {
 
         if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
             List<AdvertisementImage> advertisementImages = advertisement.getAdvertisementImages();
+            if (advertisementImages == null) {
+                advertisementImages = new ArrayList<>();
+            }
             updateImages(advertisement, advertisementImages, files, request.imageOperations());
         }
 
         advertisementRepository.save(advertisement);
     }
 
-    private void updateImages(Advertisement advertisement, List<AdvertisementImage> existingImages, List<MultipartFile> files, List<ImageOperation> imageOperationList) {
+    void updateImages(Advertisement advertisement,
+                      List<AdvertisementImage> existingImages,
+                      List<MultipartFile> files,
+                      List<ImageOperation> imageOperationList) {
+        existingImages.sort(Comparator.comparing(AdvertisementImage::getIndex));
         for (ImageOperation imageOperation : imageOperationList) {
             switch (imageOperation.action()) {
                 case ADD -> {
@@ -255,31 +253,18 @@ public class AdvertisementService {
                         throw new IllegalArgumentException("You can not upload more than 5 images");
                     }
                     Image newImage = imageService.processImage(files.get(imageOperation.filePosition()));
-                    AdvertisementImage productImage = new AdvertisementImage();
-                    productImage.setImage(newImage);
-                    productImage.setIndex(imageOperation.targetPosition());
-                    productImage.setAdvertisement(advertisement);
-                    existingImages.add(productImage);
+                    AdvertisementImage advertisementImage = new AdvertisementImage();
+                    advertisementImage.setImage(newImage);
+                    advertisementImage.setIndex(imageOperation.targetPosition());
+                    advertisementImage.setAdvertisement(advertisement);
+                    existingImages.add(advertisementImage);
                 }
-                case MOVE -> {
-                    if (imageOperation.arrayPosition() >= existingImages.size() || imageOperation.targetPosition() >= existingImages.size()) {
-                        throw new IllegalArgumentException("Invalid image positions for MOVE operation");
-                    }
-                    Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
-                }
-                case REMOVE -> {
-                    if (imageOperation.arrayPosition() >= existingImages.size()) {
-                        throw new IllegalArgumentException("Invalid image position for REMOVE operation");
-                    }
-                    existingImages.remove(imageOperation.arrayPosition());
-                }
+                case MOVE -> Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
+                case REMOVE -> existingImages.remove(imageOperation.arrayPosition());
                 case REPLACE -> {
-                    if (imageOperation.arrayPosition() >= existingImages.size()) {
-                        throw new IllegalArgumentException("Invalid image position for REPLACE operation");
-                    }
                     Image newImage = imageService.processImage(files.get(imageOperation.filePosition()));
-                    AdvertisementImage productImage = existingImages.get(imageOperation.arrayPosition());
-                    productImage.setImage(newImage);
+                    AdvertisementImage advertisementImage = existingImages.get(imageOperation.arrayPosition());
+                    advertisementImage.setImage(newImage);
                 }
             }
         }
@@ -484,7 +469,7 @@ public class AdvertisementService {
         orderRepository.save(order);
 
         String encryptedCode = "?code=" + EncryptionUtil.encrypt(String.valueOf(acceptance.getAcceptanceId()));
-        sendAcceptanceRequest(acceptance, encryptedCode);
+        sendAcceptanceRequestEmail(acceptance, encryptedCode);
         String imageUrl = getFirstImageUrl(order);
 
         Map<String, String> data = new HashMap<>();
@@ -516,7 +501,7 @@ public class AdvertisementService {
                 .orElse("");
     }
 
-    private void sendAcceptanceRequest(AcceptanceEntity acceptance, String encryptedCode) {
+    private void sendAcceptanceRequestEmail(AcceptanceEntity acceptance, String encryptedCode) {
         OrderEntity order = acceptance.getOrder();
         String price = order.getPrice() == null ? null : order.getPrice().toString();
         OrganizationEntity organization = acceptance.getOrganization();
@@ -804,5 +789,29 @@ public class AdvertisementService {
 
         organization.getAcceptanceEntities().remove(acceptance);
         acceptanceRepository.delete(acceptance);
+    }
+
+    public void updateJobAdvertisement(Long orgId, UpdateJobRequest request, List<MultipartFile> files) {
+        JobEntity job = organizationService.getJobEntity(orgId, request.jobId());
+        PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(orgId, request.positionId())
+                .orElseThrow(() -> new NotFoundException("Position not found"));
+        job.setTitle(request.title());
+        job.setDescription(request.description());
+        job.setContactInfo(request.contactInfo());
+        job.setPosition(position);
+        job.setJobType(request.jobType());
+        job.setLocation(request.location());
+        job.setSalary(request.salary());
+        job.setApplicationDeadline(request.applicationDeadline());
+
+        if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
+            List<AdvertisementImage> advertisementImages = job.getAdvertisementImages();
+            if (advertisementImages == null) {
+                advertisementImages = new ArrayList<>();
+            }
+            updateImages(job, advertisementImages, files, request.imageOperations());
+        }
+
+        jobRepository.save(job);
     }
 }

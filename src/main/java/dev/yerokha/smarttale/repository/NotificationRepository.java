@@ -16,11 +16,13 @@ public interface NotificationRepository extends JpaRepository<PushNotificationEn
     List<PushNotificationEntity> findAllByRecipientIdAndIsSent(Long senderId, boolean isSent);
 
     @Modifying
-    @Query("UPDATE PushNotificationEntity n SET n.isRead = true WHERE n.notificationId = :notificationId")
+    @Query("UPDATE PushNotificationEntity n SET n.isRead = true " +
+           "WHERE n.notificationId = :notificationId")
     void markAsRead(Long notificationId);
 
     @Modifying
-    @Query("UPDATE PushNotificationEntity n SET n.isSent = true WHERE n.notificationId = :notificationId")
+    @Query("UPDATE PushNotificationEntity n SET n.isSent = true " +
+           "WHERE n.notificationId = :notificationId")
     void markAsSent(Long notificationId);
 
     @Query("SELECT n FROM PushNotificationEntity n " +

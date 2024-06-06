@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.util;
 
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
+import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
@@ -9,6 +10,7 @@ import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.InvitationRepository;
+import dev.yerokha.smarttale.repository.JobRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
 import dev.yerokha.smarttale.repository.PositionRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
@@ -41,6 +43,8 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     private OrderRepository orderRepository;
     @Autowired
     private InvitationRepository invitationRepository;
+    @Autowired
+    private JobRepository jobRepository;
 
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
@@ -108,9 +112,16 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         // INVITE_EMPLOYEE duplicated cause this is for invite itself, first one is for positions dropdown
         return switch (permissionString) {
             case "INVITE_EMPLOYEE", "DELETE_POSITION" -> {
+                if (targetType.equals("JobEntity")) {
+                    Long jobId = (Long) targetId;
+                    JobEntity job = jobRepository.findById(jobId)
+                            .orElseThrow(() -> new NotFoundException("Job not found"));
+                    PositionEntity position = job.getPosition();
+                    yield hasPermission(position, userHierarchy, userAuthorities);
+                }
                 Long positionId = (Long) targetId;
                 PositionEntity position = getPosition(positionId);
-                yield hasPermission(userHierarchy, userAuthorities, position);
+                yield hasPermission(position, userHierarchy, userAuthorities);
             }
             case "UPDATE_STATUS" -> {
                 boolean userCanMoveToChecking = (userAuthorities & UPDATE_STATUS_TO_CHECKING.getBitmask()) > 0;
@@ -168,15 +179,18 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         };
     }
 
-    // evaluates permission for deleting employees and invitations
-    private static boolean hasPermission(PositionEntity employeePosition, int userHierarchy, int userAuthorities) {
-        int employeeHierarchy = employeePosition.getHierarchy();
-        int employeeAuthorities = employeePosition.getAuthorities();
+    // evaluates permission for deleting employees, deleting invitations, updating job ads
+    private boolean hasPermission(PositionEntity position, int userHierarchy, int userAuthorities) {
+        if (position == null) {
+            return false;
+        }
+        int employeeHierarchy = position.getHierarchy();
+        int employeeAuthorities = position.getAuthorities();
         return userHierarchy < employeeHierarchy
                && ((userAuthorities & employeeAuthorities) == employeeAuthorities);
     }
 
-    private static boolean hasPermission(OrderEntity order, boolean userCanMoveFromChecking) {
+    private boolean hasPermission(OrderEntity order, boolean userCanMoveFromChecking) {
         OrderStatus orderStatus = order.getStatus();
 
         boolean orderStatusIsRestricted = orderStatus == OrderStatus.PENDING ||
@@ -189,15 +203,6 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
         boolean orderStatusIsCheckingOrHigher = orderStatus.compareTo(OrderStatus.CHECKING) >= 0;
         return userCanMoveFromChecking || !orderStatusIsCheckingOrHigher;
-    }
-
-    private boolean hasPermission(int userHierarchy, int userAuthorities, PositionEntity position) {
-        if (position == null) {
-            return false;
-        }
-        int positionAuthorities = position.getAuthorities();
-        return userHierarchy < position.getHierarchy()
-               && ((positionAuthorities & userAuthorities) == positionAuthorities);
     }
 
     private InvitationEntity getInvitation(Long invId) {

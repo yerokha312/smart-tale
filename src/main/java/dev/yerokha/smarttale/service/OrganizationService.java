@@ -724,9 +724,13 @@ public class OrganizationService {
     }
 
     public Job getOneJobAd(Long orgId, Long jobId) {
-        JobEntity job = jobRepository.findByOrganization_OrganizationIdAndAdvertisementIdAndIsDeletedFalse(orgId, jobId)
-                .orElseThrow(() -> new NotFoundException("Job not found"));
+        JobEntity job = getJobEntity(orgId, jobId);
         return adMapper.mapToJob(job);
+    }
+
+    JobEntity getJobEntity(Long orgId, Long jobId) {
+        return jobRepository.findByOrganization_OrganizationIdAndAdvertisementIdAndIsDeletedFalse(orgId, jobId)
+                .orElseThrow(() -> new NotFoundException("Job not found"));
     }
 
 }

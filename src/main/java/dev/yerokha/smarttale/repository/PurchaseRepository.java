@@ -16,23 +16,27 @@ import java.util.Optional;
 public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> {
 
     @Query("SELECT new dev.yerokha.smarttale.dto.Purchase(" +
-           "p.purchaseId, " +
-           "p.purchasedAt, " +
-           "p.status, " +
-           "p.statusChangedAt, " +
-           "pp.advertisementId, " +
-           "pp.title, " +
-           "pp.description, " +
-           "1, " + //TODO implement quantity
-           "COALESCE(pp.price, 0), " + //TODO if marketplace price is mandatory, else smth like olx
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = pp ORDER BY ai.index ASC), ''), " +
-           "pp.publishedBy.userId, " +
-           "CONCAT(pp.publishedBy.lastName, ' ', pp.publishedBy.firstName), " +
-           "COALESCE(pubImg.imageUrl, ''), " +
-           "pp.publishedBy.phoneNumber, " +
-           "pp.publishedBy.email, " +
-           "(pp.isDeleted AND pp.isClosed)" +
-           ") " +
+           "    p.purchaseId, " +
+           "    p.purchasedAt, " +
+           "    p.status, " +
+           "    p.statusChangedAt, " +
+           "    pp.advertisementId, " +
+           "    pp.title, " +
+           "    pp.description, " +
+           "    1, " + //TODO implement quantity
+           "    COALESCE(pp.price, 0), " + //TODO if marketplace price is mandatory, else smth like olx
+           "    COALESCE((" +
+           "        SELECT i.imageUrl " +
+           "        FROM AdvertisementImage ai " +
+           "        LEFT JOIN ai.image i " +
+           "        WHERE ai.advertisement = pp " +
+           "        ORDER BY ai.index ASC), ''), " +
+           "    pp.publishedBy.userId, " +
+           "    CONCAT(pp.publishedBy.lastName, ' ', pp.publishedBy.firstName), " +
+           "    COALESCE(pubImg.imageUrl, ''), " +
+           "    pp.publishedBy.phoneNumber, " +
+           "    pp.publishedBy.email, " +
+           "    (pp.isDeleted AND pp.isClosed)) " +
            "FROM PurchaseEntity p " +
            "JOIN p.product pp " +
            "LEFT JOIN pp.publishedBy.image pubImg " +
@@ -40,19 +44,22 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
     Optional<Purchase> findByPurchaseIdAndUserId(Long purchaseId, Long userId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.PurchaseSummary(" +
-           "p.purchaseId, " +
-           "p.purchasedAt, " +
-           "p.status, " +
-           "pp.advertisementId, " +
-           "pp.title, " +
-           "pp.description, " +
-           "COALESCE(pp.price, 0), " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = pp AND ai.index = 0), ''), " +
-           "pp.publishedBy.userId, " +
-           "CONCAT(pp.publishedBy.lastName, ' ', pp.publishedBy.firstName), " +
-           "COALESCE(pubImg.imageUrl, ''), " +
-           "(pp.isDeleted AND pp.isClosed)" +
-           ") " +
+           "    p.purchaseId, " +
+           "    p.purchasedAt, " +
+           "    p.status, " +
+           "    pp.advertisementId, " +
+           "    pp.title, " +
+           "    pp.description, " +
+           "    COALESCE(pp.price, 0), " +
+           "    COALESCE((" +
+           "        SELECT i.imageUrl " +
+           "        FROM AdvertisementImage ai " +
+           "        LEFT JOIN ai.image i " +
+           "        WHERE ai.advertisement = pp AND ai.index = 0), ''), " +
+           "    pp.publishedBy.userId, " +
+           "    CONCAT(pp.publishedBy.lastName, ' ', pp.publishedBy.firstName), " +
+           "    COALESCE(pubImg.imageUrl, ''), " +
+           "    (pp.isDeleted AND pp.isClosed)) " +
            "FROM PurchaseEntity p " +
            "JOIN p.product pp " +
            "LEFT JOIN pp.publishedBy.image pubImg " +
@@ -60,11 +67,14 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
     Page<PurchaseSummary> findAllByPurchasedUserId(Long userId, Pageable pageable);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
-           "p.purchaseId, " +
-           "dev.yerokha.smarttale.enums.ContextType.PURCHASE, " +
-           "p.product.title, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = p.product AND ai.index = 0), '')" +
-           ") " +
+           "    p.purchaseId, " +
+           "    dev.yerokha.smarttale.enums.ContextType.PURCHASE, " +
+           "    p.product.title, " +
+           "    COALESCE((" +
+           "        SELECT i.imageUrl " +
+           "        FROM AdvertisementImage ai " +
+           "        LEFT JOIN ai.image i " +
+           "        WHERE ai.advertisement = p.product AND ai.index = 0), '')) " +
            "FROM PurchaseEntity p " +
            "WHERE (lower(p.product.title) LIKE %:query% " +
            "OR lower(p.product.description) LIKE %:query%) " +
