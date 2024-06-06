@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.entity;
 
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,7 +26,7 @@ public class AdvertisementImage {
     @JoinColumn(name = "advertisement_id")
     private Advertisement advertisement;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "image_id")
     private Image image;
 

@@ -14,6 +14,8 @@ import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
 import dev.yerokha.smarttale.dto.UpdateEmployeeRequest;
+import dev.yerokha.smarttale.dto.UpdateJobRequest;
+import dev.yerokha.smarttale.service.AdvertisementService;
 import dev.yerokha.smarttale.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,10 +54,12 @@ import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 public class OrganizationController {
 
     private final OrganizationService organizationService;
+    private final AdvertisementService advertisementService;
 
     @Autowired
-    public OrganizationController(OrganizationService organizationService) {
+    public OrganizationController(OrganizationService organizationService, AdvertisementService advertisementService) {
         this.organizationService = organizationService;
+        this.advertisementService = advertisementService;
     }
 
     @Operation(
@@ -405,6 +409,10 @@ public class OrganizationController {
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
                     @ApiResponse(responseCode = "403", description = "Has no EMPLOYEE role"),
                     @ApiResponse(responseCode = "404", description = "Organization not found")
+            },
+            parameters = {
+                    @Parameter(name = "page", description = "Default 0"),
+                    @Parameter(name = "size", description = "Default 5"),
             }
     )
     @GetMapping("/advertisements")
@@ -423,10 +431,35 @@ public class OrganizationController {
             }
     )
     @GetMapping("/advertisements/{advertisementId}")
-    public ResponseEntity<Job> getJobAdvertisement(Authentication authentication,
+    public ResponseEntity<Job> getAdvertisement(Authentication authentication,
                                                    @PathVariable Long advertisementId) {
         return ResponseEntity.ok(organizationService.getOneJobAd(getOrgIdFromAuthToken(authentication), advertisementId));
     }
 
+    @Operation(
+            summary = "Update job adv", tags = {"put", "job", "organization", "advertisement"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    @PutMapping("/advertisements")
+    @PreAuthorize("hasPermission(#request.jobId(), 'JobEntity', 'INVITE_EMPLOYEE')")
+    public ResponseEntity<String> updateAdvertisement(Authentication authentication,
+                                                      @Valid @RequestPart("dto") UpdateJobRequest request,
+                                                      @RequestPart(value = "images", required = false) List<MultipartFile> files) {
+
+        if (files != null && !files.isEmpty()) {
+            for (var file : files) {
+                validateImage(file);
+            }
+        }
+
+        advertisementService.updateJobAdvertisement(getOrgIdFromAuthToken(authentication), request, files);
+        return ResponseEntity.ok("Job ad updated");
+    }
 
 }

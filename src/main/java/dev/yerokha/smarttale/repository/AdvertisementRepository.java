@@ -16,26 +16,55 @@ import java.util.Optional;
 @Repository
 public interface AdvertisementRepository extends JpaRepository<Advertisement, Long> {
 
+    @Query("SELECT COUNT(o) > 0 " +
+           "FROM OrderEntity o " +
+           "WHERE o.advertisementId = :advertisementId " +
+           "AND o.publishedBy.userId = :userId " +
+           "AND o.acceptedAt IS NOT NULL")
+    boolean existsAcceptedOrder(Long advertisementId, Long userId);
+
+    @Modifying
+    @Query("UPDATE Advertisement a " +
+           "SET a.isDeleted = true " +
+           "WHERE a.advertisementId = :advertisementId " +
+           "AND a.publishedBy.userId = :userId")
+    void setDeleted(Long advertisementId, Long userId);
+
 
     @Query("SELECT new dev.yerokha.smarttale.dto.AdvertisementDto(" +
-           "CASE TYPE (a) " +
-           "WHEN OrderEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER " +
-           "WHEN ProductEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.PRODUCT " +
-           "END, " +
-           "a.advertisementId, " +
-           "SUBSTRING(a.title, 1, 60), " +
-           "SUBSTRING(a.description, 1, 120)," +
-           "CASE TYPE (a) " +
-           "WHEN OrderEntity THEN COALESCE((SELECT o.price FROM OrderEntity o WHERE a.advertisementId = o.advertisementId), 0)" +
-           "WHEN ProductEntity THEN (SELECT p.price FROM ProductEntity p WHERE a.advertisementId = p.advertisementId) " +
-           "END, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = a AND ai.index = 0), ''), " +
-           "a.publishedAt, " +
-           "CASE TYPE (a) " +
-           "WHEN OrderEntity THEN CAST((SELECT COUNT (ae.acceptanceId) FROM OrderEntity o JOIN o.acceptanceEntities ae WHERE ae.order.advertisementId = a.advertisementId) AS INTEGER) " +
-           "ELSE 0 " +
-           "END, " +
-           "a.isClosed" +
+           "    CASE TYPE (a) " +
+           "        WHEN OrderEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER " +
+           "        WHEN ProductEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.PRODUCT " +
+           "    END, " +
+           "    a.advertisementId, " +
+           "    SUBSTRING(a.title, 1, 60), " +
+           "    SUBSTRING(a.description, 1, 120)," +
+           "    CASE TYPE (a) " +
+           "        WHEN OrderEntity THEN COALESCE((" +
+           "            SELECT o.price " +
+           "            FROM OrderEntity o " +
+           "            WHERE a.advertisementId = o.advertisementId), 0)" +
+           "        WHEN ProductEntity THEN (" +
+           "            SELECT p.price " +
+           "            FROM ProductEntity p " +
+           "            WHERE a.advertisementId = p.advertisementId) " +
+           "    END, " +
+           "    COALESCE((" +
+           "        SELECT i.imageUrl " +
+           "        FROM AdvertisementImage ai " +
+           "        LEFT JOIN ai.image i " +
+           "        WHERE ai.advertisement = a " +
+           "        AND ai.index = 0), ''), " +
+           "    a.publishedAt, " +
+           "    CASE TYPE (a) " +
+           "        WHEN OrderEntity THEN CAST((" +
+           "            SELECT COUNT (ae.acceptanceId) " +
+           "            FROM OrderEntity o " +
+           "            JOIN o.acceptanceEntities ae " +
+           "            WHERE ae.order.advertisementId = a.advertisementId) AS INTEGER) " +
+           "        ELSE 0 " +
+           "    END, " +
+           "    a.isClosed" +
            ") " +
            "FROM Advertisement a " +
            "WHERE a.publishedBy.userId = :userId AND a.isDeleted = false")
@@ -48,8 +77,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
     @Query("SELECT COUNT(ae.acceptanceId) = 0 " +
            "FROM OrderEntity o " +
            "JOIN o.acceptanceEntities ae " +
-           "WHERE o.advertisementId = :orderId " +
-           "AND ae.organization.organizationId = :orgId")
+           "WHERE o.advertisementId = :orderId AND ae.organization.organizationId = :orgId")
     boolean canAcceptOrder(Long orgId, Long orderId);
 
     @Query("SELECT COUNT(jae.applicationId) " +
@@ -59,17 +87,24 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
     int countApplicantsByJobId(Long jobId);
 
     @Modifying
-    @Query("UPDATE Advertisement a SET a.views = a.views + 1 WHERE a.advertisementId = :advertisementId")
+    @Query("UPDATE Advertisement a " +
+           "SET a.views = a.views + 1 " +
+           "WHERE a.advertisementId = :advertisementId")
     void incrementViewsCount(Long advertisementId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
            "a.advertisementId, " +
-           "CASE TYPE(a) WHEN OrderEntity THEN dev.yerokha.smarttale.enums.ContextType.ORDER " +
-           "WHEN ProductEntity THEN dev.yerokha.smarttale.enums.ContextType.PRODUCT " +
-           "ELSE dev.yerokha.smarttale.enums.ContextType.ADVERTISEMENT END, " +
+           "CASE TYPE(a) " +
+           "    WHEN OrderEntity THEN dev.yerokha.smarttale.enums.ContextType.ORDER " +
+           "    WHEN ProductEntity THEN dev.yerokha.smarttale.enums.ContextType.PRODUCT " +
+           "    ELSE dev.yerokha.smarttale.enums.ContextType.ADVERTISEMENT " +
+           "END, " +
            "a.title, " +
-           "COALESCE((SELECT i.imageUrl FROM AdvertisementImage ai LEFT JOIN ai.image i WHERE ai.advertisement = a AND ai.index = 0), '')" +
-           ") " +
+           "COALESCE((" +
+           "    SELECT i.imageUrl " +
+           "    FROM AdvertisementImage ai " +
+           "    LEFT JOIN ai.image i " +
+           "    WHERE ai.advertisement = a AND ai.index = 0), '')) " +
            "FROM Advertisement a " +
            "WHERE (lower(a.title) LIKE %:query% OR lower(a.description) LIKE %:query%) " +
            "AND ((:userId IS NULL AND a.isClosed = false) OR (a.publishedBy.userId = :userId)) " +
