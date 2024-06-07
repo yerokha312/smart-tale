@@ -6,7 +6,6 @@ import dev.yerokha.smarttale.dto.LoginResponse;
 import dev.yerokha.smarttale.entity.RefreshToken;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
 import dev.yerokha.smarttale.entity.user.PositionEntity;
-import dev.yerokha.smarttale.entity.user.Role;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.enums.TokenType;
@@ -16,8 +15,12 @@ import dev.yerokha.smarttale.repository.TokenRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.util.Authorities;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -29,6 +32,8 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -90,7 +95,7 @@ public class TokenService {
 
     private String generateToken(UserEntity entity, int expirationTime, TokenType tokenType, PositionEntity position) {
         Instant now = Instant.now();
-        String roles = getRoles(entity);
+        String roles = getRolesString(entity);
 
         long organizationId = 0;
         int hierarchy = 0;
@@ -114,7 +119,7 @@ public class TokenService {
         return encodeToken(claims);
     }
 
-    private String getRoles(UserEntity entity) {
+    private String getRolesString(UserEntity entity) {
         return entity.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
@@ -269,12 +274,6 @@ public class TokenService {
         throw new InvalidTokenException("Token is revoked");
     }
 
-    private String getRolesString(UserEntity user) {
-        return user.getAuthorities().stream()
-                .map(Role::getAuthority)
-                .collect(Collectors.joining(" "));
-    }
-
     private LoginResponse generateNewTokenPair(UserEntity user, PositionEntity position) {
         String accessToken = generateAccessToken(user, position);
         String refreshToken = generateRefreshToken(user, position);
@@ -366,6 +365,25 @@ public class TokenService {
             tokenRepository.save(token);
             setValue("revoked_token:" + decrypt(token.getToken()).substring(7), "true", 7, TimeUnit.DAYS);
         });
+    }
+
+    public Authentication getAuthentication(String token) {
+        UserDetails userDetails = getUserDetails(token);
+        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
+
+    private UserDetails getUserDetails(String token) {
+        Jwt jwt = decodeToken(token);
+        String username = jwt.getSubject();
+        var authorities = getGrantedAuthoritiesFromString(jwt.getClaim("roles"));
+
+        return new User(username, "", authorities);
+    }
+
+    private Collection<GrantedAuthority> getGrantedAuthoritiesFromString(String rolesString) {
+        return Arrays.stream(rolesString.split(" "))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
 }
 

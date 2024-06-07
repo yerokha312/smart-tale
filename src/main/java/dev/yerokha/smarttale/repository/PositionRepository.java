@@ -10,4 +10,7 @@ import java.util.Optional;
 public interface PositionRepository extends JpaRepository<PositionEntity, Long> {
 
     Optional<PositionEntity> findByOrganizationOrganizationIdAndPositionId(Long organizationId, Long positionId);
+
+
+    boolean existsByOrganizationOrganizationIdAndPositionId(Long organizationId, Long aLong);
 }

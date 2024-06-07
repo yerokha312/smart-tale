@@ -10,7 +10,9 @@ import java.util.List;
 @Repository
 public interface TokenRepository extends JpaRepository<RefreshToken, Long> {
 
-    @Query("SELECT rt FROM RefreshToken rt WHERE rt.userEntity.email = :email AND rt.isRevoked = false")
+    @Query("SELECT rt " +
+           "FROM RefreshToken rt " +
+           "WHERE rt.userEntity.email = :email AND rt.isRevoked = false")
     List<RefreshToken> findNotRevokedByEmail(String email);
 
 }

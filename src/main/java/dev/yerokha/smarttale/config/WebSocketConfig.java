@@ -1,9 +1,7 @@
 package dev.yerokha.smarttale.config;
 
-import dev.yerokha.smarttale.entity.user.UserEntity;
 import dev.yerokha.smarttale.exception.InvalidTokenException;
 import dev.yerokha.smarttale.service.TokenService;
-import dev.yerokha.smarttale.service.UserService;
 import dev.yerokha.smarttale.util.UserConnectedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,15 +10,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -34,15 +32,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final TokenService tokenService;
-    private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
     private static final Map<Long, Boolean> onlineUsers = new ConcurrentHashMap<>();
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketConfig.class);
 
-    public WebSocketConfig(TokenService tokenService, UserService userService, ApplicationEventPublisher eventPublisher) {
+    public WebSocketConfig(TokenService tokenService, ApplicationEventPublisher eventPublisher) {
         this.tokenService = tokenService;
-        this.userService = userService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -76,16 +72,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     assert accessToken != null;
                     try {
                         Long userId = tokenService.getUserIdFromToken(accessToken);
-                        String username = tokenService.getEmailFromToken(accessToken);
-                        UserDetails userDetails = userService.loadUserByUsername(username);
-                        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails, null, userDetails.getAuthorities());
-                        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                        Authentication user = tokenService.getAuthentication(accessToken);
+                        accessor.setUser(user);
                         onlineUsers.put(userId, true);
-                        accessor.setUser(usernamePasswordAuthenticationToken);
                     } catch (Exception e) {
-                        log.error("Invalid token on connect " + e.getMessage());
+                        log.error("Invalid token on connect {}", e.getMessage());
                         throw new InvalidTokenException("Invalid token on connect");
                     }
                 } else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
@@ -112,9 +103,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
         StompHeaderAccessor headers = StompHeaderAccessor.wrap(event.getMessage());
-        UsernamePasswordAuthenticationToken userToken = (UsernamePasswordAuthenticationToken) headers.getUser();
-        if (userToken != null && userToken.getPrincipal() instanceof UserDetails userDetails) {
-            Long userId = ((UserEntity) userDetails).getUserId();
+        GenericMessage<?> connectMessage = (GenericMessage<?>) headers.getHeader(SimpMessageHeaderAccessor.CONNECT_MESSAGE_HEADER);
+        if (connectMessage != null) {
+            StompHeaderAccessor connectHeaders = StompHeaderAccessor.wrap(connectMessage);
+            String accessToken = connectHeaders.getFirstNativeHeader("Authorization");
+            log.info("Authorization header: {}", accessToken);
+            Long userId = tokenService.getUserIdFromToken(accessToken);
             if (userId != null) {
                 eventPublisher.publishEvent(new UserConnectedEvent(this, userId));
             }

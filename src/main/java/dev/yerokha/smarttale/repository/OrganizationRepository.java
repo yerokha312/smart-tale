@@ -12,11 +12,10 @@ import org.springframework.stereotype.Repository;
 public interface OrganizationRepository extends JpaRepository<OrganizationEntity, Long> {
 
     @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
-           "o.organizationId, " +
-           "dev.yerokha.smarttale.enums.ContextType.ORGANIZATION, " +
-           "o.name, " +
-           "coalesce(i.imageUrl, '')" +
-           ") " +
+           "    o.organizationId, " +
+           "    dev.yerokha.smarttale.enums.ContextType.ORGANIZATION, " +
+           "    o.name, " +
+           "    coalesce(i.imageUrl, '')) " +
            "FROM OrganizationEntity o " +
            "LEFT JOIN Image i ON i.imageId = o.image.imageId " +
            "WHERE lower(o.name) LIKE %:query% " +

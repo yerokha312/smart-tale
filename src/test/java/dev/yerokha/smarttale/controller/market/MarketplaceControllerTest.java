@@ -7,6 +7,7 @@ import dev.yerokha.smarttale.dto.CreateOrderRequest;
 import dev.yerokha.smarttale.dto.CreateProductRequest;
 import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
+import dev.yerokha.smarttale.dto.UpdateJobRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.enums.ContactInfo;
 import dev.yerokha.smarttale.enums.JobType;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -522,6 +524,50 @@ class MarketplaceControllerTest {
                         status().isOk(),
                         jsonPath("$.jobApplications", hasSize(1)),
                         jsonPath("$.images").isEmpty()
+                );
+    }
+
+    @Test
+    @Order(46)
+    void updateJobAdvertisement() throws Exception {
+        UpdateJobRequest request = new UpdateJobRequest(
+                3L,
+                "Updated job",
+                "Updated description",
+                null,
+                ContactInfo.PHONE,
+                100002L,
+                JobType.CONTRACT,
+                "Bishkek",
+                BigDecimal.valueOf(2000),
+                LocalDate.now().plusDays(3)
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+        MockMultipartFile textFile = new MockMultipartFile("dto", null, APP_JSON, json.getBytes());
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/v1/organization/advertisements")
+                        .file(textFile)
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        content().string("Job ad updated")
+                );
+    }
+
+    @Test
+    @Order(47)
+    void getJobAdAfterUpdated() throws Exception {
+        mockMvc.perform(get("/v1/organization/advertisements/3")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.jobApplications", hasSize(1)),
+                        jsonPath("$.images").isEmpty(),
+                        jsonPath("$.title").value("Updated job"),
+                        jsonPath("$.description").value("Updated description"),
+                        jsonPath("$.salary").value(2000),
+                        jsonPath("$.location").value("Bishkek")
                 );
     }
 

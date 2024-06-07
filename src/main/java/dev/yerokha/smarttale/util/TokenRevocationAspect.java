@@ -1,15 +1,11 @@
 package dev.yerokha.smarttale.util;
 
-import dev.yerokha.smarttale.dto.PushNotification;
-import dev.yerokha.smarttale.entity.user.PositionEntity;
-import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.service.TokenService;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Aspect
 @Component
@@ -28,30 +24,27 @@ public class TokenRevocationAspect {
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.updateEmployee(..))",
-            returning = "notification")
-    public void afterUpdateEmployee(PushNotification notification) {
-        revokeTokens(notification.data().get("email"));
+            returning = "email")
+    public void afterUpdateEmployee(String email) {
+        revokeTokens(email);
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.deleteEmployee(..))",
-            returning = "notification")
-    public void afterDeleteEmployee(PushNotification notification) {
-        revokeTokens(notification.data().get("email"));
+            returning = "email")
+    public void afterDeleteEmployee(String email) {
+        revokeTokens(email);
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.OrganizationService.updatePosition(..))",
-            returning = "position")
-    public void afterUpdatePosition(PositionEntity position) {
-        Set<String> employeeEmails = position.getEmployees().stream()
-                .map(UserDetailsEntity::getEmail)
-                .collect(Collectors.toSet());
-        employeeEmails.forEach(this::revokeTokens);
+            returning = "emailListForRevocation")
+    public void afterUpdatePosition(List<String> emailListForRevocation) {
+        emailListForRevocation.forEach(this::revokeTokens);
     }
 
     @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.UserService.acceptInvitation(..))",
-            returning = "notification")
-    public void afterAcceptInvitation(PushNotification notification) {
-        revokeTokens(notification.data().get("email"));
+            returning = "email")
+    public void afterAcceptInvitation(String email) {
+        revokeTokens(email);
     }
 
     public void revokeTokens(String email) {
