@@ -303,10 +303,8 @@ public class OrganizationController {
     @PostMapping("/employees")
     @PreAuthorize("hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
     public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody @Valid InviteRequest request) {
-        String email = organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request)
-                .data().get("email");
-
-        return new ResponseEntity<>(String.format("Invite sent to %s", email), HttpStatus.CREATED);
+        organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
+        return new ResponseEntity<>(String.format("Invite sent to %s", request.email()), HttpStatus.CREATED);
     }
 
     @Operation(
@@ -432,7 +430,7 @@ public class OrganizationController {
     )
     @GetMapping("/advertisements/{advertisementId}")
     public ResponseEntity<Job> getAdvertisement(Authentication authentication,
-                                                   @PathVariable Long advertisementId) {
+                                                @PathVariable Long advertisementId) {
         return ResponseEntity.ok(organizationService.getOneJobAd(getOrgIdFromAuthToken(authentication), advertisementId));
     }
 

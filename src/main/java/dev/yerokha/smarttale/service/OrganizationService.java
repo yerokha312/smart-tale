@@ -15,7 +15,6 @@ import dev.yerokha.smarttale.dto.OrganizationSummary;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
-import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.AdvertisementImage;
@@ -28,6 +27,7 @@ import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.Role;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.entity.user.UserEntity;
+import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.ForbiddenException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
@@ -79,6 +79,7 @@ public class OrganizationService {
     private final AuthenticationService authenticationService;
     private final AdMapper adMapper;
     private final JobRepository jobRepository;
+    private final PushNotificationService pushNotificationService;
 
 
     public OrganizationService(OrderRepository orderRepository,
@@ -88,7 +89,7 @@ public class OrganizationService {
                                PositionRepository positionRepository,
                                OrganizationRepository organizationRepository,
                                ImageService imageService,
-                               AuthenticationService authenticationService, AdMapper adMapper, JobRepository jobRepository) {
+                               AuthenticationService authenticationService, AdMapper adMapper, JobRepository jobRepository, PushNotificationService pushNotificationService) {
         this.orderRepository = orderRepository;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
@@ -99,6 +100,7 @@ public class OrganizationService {
         this.authenticationService = authenticationService;
         this.adMapper = adMapper;
         this.jobRepository = jobRepository;
+        this.pushNotificationService = pushNotificationService;
     }
 
     public CustomPage<OrderAccepted> getOrders(Long organizationId, Map<String, String> params) {
@@ -270,11 +272,12 @@ public class OrganizationService {
         return orderRepository.findCurrentOrdersByEmployeeId(employeeId);
     }
 
-    public PushNotification inviteEmployee(Long inviterId, InviteRequest request) {
+    public void inviteEmployee(Long inviterId, InviteRequest request) {
         UserDetailsEntity inviter = getUserDetailsEntity(inviterId);
 
         OrganizationEntity organization = inviter.getOrganization();
-        PositionEntity position = positionRepository.findById(request.positionId())
+        PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(
+                        organization.getOrganizationId(), request.positionId())
                 .orElseThrow(() -> new NotFoundException("Position not found"));
 
         UserDetailsEntity invitee = getInvitee(request);
@@ -289,8 +292,7 @@ public class OrganizationService {
             invitation.setInviter(inviter);
             invitation.setPosition(position);
         } else {
-            invitation = new InvitationEntity(
-                    LocalDateTime.now(), inviter, invitee, organization, position);
+            invitation = new InvitationEntity(LocalDateTime.now(), inviter, invitee, organization, position);
         }
 
         invitationRepository.save(invitation);
@@ -317,10 +319,7 @@ public class OrganizationService {
         data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
         data.put("invId", invitationId.toString());
 
-        return new PushNotification(
-                invitee.getUserId(),
-                data
-        );
+        pushNotificationService.sendToUser(invitee.getUserId(), data);
     }
 
     private UserDetailsEntity getInvitee(InviteRequest request) {
@@ -350,7 +349,11 @@ public class OrganizationService {
                         userDetails.setMiddleName(middleName);
                     }
 
-                    return userDetailsRepository.save(userDetails);
+                    try {
+                        return userDetailsRepository.save(userDetails);
+                    } catch (Exception e) {
+                        throw new AlreadyTakenException("Phone number already taken");
+                    }
                 });
     }
 
@@ -486,12 +489,16 @@ public class OrganizationService {
         positionRepository.save(positionEntity);
     }
 
-    public PositionEntity updatePosition(Long organizationId, Position position) {
-        PositionEntity positionEntity = positionRepository.findById(position.positionId())
-                .orElseThrow(() -> new NotFoundException("Position not found"));
-
-        if (!organizationId.equals(position.organizationId())) {
-            throw new ForbiddenException("It is not your organization");
+    @Transactional
+    public List<String> updatePosition(Long organizationId, Position position) {
+        Long positionId = position.positionId();
+        boolean positionExists = positionRepository
+                .existsByOrganizationOrganizationIdAndPositionId(organizationId, positionId);
+        PositionEntity positionEntity;
+        if (positionExists) {
+            positionEntity = positionRepository.getReferenceById(positionId);
+        } else {
+            throw new NotFoundException("Position not found");
         }
 
         int hierarchy = position.hierarchy();
@@ -511,8 +518,26 @@ public class OrganizationService {
         positionEntity.setTitle(position.title());
         positionEntity.setHierarchy(hierarchy);
         positionEntity.setAuthorities(authorities);
+        positionRepository.save(positionEntity);
 
-        return positionRepository.save(positionEntity);
+        List<Long> employeeIdListByPosition = userDetailsRepository.findEmployeeIdsByPositionId(positionId);
+        for (Long employeeId : employeeIdListByPosition) {
+            Map<String, String> data = Map.of(
+                    "sub", "Ваша должность обновлена",
+                    "posId", positionId.toString(),
+                    "title", position.title()
+            );
+            pushNotificationService.sendToUser(employeeId, data);
+        }
+
+        Map<String, String> data = Map.of(
+                "sub", "Должность была обновлена",
+                "posId", positionId.toString(),
+                "title", position.title()
+        );
+        pushNotificationService.sendToOrganization(organizationId, data);
+
+        return userDetailsRepository.findEmployeeEmailsByPositionId(positionId);
     }
 
     private UserDetailsEntity getUserDetailsEntity(Long userId) {
@@ -542,11 +567,10 @@ public class OrganizationService {
         orderRepository.save(order);
     }
 
-    public List<PushNotification> removeContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
+    public void removeContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
         List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
                 organization.getOrganizationId(), request.removedEmployees());
 
-        List<PushNotification> notifications = new ArrayList<>();
         for (UserDetailsEntity contractor : contractors) {
             order.removeContractor(contractor);
             contractor.removeAssignedTask(order);
@@ -566,22 +590,16 @@ public class OrganizationService {
                     "image", imageUrl,
                     "status", order.getStatus().name()
             );
-            PushNotification notification = new PushNotification(
-                    contractor.getUserId(),
-                    data
-            );
-            notifications.add(notification);
-        }
 
-        return notifications;
+            pushNotificationService.sendToUser(contractor.getUserId(), data);
+        }
 
     }
 
-    public List<PushNotification> assignContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
+    public void assignContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
         List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
                 organization.getOrganizationId(), request.addedEmployees());
 
-        List<PushNotification> notifications = new ArrayList<>();
         for (UserDetailsEntity contractor : contractors) {
             order.addContractor(contractor);
             contractor.addAssignedTask(order);
@@ -601,14 +619,9 @@ public class OrganizationService {
                     "image", imageUrl,
                     "status", order.getStatus().name()
             );
-            PushNotification notification = new PushNotification(
-                    contractor.getUserId(),
-                    data
-            );
-            notifications.add(notification);
+            pushNotificationService.sendToUser(contractor.getUserId(), data);
         }
 
-        return notifications;
     }
 
     public List<PositionSummary> getAllPositions(Long organizationId) {
@@ -636,7 +649,7 @@ public class OrganizationService {
     }
 
     @Transactional
-    public PushNotification deleteEmployee(Long organizationId, Long employeeId) {
+    public String deleteEmployee(Long organizationId, Long employeeId) {
         UserDetailsEntity employee = userDetailsRepository.findEmployeeById(organizationId, employeeId)
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
         employee.setOrganization(null);
@@ -654,10 +667,10 @@ public class OrganizationService {
                 "sub", "Вас исключили из организации",
                 "email", employee.getEmail()
         );
-        return new PushNotification(
-                employeeId,
-                data
-        );
+
+        pushNotificationService.sendToUser(employee.getUserId(), data);
+
+        return employee.getEmail();
     }
 
     public void deletePosition(Long organizationId, Long positionId) {
@@ -673,7 +686,7 @@ public class OrganizationService {
     }
 
     @Transactional
-    public PushNotification updateEmployee(Long organizationId, Long employeeId, Long positionId) {
+    public String updateEmployee(Long organizationId, Long employeeId, Long positionId) {
         UserDetailsEntity employee = userDetailsRepository.findEmployeeById(organizationId, employeeId)
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
         PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(organizationId, positionId)
@@ -689,10 +702,10 @@ public class OrganizationService {
                 "title", position.getTitle(),
                 "email", employee.getEmail()
         );
-        return new PushNotification(
-                employeeId,
-                data
-        );
+
+        pushNotificationService.sendToUser(employee.getUserId(), data);
+
+        return employee.getEmail();
     }
 
     public CustomPage<InviterInvitation> getInvitations(Long orgId, int page, int size) {

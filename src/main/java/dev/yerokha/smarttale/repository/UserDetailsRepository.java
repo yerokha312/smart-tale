@@ -78,4 +78,14 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "JOIN o.employees e " +
            "WHERE o.organizationId = :orgId AND e.userId = :userId")
     boolean existsInOrganization(Long userId, Long orgId);
+
+    @Query("SELECT u.userId " +
+           "FROM UserDetailsEntity u " +
+           "WHERE u.position.positionId = :positionId")
+    List<Long> findEmployeeIdsByPositionId(Long positionId);
+
+    @Query("SELECT u.email " +
+           "FROM UserDetailsEntity u " +
+           "WHERE u.position.positionId = :positionId")
+    List<String> findEmployeeEmailsByPositionId(Long positionId);
 }
