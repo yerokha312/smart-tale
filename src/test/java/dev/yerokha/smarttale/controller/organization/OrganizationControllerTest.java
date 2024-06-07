@@ -703,7 +703,7 @@ class OrganizationControllerTest {
 
     @Test
     @Order(33)
-    void updatePosition_Should403() throws Exception {
+    void updatePosition_Should404() throws Exception {
         Position position = new Position(
                 100003L,
                 "Test position update",
@@ -718,7 +718,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(APP_JSON)
                         .content(json))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 
     @Test

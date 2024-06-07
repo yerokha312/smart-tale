@@ -1,7 +1,7 @@
 package dev.yerokha.smarttale.dto;
 
 import dev.yerokha.smarttale.enums.ContactInfo;
-import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -20,7 +20,7 @@ public record CreateOrderRequest(
         @PositiveOrZero
         BigDecimal price,
         String size,
-        @Future
+        @FutureOrPresent
         LocalDate deadline,
         @NotNull
         ContactInfo contactInfo

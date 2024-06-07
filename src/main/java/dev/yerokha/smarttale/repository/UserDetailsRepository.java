@@ -24,9 +24,13 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "FROM UserDetailsEntity ud " +
            "LEFT JOIN ud.invitations inv " +
            "LEFT JOIN ud.organization org " +
-           "WHERE org.organizationId = :orgId OR (inv.organization.organizationId = :orgId " +
+           "WHERE org.organizationId = :orgId " +
+           "OR (inv.organization.organizationId = :orgId " +
            "AND inv.invitedAt + 7 DAY >= CURRENT_DATE) " +
-           "ORDER BY CASE WHEN org.organizationId = :orgId THEN 0 ELSE 1 END ASC")
+           "ORDER BY CASE " +
+           "    WHEN org.organizationId = :orgId THEN 0 " +
+           "    ELSE 1 " +
+           "END ASC")
     Page<UserDetailsEntity> findAllEmployeesAndInvitees(@Param("orgId") Long orgId, Pageable pageable);
 
     @Query("SELECT u " +
@@ -36,7 +40,9 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
     Optional<UserDetailsEntity> findEmployeeById(Long organizationId, Long employeeId);
 
     @Modifying
-    @Query(value = "UPDATE user_details SET active_orders_count = active_orders_count + :amount WHERE details_id = :userId", nativeQuery = true)
+    @Query(value = "UPDATE user_details " +
+                   "SET active_orders_count = active_orders_count + :amount " +
+                   "WHERE details_id = :userId", nativeQuery = true)
     void updateActiveOrdersCount(int amount, Long userId);
 
     List<UserDetailsEntity> findAllByOrganizationOrganizationIdAndUserIdIn(Long organizationId, List<Long> employeeIds);
@@ -47,12 +53,13 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
     List<Long> findAllUserIdsByOrganizationId(Long organizationId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +
-           "ud.userId, " +
-           "CASE WHEN :orgId IS NULL THEN dev.yerokha.smarttale.enums.ContextType.USER " +
-           "ELSE dev.yerokha.smarttale.enums.ContextType.EMPLOYEE END, " +
-           "concat(ud.firstName, ' ', ud.lastName), " +
-           "coalesce(i.imageUrl, '')" +
-           ") " +
+           "    ud.userId, " +
+           "    CASE " +
+           "        WHEN :orgId IS NULL THEN dev.yerokha.smarttale.enums.ContextType.USER " +
+           "        ELSE dev.yerokha.smarttale.enums.ContextType.EMPLOYEE " +
+           "    END, " +
+           "    concat(ud.firstName, ' ', ud.lastName), " +
+           "    coalesce(i.imageUrl, '')) " +
            "FROM UserDetailsEntity ud " +
            "LEFT JOIN Image i ON i.imageId = ud.image.imageId " +
            "WHERE (lower(ud.lastName) LIKE %:query% " +
@@ -60,9 +67,25 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "AND (:orgId IS NULL OR ud.organization.organizationId = :orgId)")
     Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("orgId") Long orgId, Pageable pageable);
 
-    @Query("SELECT COUNT(at.advertisementId) > 0 FROM UserDetailsEntity u JOIN u.assignedTasks at WHERE u.userId = :userId")
+    @Query("SELECT COUNT(at.advertisementId) > 0 " +
+           "FROM UserDetailsEntity u " +
+           "JOIN u.assignedTasks at " +
+           "WHERE u.userId = :userId")
     boolean existsAssignedTasks(Long userId);
 
-    @Query("SELECT COUNT (e.userId) > 0 FROM OrganizationEntity o JOIN o.employees e WHERE o.organizationId = :orgId AND e.userId = :userId")
+    @Query("SELECT COUNT (e.userId) > 0 " +
+           "FROM OrganizationEntity o " +
+           "JOIN o.employees e " +
+           "WHERE o.organizationId = :orgId AND e.userId = :userId")
     boolean existsInOrganization(Long userId, Long orgId);
+
+    @Query("SELECT u.userId " +
+           "FROM UserDetailsEntity u " +
+           "WHERE u.position.positionId = :positionId")
+    List<Long> findEmployeeIdsByPositionId(Long positionId);
+
+    @Query("SELECT u.email " +
+           "FROM UserDetailsEntity u " +
+           "WHERE u.position.positionId = :positionId")
+    List<String> findEmployeeEmailsByPositionId(Long positionId);
 }

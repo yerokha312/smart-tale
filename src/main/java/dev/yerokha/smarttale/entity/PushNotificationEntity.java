@@ -15,6 +15,8 @@ import jakarta.persistence.Index;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -39,6 +41,7 @@ public class PushNotificationEntity {
 
     @Convert(converter = JsonNodeConverter.class)
     @Column(name = "data", nullable = false, columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private JsonNode data;
 
     @Column(name = "timestamp", nullable = false)

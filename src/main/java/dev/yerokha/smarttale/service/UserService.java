@@ -3,7 +3,6 @@ package dev.yerokha.smarttale.service;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Invitation;
 import dev.yerokha.smarttale.dto.Profile;
-import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
@@ -40,13 +39,15 @@ public class UserService implements UserDetailsService {
     private final ImageService imageService;
     private final MailService mailService;
     private final InvitationRepository invitationRepository;
+    private final PushNotificationService pushNotificationService;
 
-    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService, MailService mailService, InvitationRepository invitationRepository) {
+    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService, MailService mailService, InvitationRepository invitationRepository, PushNotificationService pushNotificationService) {
         this.userRepository = userRepository;
         this.userDetailsRepository = userDetailsRepository;
         this.imageService = imageService;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
+        this.pushNotificationService = pushNotificationService;
     }
 
     @Override
@@ -146,7 +147,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public PushNotification acceptInvitation(Authentication authentication, Long invitationId) {
+    public String acceptInvitation(Authentication authentication, Long invitationId) {
         Long userId = TokenService.getUserIdFromAuthToken(authentication);
         boolean userHasAssignedTasks = userDetailsRepository.existsAssignedTasks(userId);
         if (userHasAssignedTasks) {
@@ -178,10 +179,9 @@ public class UserService implements UserDetailsService {
                 "employeePosition", invitation.getPosition().getTitle()
         );
 
-        return new PushNotification(
-                organization.getOrganizationId(),
-                data
-        );
+        pushNotificationService.sendToOrganization(organization.getOrganizationId(), data);
+
+        return email;
     }
 
     public void declineInvitation(Long userId, Long invitationId) {

@@ -66,8 +66,8 @@ public class AdvertisementController {
             }
     )
     @GetMapping
-    public ResponseEntity<CustomPage<AdvertisementInterface>> getAds(Authentication authentication,
-                                                                     @RequestParam(required = false) Map<String, String> params) {
+    public ResponseEntity<CustomPage<AdvertisementInterface>> getMyAds(Authentication authentication,
+                                                                       @RequestParam(required = false) Map<String, String> params) {
 
         return ResponseEntity.ok(advertisementService.getPersonalAds(getUserIdFromAuthToken(authentication), params));
     }
@@ -84,15 +84,15 @@ public class AdvertisementController {
             }
     )
     @GetMapping("/{advertisementId}")
-    public ResponseEntity<AdvertisementInterface> getAd(Authentication authentication,
-                                                        @PathVariable Long advertisementId) {
+    public ResponseEntity<AdvertisementInterface> getMyAd(Authentication authentication,
+                                                          @PathVariable Long advertisementId) {
 
         return ResponseEntity.ok(advertisementService.getAdvertisement(getUserIdFromAuthToken(authentication),
                 advertisementId));
     }
 
     @Operation(
-            summary = "Action on ad", description = "EP for close(1)/disclose(2)/delete(3)/restore(4) an ad",
+            summary = "Action on ad", description = "EP for close(1)/disclose(2)/delete(3) an ad",
             tags = {"advertisement", "user", "delete", "account"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
