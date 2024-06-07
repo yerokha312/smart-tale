@@ -16,7 +16,6 @@ import dev.yerokha.smarttale.dto.OrderDto;
 import dev.yerokha.smarttale.dto.Purchase;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.PurchaseSummary;
-import dev.yerokha.smarttale.dto.PushNotification;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdRequest;
 import dev.yerokha.smarttale.dto.UpdateJobRequest;
@@ -102,6 +101,7 @@ public class AdvertisementService {
     private final OrganizationService organizationService;
     private final JobRepository jobRepository;
     private final PositionRepository positionRepository;
+    private final PushNotificationService pushNotificationService;
 
     public AdvertisementService(ProductRepository productRepository,
                                 OrderRepository orderRepository,
@@ -116,7 +116,7 @@ public class AdvertisementService {
                                 UserDetailsRepository userDetailsRepository,
                                 AdMapper adMapper,
                                 OrganizationService organizationService,
-                                JobRepository jobRepository, PositionRepository positionRepository) {
+                                JobRepository jobRepository, PositionRepository positionRepository, PushNotificationService pushNotificationService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
@@ -132,6 +132,7 @@ public class AdvertisementService {
         this.organizationService = organizationService;
         this.jobRepository = jobRepository;
         this.positionRepository = positionRepository;
+        this.pushNotificationService = pushNotificationService;
     }
 
     // get Ads in Personal account -> My advertisements
@@ -184,6 +185,7 @@ public class AdvertisementService {
             default -> throw new IllegalArgumentException("Unsupported action id");
         };
     }
+
     private String deleteAd(Long userId, Long advertisementId) {
         boolean hasAcceptedOrder = advertisementRepository.existsAcceptedOrder(advertisementId, userId);
 
@@ -259,7 +261,8 @@ public class AdvertisementService {
                     advertisementImage.setAdvertisement(advertisement);
                     existingImages.add(advertisementImage);
                 }
-                case MOVE -> Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
+                case MOVE ->
+                        Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
                 case REMOVE -> existingImages.remove(imageOperation.arrayPosition());
                 case REPLACE -> {
                     Image newImage = imageService.processImage(files.get(imageOperation.filePosition()));
@@ -452,7 +455,7 @@ public class AdvertisementService {
         ));
     }
 
-    public PushNotification acceptOrder(OrderEntity order, Long organizationId) {
+    public void acceptOrder(OrderEntity order, Long organizationId) {
         OrganizationEntity organization = organizationService.getOrganizationEntity(organizationId);
         if (acceptanceRepository.existsByOrganization_OrganizationIdAndOrder_AdvertisementId(
                 organization.getOrganizationId(), order.getAdvertisementId())) {
@@ -482,10 +485,7 @@ public class AdvertisementService {
         data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
         data.put("code", encryptedCode);
 
-        return new PushNotification(
-                order.getPublishedBy().getUserId(),
-                data
-        );
+        pushNotificationService.sendToUser(order.getPublishedBy().getUserId(), data);
     }
 
     public String getFirstImageUrl(Advertisement advertisement) {
@@ -636,7 +636,7 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public PushNotification confirmOrder(String code, Long userId) {
+    public void confirmOrder(String code, Long userId) {
         AcceptanceEntity acceptance = acceptanceRepository.findById(
                         Long.valueOf(EncryptionUtil.decrypt(code)))
                 .orElseThrow(() -> new NotFoundException("Acceptance not found"));
@@ -672,10 +672,8 @@ public class AdvertisementService {
         data.put("authorName", order.getPublishedBy().getName());
         Image authorAvatar = order.getPublishedBy().getImage();
         data.put("authorAvatar", authorAvatar == null ? "" : authorAvatar.getImageUrl());
-        return new PushNotification(
-                organization.getOrganizationId(),
-                data
-        );
+
+        pushNotificationService.sendToOrganization(organization.getOrganizationId(), data);
     }
 
     @Transactional
@@ -702,7 +700,7 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public PushNotification updateStatus(Long userId, Long orderId, String status) {
+    public void updateStatus(Long userId, Long orderId, String status) {
         OrderEntity order = getOrderEntity(orderId);
         UserDetailsEntity user = userService.getUserDetailsEntity(userId);
 
@@ -714,7 +712,7 @@ public class AdvertisementService {
         OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
 
         if (newStatus.equals(oldStatus)) {
-            return null;
+            return;
         }
 
         boolean isValidTransition = switch (newStatus) {
@@ -743,10 +741,8 @@ public class AdvertisementService {
         data.put("title", order.getTitle());
         data.put("oldStatus", oldStatus.name());
         data.put("newStatus", newStatus.name());
-        return new PushNotification(
-                order.getAcceptedBy().getOrganizationId(),
-                data
-        );
+
+        pushNotificationService.sendToOrganization(order.getAcceptedBy().getOrganizationId(), data);
     }
 
     private OrderEntity getOrderEntity(Long orderId) {
