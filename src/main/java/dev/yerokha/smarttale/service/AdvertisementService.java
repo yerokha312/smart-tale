@@ -877,4 +877,41 @@ public class AdvertisementService {
         organization.getAcceptanceEntities().remove(acceptance);
         acceptanceRepository.delete(acceptance);
     }
+
+    @Transactional
+    public String interactWithJobAd(Long orgId, Long jobId, byte actionId) {
+        return switch (actionId) {
+            case CLOSE -> closeJobAd(orgId, jobId);
+            case DISCLOSE -> discloseJobAd(orgId, jobId);
+            case DELETE -> deleteJobAd(orgId, jobId);
+            default -> throw new IllegalArgumentException("Unsupported action id");
+        };
+    }
+
+    private String deleteJobAd(Long orgId, Long jobId) {
+        int closedJobCount = jobRepository.setJobDeletedByOrganizationIdAndJobId(orgId, jobId);
+        if (closedJobCount > 0) {
+            return "Job deleted";
+        } else {
+            return "Something went wrong";
+        }
+    }
+
+    private String discloseJobAd(Long orgId, Long jobId) {
+        int closedJobCount = jobRepository.setJobClosedFalseByOrganizationIdAndJobId(orgId, jobId);
+        if (closedJobCount > 0) {
+            return "Job disclosed";
+        } else {
+            return "Something went wrong";
+        }
+    }
+
+    private String closeJobAd(Long orgId, Long jobId) {
+        int closedJobCount = jobRepository.setJobClosedTrueByOrganizationIdAndJobId(orgId, jobId);
+        if (closedJobCount > 0) {
+            return "Job closed";
+        } else {
+            return "Something went wrong";
+        }
+    }
 }
