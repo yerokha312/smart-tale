@@ -192,25 +192,33 @@ public class AdvertisementService {
         boolean hasAcceptedOrder = advertisementRepository.existsAcceptedOrder(advertisementId, userId);
 
         if (!hasAcceptedOrder) {
-            advertisementRepository.setDeleted(advertisementId, userId);
-            return "Ad deleted";
+            int deletedRows = advertisementRepository.setDeletedByAdvertisementIdAndUserId(advertisementId, userId);
+            if (deletedRows > 0) {
+                return "Ad deleted";
+            } else {
+                return "Something went wrong";
+            }
         }
 
         throw new ForbiddenException("You can not delete already accepted order");
     }
 
     private String discloseAd(Long userId, Long advertisementId) {
-        Advertisement advertisement = getAdEntity(userId, advertisementId);
-        advertisement.setClosed(false);
-        advertisementRepository.save(advertisement);
-        return "Ad disclosed";
+        int closedAdCount = advertisementRepository.setClosedFalseByAdvertisementIdAndUserId(advertisementId, userId);
+        if (closedAdCount > 0) {
+            return "Ad disclosed";
+        } else {
+            return "Something went wrong";
+        }
     }
 
     private String closeAd(Long userId, Long advertisementId) {
-        Advertisement advertisement = getAdEntity(userId, advertisementId);
-        advertisement.setClosed(true);
-        advertisementRepository.save(advertisement);
-        return "Ad closed";
+        int closedAdCount = advertisementRepository.setClosedTrueByAdvertisementIdAndUserId(advertisementId, userId);
+        if (closedAdCount > 0) {
+            return "Ad closed";
+        } else {
+            return "Something went wrong";
+        }
     }
 
     private Advertisement getAdEntity(Long userId, Long advertisementId) {
@@ -372,8 +380,8 @@ public class AdvertisementService {
         return purchaseRepository.findByPurchaseIdAndUserId(purchaseId, userId)
                 .orElseThrow(() -> new NotFoundException("Purchase not found"));
     }
-    // in Personal account -> My orders
 
+    // in Personal account -> My orders
     public CustomPage<SmallOrder> getOrders(Long userId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         if (params.get("q").equals("active")) {
@@ -406,8 +414,8 @@ public class AdvertisementService {
         });
         return orders.isEmpty() ? Sort.by(Sort.Direction.DESC, "deadlineAt") : Sort.by(orders);
     }
-    // in Personal account -> My orders
 
+    // in Personal account -> My orders
     public OrderDto getOrder(Long userId, Long orderId) {
         return adMapper.toOrderDto(orderRepository.findByPublishedByUserIdAndAdvertisementId(userId, orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found")));
@@ -813,7 +821,7 @@ public class AdvertisementService {
 
         orderRepository.save(order);
 
-        String avatarUrl = user.getImage() == null ? "" : user.getImage().getImageUrl();
+        String avatarUrl = user.getAvatarUrl();
         Map<String, String> data = new HashMap<>();
         data.put("sub", "Статус заказа обновлен");
         data.put("employeeId", userId.toString());
