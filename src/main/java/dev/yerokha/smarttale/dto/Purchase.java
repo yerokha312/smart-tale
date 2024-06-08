@@ -16,6 +16,7 @@ public record Purchase(
         @NotNull String description,
         @NotNull int quantity,
         @NotNull BigDecimal price,
+        @NotNull BigDecimal totalPrice,
         @NotNull String imageUrl,
         @NotNull Long publishedBy,
         @NotNull String publisherName,

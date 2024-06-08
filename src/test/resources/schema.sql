@@ -165,7 +165,7 @@ create table orders
     comment          varchar(255),
     size             varchar(255),
     task_key         varchar(255),
-    price            numeric(38,2),
+    price            numeric(38,2) default 0,
     primary key (advertisement_id),
     constraint fko7oqmrhjyu78foflci8xhw9u5
         foreign key (accepted_by) references organizations,
@@ -195,7 +195,7 @@ alter table organizations
 create table products
 (
     advertisement_id bigint            not null,
-    price            numeric(38,2)           not null,
+    price            numeric(38,2)     not null default 0,
     quantity         integer default 0 not null,
     primary key (advertisement_id),
     constraint fkrlasy6vsu39rymr339s3esa6p
@@ -210,6 +210,8 @@ create table purchases
     purchased_by      bigint,
     status            varchar(255),
     status_changed_at timestamp,
+    quantity          numeric(38, 2) default 0,
+    total_price       numeric(38, 2) default 0,
     primary key (purchase_id),
     constraint fkcacbvw28fu31rv1vrhnkcbe28
         foreign key (product_id) references products,
@@ -261,7 +263,7 @@ create table jobs
     position_id          bigint,
     job_type             varchar(255),
     location             varchar(255),
-    salary               numeric(38,2),
+    salary               numeric(38,2) default 0,
     advertisement_id     bigint not null,
     organization_id      bigint,
     primary key (advertisement_id),

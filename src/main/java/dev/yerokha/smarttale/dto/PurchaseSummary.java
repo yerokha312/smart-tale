@@ -13,7 +13,7 @@ public record PurchaseSummary(
         @NotNull Long productId,
         @NotNull String title,
         @NotNull String description,
-        @NotNull BigDecimal price,
+        @NotNull BigDecimal totalPrice,
         @NotNull String imageUrl,
         @NotNull Long publishedBy,
         @NotNull String publisherName,

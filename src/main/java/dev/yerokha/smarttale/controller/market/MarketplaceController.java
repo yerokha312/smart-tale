@@ -92,12 +92,17 @@ public class MarketplaceController {
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
                     @ApiResponse(responseCode = "404", description = "Not found"),
                     @ApiResponse(responseCode = "410", description = "Already purchased"),
+            },
+            parameters = {
+                    @Parameter(name = "quantity", description = "Only used with purchase Product")
             }
     )
-    @PostMapping("/{advertisementId}")
+    @PostMapping(value = "/{advertisementId}")
     public ResponseEntity<String> handleAdvertisementAction(@PathVariable Long advertisementId,
+                                                            @RequestParam(value = "quantity",
+                                                                    required = false) Integer quantity,
                                                             Authentication authentication) {
-        return ResponseEntity.ok(advertisementService.handleAdvertisement(advertisementId, authentication));
+        return ResponseEntity.ok(advertisementService.handleAdvertisement(advertisementId, authentication, quantity));
     }
 
     @Operation(

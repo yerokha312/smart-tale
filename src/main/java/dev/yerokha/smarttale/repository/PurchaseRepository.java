@@ -23,8 +23,9 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
            "    pp.advertisementId, " +
            "    pp.title, " +
            "    pp.description, " +
-           "    1, " + //TODO implement quantity
-           "    COALESCE(pp.price, 0), " + //TODO if marketplace price is mandatory, else smth like olx
+           "    p.quantity, " +
+           "    pp.price, " +
+           "    p.totalPrice, " +
            "    COALESCE((" +
            "        SELECT i.imageUrl " +
            "        FROM AdvertisementImage ai " +
@@ -50,7 +51,7 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
            "    pp.advertisementId, " +
            "    pp.title, " +
            "    pp.description, " +
-           "    COALESCE(pp.price, 0), " +
+           "    p.totalPrice, " +
            "    COALESCE((" +
            "        SELECT i.imageUrl " +
            "        FROM AdvertisementImage ai " +

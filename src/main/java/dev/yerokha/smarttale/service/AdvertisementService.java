@@ -18,8 +18,8 @@ import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.PurchaseSummary;
 import dev.yerokha.smarttale.dto.SmallOrder;
 import dev.yerokha.smarttale.dto.UpdateAdInterface;
-import dev.yerokha.smarttale.dto.UpdateOrderRequest;
 import dev.yerokha.smarttale.dto.UpdateJobRequest;
+import dev.yerokha.smarttale.dto.UpdateOrderRequest;
 import dev.yerokha.smarttale.dto.UpdateProductRequest;
 import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.Image;
@@ -35,6 +35,7 @@ import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.ApplicationStatus;
 import dev.yerokha.smarttale.enums.OrderStatus;
+import dev.yerokha.smarttale.enums.PurchaseStatus;
 import dev.yerokha.smarttale.exception.AlreadyTakenException;
 import dev.yerokha.smarttale.exception.ForbiddenException;
 import dev.yerokha.smarttale.exception.MissedException;
@@ -60,6 +61,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -470,7 +472,7 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public String handleAdvertisement(Long advertisementId, Authentication authentication) {
+    public String handleAdvertisement(Long advertisementId, Authentication authentication, Integer quantity) {
         Advertisement advertisement = getAdByIdNotDeletedNotClosed(advertisementId);
         Long userId = getUserIdFromAuthToken(authentication);
         if (advertisement instanceof JobEntity job) {
@@ -491,7 +493,7 @@ public class AdvertisementService {
             acceptOrder(order, organizationId);
             return "Order accepted";
         } else if (advertisement instanceof ProductEntity product) {
-            purchaseProduct(product, userId);
+            purchaseProduct(product, userId, quantity);
             return "Product purchased";
         }
 
@@ -512,38 +514,46 @@ public class AdvertisementService {
         jobRepository.save(job);
     }
 
-    private void purchaseProduct(ProductEntity product, Long buyerId) {
+    private void purchaseProduct(ProductEntity product, Long buyerId, int quantity) {
         UserDetailsEntity buyer = userService.getUserDetailsEntity(buyerId);
         UserDetailsEntity seller = product.getPublishedBy();
 
         if (seller.getUserId().equals(buyerId)) {
             throw new ForbiddenException("You are not allowed to purchase your own product");
         }
-
-        PurchaseEntity purchase = new PurchaseEntity(
+        BigDecimal totalPrice = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+        LocalDateTime purchasedAt = LocalDateTime.now();
+        PurchaseEntity purchaseEntity = new PurchaseEntity(
                 buyer,
                 product,
-                LocalDateTime.now()
+                quantity,
+                totalPrice,
+                purchasedAt,
+                PurchaseStatus.PENDING,
+                purchasedAt
         );
 
-        product.addPurchase(purchase);
-
+        product.addPurchase(purchaseEntity);
         productRepository.save(product);
-
-        sendPurchaseRequest(product, buyer, seller);
+        sendPurchaseRequest(product, quantity, totalPrice, buyer, seller);
     }
 
-    private void sendPurchaseRequest(ProductEntity product, UserDetailsEntity buyer, UserDetailsEntity seller) {
-        String price = product.getPrice() == null ? "" : product.getPrice().toString();
-        mailService.sendPurchaseRequest(new PurchaseRequest(
+    private void sendPurchaseRequest(ProductEntity product, int quantity, BigDecimal totalPrice,
+                                     UserDetailsEntity buyer, UserDetailsEntity seller) {
+        PurchaseRequest purchase = new PurchaseRequest(
                 product.getTitle(),
                 product.getDescription(),
-                price,
+                product.getPrice().toString(),
+                String.valueOf(quantity),
+                totalPrice.toString(),
+                PurchaseStatus.PENDING.toString(),
                 buyer.getEmail(),
                 buyer.getPhoneNumber(),
                 seller.getEmail(),
                 seller.getPhoneNumber()
-        ));
+        );
+
+        mailService.sendPurchaseRequest(purchase);
     }
 
     public void acceptOrder(OrderEntity order, Long organizationId) {

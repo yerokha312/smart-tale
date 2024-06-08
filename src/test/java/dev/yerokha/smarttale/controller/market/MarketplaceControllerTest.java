@@ -174,7 +174,8 @@ class MarketplaceControllerTest {
     @Order(3)
     void purchase() throws Exception {
         mockMvc.perform(post("/v1/market/100009")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("quantity", "1"))
                 .andExpectAll(
                         status().isOk()
                 );

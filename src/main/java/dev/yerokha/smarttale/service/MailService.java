@@ -56,7 +56,6 @@ public class MailService {
         context.setVariables(Map.of("verificationCode", verificationCode));
 
         String emailBody = engine.process("confirmation_letter", context);
-
         send(to, "Код подтверждения почты", emailBody);
     }
 
@@ -70,7 +69,6 @@ public class MailService {
                 "phoneNumber", user.getPhoneNumber()));
 
         String emailBody = engine.process("subscription_request_letter", context);
-
         send(ADMIN_EMAIL, "Запрос на подписку", emailBody);
     }
 
@@ -87,7 +85,6 @@ public class MailService {
                 "link", link));
 
         String emailBody = engine.process("invitation_letter", context);
-
         send(ADMIN_EMAIL, "Приглашение в организацию", emailBody);
     }
 
@@ -98,6 +95,9 @@ public class MailService {
                 "title", request.title(),
                 "description", request.description(),
                 "price", request.price(),
+                "quantity", request.quantity(),
+                "totalPrice", request.totalPrice(),
+                "status", request.status(),
                 "email", request.buyerEmail(),
                 "phone", request.buyerPhoneNumber(),
                 "sellerEmail", request.sellerEmail(),
@@ -105,7 +105,6 @@ public class MailService {
         ));
 
         String emailBody = engine.process("purchase_request_letter", context);
-
         send(request.sellerEmail(), "Запрос о покупке", emailBody);
         send(request.buyerEmail(), "Запрос о покупке", emailBody);
     }
@@ -116,7 +115,6 @@ public class MailService {
         context.setVariables(Map.of("verificationCode", verificationCode));
 
         String emailBody = engine.process("login_letter", context);
-
         send(to, "Код для входа", emailBody);
     }
 
@@ -134,7 +132,6 @@ public class MailService {
         ));
 
         String emailBody = engine.process("acceptance_request_letter", context);
-
         send(email, "Запрос о принятии заказа", emailBody);
     }
 }
