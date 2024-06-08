@@ -745,4 +745,18 @@ public class OrganizationService {
                 .orElseThrow(() -> new NotFoundException("Job not found"));
     }
 
+    public void deleteOrganization(Long userId, Long orgId) {
+        boolean hasActiveOrders = orderRepository
+                .existsByAcceptedBy_OrganizationIdAndCompletedAtIsNull(orgId);
+        if (hasActiveOrders) {
+            throw new ForbiddenException("Complete orders before deletion");
+        }
+
+        boolean isOwner = userDetailsRepository.checkIsOwner(userId, orgId);
+        if (!isOwner) {
+            throw new ForbiddenException("You are not allowed to delete organization");
+        }
+
+
+    }
 }

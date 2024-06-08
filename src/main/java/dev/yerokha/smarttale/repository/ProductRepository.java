@@ -19,7 +19,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
            "    p.advertisementId, " +
            "    SUBSTRING(p.title, 1, 60), " +
            "    SUBSTRING(p.description, 1, 120), " +
-           "    COALESCE(p.price, 0), " +
+           "    p.price, " +
+           "    p.quantity, " +
            "    COALESCE((" +
            "        SELECT i.imageUrl " +
            "        FROM AdvertisementImage ai " +
@@ -36,7 +37,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
            "    p.publishedAt, " +
            "    SUBSTRING(p.title, 1, 60), " +
            "    SUBSTRING(p.description, 1, 120), " +
-           "    COALESCE(p.price, 0), " +
+           "    p.price, " +
            "    COALESCE((" +
            "        SELECT i.imageUrl " +
            "        FROM AdvertisementImage ai " +
@@ -51,7 +52,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
            "    END) " +
            "FROM ProductEntity p " +
            "LEFT JOIN p.publishedBy.image pubImg " +
-           "WHERE p.isDeleted = false AND p.isClosed = false")
+           "WHERE p.isDeleted = false AND p.isClosed = false AND p.quantity > 0")
     Page<Card> findMarketProducts(Long userId, Pageable pageable);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.SearchItem(" +

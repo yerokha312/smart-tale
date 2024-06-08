@@ -13,6 +13,7 @@ public record AdvertisementDto(
         @NotNull String title,
         @NotNull String description,
         @NotNull BigDecimal price,
+        @NotNull int quantity,
         @NotNull String imageUrl,
         @NotNull LocalDateTime publishedAt,
         @NotNull int acceptancesCount,

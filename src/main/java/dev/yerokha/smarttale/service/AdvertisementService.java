@@ -515,6 +515,11 @@ public class AdvertisementService {
     }
 
     private void purchaseProduct(ProductEntity product, Long buyerId, int quantity) {
+        int productQuantity = product.getQuantity();
+        if (productQuantity < quantity) {
+            throw new ForbiddenException("Product quantity is not sufficient");
+        }
+
         UserDetailsEntity buyer = userService.getUserDetailsEntity(buyerId);
         UserDetailsEntity seller = product.getPublishedBy();
 
@@ -534,6 +539,7 @@ public class AdvertisementService {
         );
 
         product.addPurchase(purchaseEntity);
+        product.setQuantity(productQuantity - quantity);
         productRepository.save(product);
         sendPurchaseRequest(product, quantity, totalPrice, buyer, seller);
     }
@@ -714,6 +720,7 @@ public class AdvertisementService {
         product.setTitle(request.title());
         product.setDescription(request.description());
         product.setPrice(request.price());
+        product.setQuantity(request.quantity());
         product.setPublishedAt(LocalDateTime.now());
         product.setContactInfo(request.contactInfo());
 

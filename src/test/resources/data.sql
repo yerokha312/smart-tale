@@ -68,9 +68,10 @@ SELECT 100000 + n,
 FROM generate_series(0, 9) AS t(n);
 
 -- create 10 products --
-INSERT INTO products (advertisement_id, price)
+INSERT INTO products (advertisement_id, price, quantity)
 SELECT 100000 + n,
-       1000
+       1000,
+       10
 FROM generate_series(0, 9) AS t(n);
 
 -- imitate purchases for 5 products --

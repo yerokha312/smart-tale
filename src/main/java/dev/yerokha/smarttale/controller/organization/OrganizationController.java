@@ -121,6 +121,12 @@ public class OrganizationController {
         return ResponseEntity.ok("Organization updated");
     }
 
+    @DeleteMapping
+    public ResponseEntity<String> deleteOrganization(Authentication authentication) {
+        organizationService.deleteOrganization(
+                getUserIdFromAuthToken(authentication), getOrgIdFromAuthToken(authentication));
+        return ResponseEntity.ok("Organization deleted");
+    }
 
     @Operation(
             summary = "Get order history", description = "Get all orders of organization",

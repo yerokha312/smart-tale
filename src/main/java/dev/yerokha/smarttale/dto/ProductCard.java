@@ -13,6 +13,7 @@ public record ProductCard(
         @NotNull String title,
         @NotNull String description,
         @NotNull BigDecimal price,
+        @NotNull int quantity,
         @NotNull List<String> imageUrls,
         @NotNull LocalDateTime purchasedAt,
         @NotNull Long publishedBy,

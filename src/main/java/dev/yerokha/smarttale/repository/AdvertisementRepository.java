@@ -49,6 +49,13 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "            FROM ProductEntity p " +
            "            WHERE a.advertisementId = p.advertisementId) " +
            "    END, " +
+           "    CASE TYPE (a) " +
+           "        WHEN ProductEntity THEN (" +
+           "            SELECT p.quantity " +
+           "            FROM ProductEntity p " +
+           "            WHERE a.advertisementId = p.advertisementId) " +
+           "        ELSE 0 " +
+           "    END, " +
            "    COALESCE((" +
            "        SELECT i.imageUrl " +
            "        FROM AdvertisementImage ai " +
