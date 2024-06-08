@@ -6,13 +6,16 @@ import dev.yerokha.smarttale.dto.OrderFull;
 import dev.yerokha.smarttale.dto.OrderSummaryPersonal;
 import dev.yerokha.smarttale.dto.Product;
 import dev.yerokha.smarttale.dto.ProductFull;
-import dev.yerokha.smarttale.dto.UpdateAdRequest;
+import dev.yerokha.smarttale.dto.UpdateAdInterface;
+import dev.yerokha.smarttale.dto.UpdateOrderRequest;
+import dev.yerokha.smarttale.dto.UpdateProductRequest;
 import dev.yerokha.smarttale.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -119,11 +122,14 @@ public class AdvertisementController {
                     @ApiResponse(responseCode = "400", description = "Validation failed", content = @Content),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
                     @ApiResponse(responseCode = "404", description = "User or Ad not found", content = @Content)
-            }
+            },
+            requestBody = @RequestBody(content = @Content(schema = @Schema(anyOf = {
+                    UpdateProductRequest.class, UpdateOrderRequest.class
+            })))
     )
     @PutMapping
     public ResponseEntity<String> updateAd(Authentication authentication,
-                                           @RequestPart("dto") @Valid UpdateAdRequest request,
+                                           @RequestPart("dto") @Valid UpdateAdInterface request,
                                            @RequestPart(value = "images", required = false) List<MultipartFile> files) {
 
         if (files != null && !files.isEmpty()) {
@@ -135,7 +141,6 @@ public class AdvertisementController {
             }
         }
 
-        advertisementService.updateAd(getUserIdFromAuthToken(authentication), request, files);
-        return ResponseEntity.ok("Advertisement updated successfully!");
+        return ResponseEntity.ok(advertisementService.updateAd(getUserIdFromAuthToken(authentication), request, files));
     }
 }

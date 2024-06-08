@@ -193,6 +193,8 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "OR lower(o.description) LIKE %:query%) " +
            "AND (o.acceptedBy.organizationId = :organizationId)")
     Page<SearchItem> findSearchedItemsJPQL(String query, Long organizationId, Pageable pageable, String org);
+
+    boolean existsByAdvertisementIdAndPublishedBy_UserId(Long advertisementId, Long userId);
 }
 
 

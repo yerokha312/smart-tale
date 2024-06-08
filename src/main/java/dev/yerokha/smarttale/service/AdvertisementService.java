@@ -17,8 +17,10 @@ import dev.yerokha.smarttale.dto.Purchase;
 import dev.yerokha.smarttale.dto.PurchaseRequest;
 import dev.yerokha.smarttale.dto.PurchaseSummary;
 import dev.yerokha.smarttale.dto.SmallOrder;
-import dev.yerokha.smarttale.dto.UpdateAdRequest;
+import dev.yerokha.smarttale.dto.UpdateAdInterface;
+import dev.yerokha.smarttale.dto.UpdateOrderRequest;
 import dev.yerokha.smarttale.dto.UpdateJobRequest;
+import dev.yerokha.smarttale.dto.UpdateProductRequest;
 import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.advertisement.AcceptanceEntity;
@@ -216,31 +218,112 @@ public class AdvertisementService {
                 .orElseThrow(() -> new NotFoundException("Ad not found"));
     }
 
-    public void updateAd(Long userId, UpdateAdRequest request, List<MultipartFile> files) {
-        Advertisement advertisement = getAdEntity(userId, request.advertisementId());
-
-        advertisement.setTitle(request.title());
-        advertisement.setDescription(request.description());
-        advertisement.setContactInfo(request.contactInfo());
-        if (advertisement instanceof OrderEntity order) {
-            order.setDeadlineAt(request.deadlineAt());
-            order.setSize(request.size());
-            order.setPrice(request.price());
-        } else if (advertisement instanceof ProductEntity product) {
-            product.setPrice(request.price());
+    public String updateAd(Long userIdOrOrgId, UpdateAdInterface requestInterface, List<MultipartFile> files) {
+        if (requestInterface instanceof UpdateOrderRequest request) {
+            return updateOrder(userIdOrOrgId, request, files);
+        } else if (requestInterface instanceof UpdateProductRequest request) {
+            return updateProduct(userIdOrOrgId, request, files);
+        } else if (requestInterface instanceof UpdateJobRequest request) {
+            return updateJob(userIdOrOrgId, request, files);
         } else {
             throw new IllegalArgumentException("Unsupported advertisement type");
         }
+    }
 
-        if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
-            List<AdvertisementImage> advertisementImages = advertisement.getAdvertisementImages();
-            if (advertisementImages == null) {
-                advertisementImages = new ArrayList<>();
-            }
-            updateImages(advertisement, advertisementImages, files, request.imageOperations());
+    public String updateJob(Long orgId, UpdateJobRequest request, List<MultipartFile> files) {
+        boolean exists = jobRepository.existsByAdvertisementIdAndOrganization_OrganizationId(request.jobId(), orgId);
+        JobEntity job;
+        if (exists) {
+            job = jobRepository.getReferenceById(request.jobId());
+        } else {
+            throw new NotFoundException("Job not found");
         }
 
-        advertisementRepository.save(advertisement);
+        boolean positionExists = positionRepository.existsByOrganizationOrganizationIdAndPositionId(orgId, request.positionId());
+        PositionEntity position;
+        if (positionExists) {
+            position = positionRepository.getReferenceById(request.positionId());
+        } else {
+            throw new NotFoundException("Position not found");
+        }
+
+        job.setTitle(request.title());
+        job.setDescription(request.description());
+        job.setPosition(position);
+        job.setJobType(request.jobType());
+        job.setLocation(request.location());
+        job.setSalary(request.salary());
+        job.setApplicationDeadline(request.applicationDeadline());
+        job.setContactInfo(request.contactInfo());
+
+        if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
+            List<AdvertisementImage> advertisementImages = getAdvertisementImages(request.jobId());
+            updateImages(job, advertisementImages, files, request.imageOperations());
+        }
+
+        jobRepository.save(job);
+
+        return "Job updated";
+    }
+
+    private String updateProduct(Long userId, UpdateProductRequest request, List<MultipartFile> files) {
+        boolean exists = productRepository.existsByAdvertisementIdAndPublishedBy_UserId(request.advertisementId(), userId);
+        ProductEntity product;
+        if (exists) {
+            product = productRepository.getReferenceById(request.advertisementId());
+        } else {
+            throw new NotFoundException("Order not found");
+        }
+
+        product.setTitle(request.title());
+        product.setDescription(request.description());
+        product.setQuantity(request.quantity());
+        product.setPrice(request.price());
+        product.setContactInfo(request.contactInfo());
+
+        if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
+            List<AdvertisementImage> advertisementImages = getAdvertisementImages(request.advertisementId());
+            updateImages(product, advertisementImages, files, request.imageOperations());
+        }
+
+        productRepository.save(product);
+
+        return "Product updated";
+    }
+
+    private String updateOrder(Long userId, UpdateOrderRequest request, List<MultipartFile> files) {
+        boolean exists = orderRepository.existsByAdvertisementIdAndPublishedBy_UserId(request.advertisementId(), userId);
+        OrderEntity order;
+        if (exists) {
+            order = orderRepository.getReferenceById(request.advertisementId());
+        } else {
+            throw new NotFoundException("Order not found");
+        }
+
+        order.setTitle(request.title());
+        order.setDescription(request.description());
+        order.setPrice(request.price());
+        order.setSize(request.size());
+        order.setDeadlineAt(request.deadlineAt());
+        order.setContactInfo(request.contactInfo());
+
+        if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
+            List<AdvertisementImage> advertisementImages = getAdvertisementImages(request.advertisementId());
+            updateImages(order, advertisementImages, files, request.imageOperations());
+        }
+
+        orderRepository.save(order);
+
+        return "Order updated";
+    }
+
+    private List<AdvertisementImage> getAdvertisementImages(Long advertisementId) {
+        List<AdvertisementImage> advertisementImages = advertisementRepository
+                .findAdvertisementImages(advertisementId);
+        if (advertisementImages == null) {
+            advertisementImages = new ArrayList<>();
+        }
+        return advertisementImages;
     }
 
     void updateImages(Advertisement advertisement,
@@ -289,8 +372,8 @@ public class AdvertisementService {
         return purchaseRepository.findByPurchaseIdAndUserId(purchaseId, userId)
                 .orElseThrow(() -> new NotFoundException("Purchase not found"));
     }
-
     // in Personal account -> My orders
+
     public CustomPage<SmallOrder> getOrders(Long userId, Map<String, String> params) {
         Sort sort = getSortProps(params);
         if (params.get("q").equals("active")) {
@@ -323,8 +406,8 @@ public class AdvertisementService {
         });
         return orders.isEmpty() ? Sort.by(Sort.Direction.DESC, "deadlineAt") : Sort.by(orders);
     }
-
     // in Personal account -> My orders
+
     public OrderDto getOrder(Long userId, Long orderId) {
         return adMapper.toOrderDto(orderRepository.findByPublishedByUserIdAndAdvertisementId(userId, orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found")));
@@ -785,29 +868,5 @@ public class AdvertisementService {
 
         organization.getAcceptanceEntities().remove(acceptance);
         acceptanceRepository.delete(acceptance);
-    }
-
-    public void updateJobAdvertisement(Long orgId, UpdateJobRequest request, List<MultipartFile> files) {
-        JobEntity job = organizationService.getJobEntity(orgId, request.jobId());
-        PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(orgId, request.positionId())
-                .orElseThrow(() -> new NotFoundException("Position not found"));
-        job.setTitle(request.title());
-        job.setDescription(request.description());
-        job.setContactInfo(request.contactInfo());
-        job.setPosition(position);
-        job.setJobType(request.jobType());
-        job.setLocation(request.location());
-        job.setSalary(request.salary());
-        job.setApplicationDeadline(request.applicationDeadline());
-
-        if (request.imageOperations() != null && !request.imageOperations().isEmpty()) {
-            List<AdvertisementImage> advertisementImages = job.getAdvertisementImages();
-            if (advertisementImages == null) {
-                advertisementImages = new ArrayList<>();
-            }
-            updateImages(job, advertisementImages, files, request.imageOperations());
-        }
-
-        jobRepository.save(job);
     }
 }

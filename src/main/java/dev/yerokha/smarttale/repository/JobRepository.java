@@ -59,4 +59,6 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
     Page<JobSummary> findAllByOrganizationId(Long orgId, Pageable pageable);
 
     Optional<JobEntity> findByOrganization_OrganizationIdAndAdvertisementIdAndIsDeletedFalse(Long orgId, Long jobId);
+
+    boolean existsByAdvertisementIdAndOrganization_OrganizationId(Long advertisementId, Long orgId);
 }

@@ -435,7 +435,7 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Update job adv", tags = {"put", "job", "organization", "advertisement"},
+            summary = "Update job", tags = {"put", "job", "organization", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad request"),
@@ -456,7 +456,7 @@ public class OrganizationController {
             }
         }
 
-        advertisementService.updateJobAdvertisement(getOrgIdFromAuthToken(authentication), request, files);
+        advertisementService.updateAd(getOrgIdFromAuthToken(authentication), request, files);
         return ResponseEntity.ok("Job ad updated");
     }
 

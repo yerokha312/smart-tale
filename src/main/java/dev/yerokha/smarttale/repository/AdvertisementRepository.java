@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.repository;
 
 import dev.yerokha.smarttale.dto.AdvertisementDto;
 import dev.yerokha.smarttale.dto.SearchItem;
+import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -110,4 +112,10 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "AND ((:userId IS NULL AND a.isClosed = false) OR (a.publishedBy.userId = :userId)) " +
            "AND a.isDeleted = false")
     Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT ai " +
+           "FROM AdvertisementImage ai " +
+           "WHERE ai.advertisement.advertisementId = :advertisementId " +
+           "ORDER BY ai.index")
+    List<AdvertisementImage> findAdvertisementImages(Long advertisementId);
 }
