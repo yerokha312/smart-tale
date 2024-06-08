@@ -312,7 +312,6 @@ public class OrganizationService {
                 link);
 
         Map<String, String> data = new HashMap<>();
-        data.put("email", invitee.getEmail());
         data.put("sub", "Приглашение в организацию");
         data.put("orgId", organization.getOrganizationId().toString());
         data.put("orgName", organization.getName());

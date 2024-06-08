@@ -158,4 +158,8 @@ public class UserDetailsEntity {
 
         this.assignedTasks.remove(task);
     }
+
+    public String getAvatarUrl() {
+        return this.image == null ? "" : this.image.getImageUrl();
+    }
 }

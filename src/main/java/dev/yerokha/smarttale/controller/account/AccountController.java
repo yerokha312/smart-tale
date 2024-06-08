@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 import static dev.yerokha.smarttale.util.ImageValidator.validateImage;
 
@@ -159,5 +160,20 @@ public class AccountController {
         userService.declineInvitation(getUserIdFromAuthToken(authentication), invitationId);
 
         return ResponseEntity.ok("Invitation declined");
+    }
+
+    @Operation(
+            summary = "Leave organization", tags = {"delete", "organization", "account", "user"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "User is owner or has assigned tasks")
+            }
+    )
+    @DeleteMapping("/organization")
+    public ResponseEntity<String> leaveOrganization(Authentication authentication) {
+        userService.leaveOrganization(getUserIdFromAuthToken(authentication), getOrgIdFromAuthToken(authentication));
+
+        return ResponseEntity.ok("You left the organization");
     }
 }

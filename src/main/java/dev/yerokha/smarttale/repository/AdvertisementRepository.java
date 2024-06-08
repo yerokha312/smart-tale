@@ -26,10 +26,8 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
     @Modifying
     @Query("UPDATE Advertisement a " +
            "SET a.isDeleted = true " +
-           "WHERE a.advertisementId = :advertisementId " +
-           "AND a.publishedBy.userId = :userId")
-    void setDeleted(Long advertisementId, Long userId);
-
+           "WHERE a.advertisementId = :advertisementId AND a.publishedBy.userId = :userId")
+    int setDeletedByAdvertisementIdAndUserId(Long advertisementId, Long userId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.AdvertisementDto(" +
            "    CASE TYPE (a) " +
@@ -110,4 +108,16 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "AND ((:userId IS NULL AND a.isClosed = false) OR (a.publishedBy.userId = :userId)) " +
            "AND a.isDeleted = false")
     Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("userId") Long userId, Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE Advertisement a " +
+           "SET a.isClosed = false " +
+           "WHERE a.advertisementId = :advertisementId AND a.publishedBy.userId = :userId")
+    int setClosedFalseByAdvertisementIdAndUserId(Long advertisementId, Long userId);
+
+    @Modifying
+    @Query("UPDATE Advertisement a " +
+           "SET a.isClosed = true " +
+           "WHERE a.advertisementId = :advertisementId AND a.publishedBy.userId = :userId")
+    int setClosedTrueByAdvertisementIdAndUserId(Long advertisementId, Long userId);
 }

@@ -165,10 +165,12 @@ public class PushNotificationService {
         Slice<PushNotificationEntity> history = notificationRepository
                 .findHistory(request.userId(), request.organizationId(), pageable);
 
+        int unreadCount = notificationRepository.countUnreadMessages(request.userId());
         List<PushNotificationEntity> content = history.getContent();
         NotificationSliceContainer container = new NotificationSliceContainer(
                 content,
-                history.hasNext()
+                history.hasNext(),
+                unreadCount
         );
 
         transactionalNotificationService.markNotificationsAsSent(content);

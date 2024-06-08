@@ -6,6 +6,7 @@ import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -59,4 +60,22 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
     Page<JobSummary> findAllByOrganizationId(Long orgId, Pageable pageable);
 
     Optional<JobEntity> findByOrganization_OrganizationIdAndAdvertisementIdAndIsDeletedFalse(Long orgId, Long jobId);
+
+    @Modifying
+    @Query("UPDATE JobEntity j " +
+           "SET j.isClosed = true " +
+           "WHERE j.organization.organizationId = :orgId AND j.advertisementId = :jobId")
+    int setJobClosedTrueByOrganizationIdAndJobId(Long orgId, Long jobId);
+
+    @Modifying
+    @Query("UPDATE JobEntity j " +
+           "SET j.isClosed = false " +
+           "WHERE j.organization.organizationId = :orgId AND j.advertisementId = :jobId")
+    int setJobClosedFalseByOrganizationIdAndJobId(Long orgId, Long jobId);
+
+    @Modifying
+    @Query("UPDATE JobEntity j " +
+           "SET j.isDeleted = true " +
+           "WHERE j.organization.organizationId = :orgId AND j.advertisementId = :jobId")
+    int setJobDeletedByOrganizationIdAndJobId(Long orgId, Long jobId);
 }

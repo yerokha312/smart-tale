@@ -190,25 +190,33 @@ public class AdvertisementService {
         boolean hasAcceptedOrder = advertisementRepository.existsAcceptedOrder(advertisementId, userId);
 
         if (!hasAcceptedOrder) {
-            advertisementRepository.setDeleted(advertisementId, userId);
-            return "Ad deleted";
+            int deletedRows = advertisementRepository.setDeletedByAdvertisementIdAndUserId(advertisementId, userId);
+            if (deletedRows > 0) {
+                return "Ad deleted";
+            } else {
+                return "Something went wrong";
+            }
         }
 
         throw new ForbiddenException("You can not delete already accepted order");
     }
 
     private String discloseAd(Long userId, Long advertisementId) {
-        Advertisement advertisement = getAdEntity(userId, advertisementId);
-        advertisement.setClosed(false);
-        advertisementRepository.save(advertisement);
-        return "Ad disclosed";
+        int closedAdCount = advertisementRepository.setClosedFalseByAdvertisementIdAndUserId(advertisementId, userId);
+        if (closedAdCount > 0) {
+            return "Ad disclosed";
+        } else {
+            return "Something went wrong";
+        }
     }
 
     private String closeAd(Long userId, Long advertisementId) {
-        Advertisement advertisement = getAdEntity(userId, advertisementId);
-        advertisement.setClosed(true);
-        advertisementRepository.save(advertisement);
-        return "Ad closed";
+        int closedAdCount = advertisementRepository.setClosedTrueByAdvertisementIdAndUserId(advertisementId, userId);
+        if (closedAdCount > 0) {
+            return "Ad closed";
+        } else {
+            return "Something went wrong";
+        }
     }
 
     private Advertisement getAdEntity(Long userId, Long advertisementId) {
@@ -730,7 +738,7 @@ public class AdvertisementService {
 
         orderRepository.save(order);
 
-        String avatarUrl = user.getImage() == null ? "" : user.getImage().getImageUrl();
+        String avatarUrl = user.getAvatarUrl();
         Map<String, String> data = new HashMap<>();
         data.put("sub", "Статус заказа обновлен");
         data.put("employeeId", userId.toString());
@@ -809,5 +817,42 @@ public class AdvertisementService {
         }
 
         jobRepository.save(job);
+    }
+
+    @Transactional
+    public String interactWithJobAd(Long orgId, Long jobId, byte actionId) {
+        return switch (actionId) {
+            case CLOSE -> closeJobAd(orgId, jobId);
+            case DISCLOSE -> discloseJobAd(orgId, jobId);
+            case DELETE -> deleteJobAd(orgId, jobId);
+            default -> throw new IllegalArgumentException("Unsupported action id");
+        };
+    }
+
+    private String deleteJobAd(Long orgId, Long jobId) {
+        int closedJobCount = jobRepository.setJobDeletedByOrganizationIdAndJobId(orgId, jobId);
+        if (closedJobCount > 0) {
+            return "Job deleted";
+        } else {
+            return "Something went wrong";
+        }
+    }
+
+    private String discloseJobAd(Long orgId, Long jobId) {
+        int closedJobCount = jobRepository.setJobClosedFalseByOrganizationIdAndJobId(orgId, jobId);
+        if (closedJobCount > 0) {
+            return "Job disclosed";
+        } else {
+            return "Something went wrong";
+        }
+    }
+
+    private String closeJobAd(Long orgId, Long jobId) {
+        int closedJobCount = jobRepository.setJobClosedTrueByOrganizationIdAndJobId(orgId, jobId);
+        if (closedJobCount > 0) {
+            return "Job closed";
+        } else {
+            return "Something went wrong";
+        }
     }
 }

@@ -6,6 +6,7 @@ import java.util.List;
 
 public record NotificationSliceContainer(
         List<PushNotificationEntity> content,
-        boolean hasNext
+        boolean hasNext,
+        int unreadCount
 ) {
 }
