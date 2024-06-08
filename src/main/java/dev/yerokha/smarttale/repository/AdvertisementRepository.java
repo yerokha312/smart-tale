@@ -2,6 +2,7 @@ package dev.yerokha.smarttale.repository;
 
 import dev.yerokha.smarttale.dto.AdvertisementDto;
 import dev.yerokha.smarttale.dto.SearchItem;
+import dev.yerokha.smarttale.entity.AdvertisementImage;
 import dev.yerokha.smarttale.entity.advertisement.Advertisement;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -26,8 +28,10 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
     @Modifying
     @Query("UPDATE Advertisement a " +
            "SET a.isDeleted = true " +
-           "WHERE a.advertisementId = :advertisementId AND a.publishedBy.userId = :userId")
-    int setDeletedByAdvertisementIdAndUserId(Long advertisementId, Long userId);
+           "WHERE a.advertisementId = :advertisementId " +
+           "AND a.publishedBy.userId = :userId")
+    void setDeleted(Long advertisementId, Long userId);
+
 
     @Query("SELECT new dev.yerokha.smarttale.dto.AdvertisementDto(" +
            "    CASE TYPE (a) " +
@@ -109,15 +113,9 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "AND a.isDeleted = false")
     Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("userId") Long userId, Pageable pageable);
 
-    @Modifying
-    @Query("UPDATE Advertisement a " +
-           "SET a.isClosed = false " +
-           "WHERE a.advertisementId = :advertisementId AND a.publishedBy.userId = :userId")
-    int setClosedFalseByAdvertisementIdAndUserId(Long advertisementId, Long userId);
-
-    @Modifying
-    @Query("UPDATE Advertisement a " +
-           "SET a.isClosed = true " +
-           "WHERE a.advertisementId = :advertisementId AND a.publishedBy.userId = :userId")
-    int setClosedTrueByAdvertisementIdAndUserId(Long advertisementId, Long userId);
+    @Query("SELECT ai " +
+           "FROM AdvertisementImage ai " +
+           "WHERE ai.advertisement.advertisementId = :advertisementId " +
+           "ORDER BY ai.index")
+    List<AdvertisementImage> findAdvertisementImages(Long advertisementId);
 }

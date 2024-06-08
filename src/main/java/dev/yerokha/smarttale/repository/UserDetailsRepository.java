@@ -88,9 +88,4 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "FROM UserDetailsEntity u " +
            "WHERE u.position.positionId = :positionId")
     List<String> findEmployeeEmailsByPositionId(Long positionId);
-
-    @Query("SELECT COUNT (o) > 0 " +
-           "FROM OrganizationEntity o " +
-           "WHERE o.organizationId = :orgId AND o.owner.userId = :userId")
-    boolean checkIsOwner(Long userId, Long orgId);
 }
