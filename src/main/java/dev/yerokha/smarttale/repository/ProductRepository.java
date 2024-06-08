@@ -69,4 +69,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
            "AND ((:userId IS NULL AND p.isClosed = false) OR (p.publishedBy.userId = :userId)) " +
            "AND p.isDeleted = false")
     Page<SearchItem> findSearchedItemsJPQL(@Param("query") String query, @Param("userId") Long userId, Pageable pageable);
+
+    boolean existsByAdvertisementIdAndPublishedBy_UserId(Long advertisementId, Long userId);
 }

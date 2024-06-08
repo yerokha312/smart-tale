@@ -3,7 +3,7 @@ package dev.yerokha.smarttale.controller.account;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import dev.yerokha.smarttale.dto.ImageOperation;
-import dev.yerokha.smarttale.dto.UpdateAdRequest;
+import dev.yerokha.smarttale.dto.UpdateOrderRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.enums.Action;
 import dev.yerokha.smarttale.enums.ContactInfo;
@@ -182,7 +182,7 @@ class AdvertisementControllerTest {
                 new ImageOperation(0, 3, Action.ADD, 3)
         );
 
-        UpdateAdRequest request = new UpdateAdRequest(
+        UpdateOrderRequest request = new UpdateOrderRequest(
                 100010L,
                 "Updated Title",
                 "Updated Description",
@@ -211,7 +211,7 @@ class AdvertisementControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        content().string("Advertisement updated successfully!")
+                        content().string("Order updated")
                 );
 
     }

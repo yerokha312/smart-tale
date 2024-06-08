@@ -84,4 +84,8 @@ public class OrganizationEntity {
         this.registeredAt = registeredAt;
         this.owner = owner;
     }
+
+    public String getLogoUrl() {
+        return this.image == null ? "" : this.image.getImageUrl();
+    }
 }

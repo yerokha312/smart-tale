@@ -79,7 +79,7 @@ public class AdMapper {
                 isAccepted ? order.getAcceptedBy().getOrganizationId() : 0,
                 order.getAcceptanceEntities() == null ? emptyList() : mapToAcceptanceDto(order.getAcceptanceEntities()),
                 isAccepted ? order.getAcceptedBy().getName() : "",
-                isAccepted ? getImageUrl(order.getAcceptedBy().getImage()) : "",
+                isAccepted ? order.getAcceptedBy().getLogoUrl() : "",
                 order.getTitle(),
                 order.getDescription(),
                 order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
@@ -98,7 +98,7 @@ public class AdMapper {
                     return new AcceptanceRequest(
                             organization.getOrganizationId(),
                             organization.getName(),
-                            getImageUrl(organization.getImage()),
+                            organization.getLogoUrl(),
                             EncryptionUtil.encrypt(String.valueOf(e.getAcceptanceId()))
                     );
                 })
@@ -151,12 +151,12 @@ public class AdMapper {
                 imageUrls,
                 publishedBy.getUserId(),
                 publishedBy.getName(),
-                getImageUrl(publishedBy.getImage()),
+                publishedBy.getAvatarUrl(),
                 contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
                 contact.contains("EMAIL") ? publishedBy.getEmail() : "",
                 organization.getOrganizationId(),
                 organization.getName(),
-                getImageUrl(organization.getImage()),
+                organization.getLogoUrl(),
                 job.getJobType(),
                 advertisementRepository.countApplicantsByJobId(job.getAdvertisementId()),
                 job.getLocation() == null ? "" : job.getLocation(),
@@ -182,7 +182,7 @@ public class AdMapper {
                 product.getPurchasedAt(),
                 publishedBy.getUserId(),
                 publishedBy.getName(),
-                getImageUrl(publishedBy.getImage()),
+                publishedBy.getAvatarUrl(),
                 contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
                 contact.contains("EMAIL") ? publishedBy.getEmail() : "",
                 product.getViews(),
@@ -204,7 +204,7 @@ public class AdMapper {
                 order.getDeadlineAt(),
                 publishedBy.getUserId(),
                 publishedBy.getName(),
-                getImageUrl(publishedBy.getImage()),
+                publishedBy.getAvatarUrl(),
                 contact.contains("PHONE") ? publishedBy.getPhoneNumber() : "",
                 contact.contains("EMAIL") ? publishedBy.getEmail() : "",
                 order.getViews(),
@@ -232,7 +232,7 @@ public class AdMapper {
         }
 
         OrganizationEntity acceptedOrganization = entity.getAcceptedBy();
-        String logoUrl = getImageUrl(acceptedOrganization.getImage());
+        String logoUrl = acceptedOrganization.getLogoUrl();
         return new OrderDto(
                 entity.getAdvertisementId(),
                 entity.getStatus(),
@@ -270,14 +270,14 @@ public class AdMapper {
                 imageUrls,
                 order.getStatus(),
                 author.getUserId(),
-                getImageUrl(author.getImage()),
+                author.getAvatarUrl(),
                 contact.contains("EMAIL") ? author.getEmail() : "",
                 contact.contains("PHONE") ? author.getPhoneNumber() : "",
                 order.getContractors() == null ? emptyList() : order.getContractors().stream()
                         .map(emp -> new AssignedEmployee(
                                 emp.getUserId(),
                                 emp.getName(),
-                                getImageUrl(emp.getImage()),
+                                emp.getAvatarUrl(),
                                 order.getPrice() == null ? BigDecimal.ZERO : order.getPrice()
                         ))
                         .toList(),
@@ -286,6 +286,7 @@ public class AdMapper {
     }
 
     public Task toTask(OrderEntity order) {
+        UserDetailsEntity publishedBy = order.getPublishedBy();
         return new Task(
                 order.getAdvertisementId(),
                 order.getStatus(),
@@ -299,23 +300,15 @@ public class AdMapper {
                         .map(emp -> new AssignedEmployee(
                                 emp.getUserId(),
                                 emp.getName(),
-                                getImageUrl(emp.getImage()),
+                                emp.getAvatarUrl(),
                                 order.getPrice()
                         ))
                         .toList(),
-                order.getPublishedBy().getUserId(),
-                order.getPublishedBy().getName(),
-                getImageUrl(order.getPublishedBy().getImage()),
-                order.getPublishedBy().getPhoneNumber()
+                publishedBy.getUserId(),
+                publishedBy.getName(),
+                publishedBy.getAvatarUrl(),
+                publishedBy.getPhoneNumber()
         );
-    }
-
-    private String getImageUrl(Image image) {
-        if (image != null) {
-            return image.getImageUrl();
-        } else {
-            return "";
-        }
     }
 
     public Page<AdvertisementInterface> mapToPersonalAds(Page<AdvertisementDto> personalAds) {
@@ -360,7 +353,7 @@ public class AdMapper {
                 job.getPublishedAt(),
                 userDetails.getUserId(),
                 userDetails.getName(),
-                getImageUrl(userDetails.getImage()),
+                userDetails.getAvatarUrl(),
                 job.getTitle(),
                 job.getPosition().getPositionId(),
                 job.getPosition().getTitle(),
@@ -389,7 +382,7 @@ public class AdMapper {
                             a.getApplicationDate(),
                             applicant.getUserId(),
                             applicant.getName(),
-                            getImageUrl(applicant.getImage()),
+                            applicant.getAvatarUrl(),
                             applicant.getEmail(),
                             applicant.getPhoneNumber()
                     );

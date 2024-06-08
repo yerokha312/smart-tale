@@ -435,7 +435,7 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Update job adv", tags = {"put", "job", "organization", "advertisement"},
+            summary = "Update job", tags = {"put", "job", "organization", "advertisement"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad request"),
@@ -456,8 +456,30 @@ public class OrganizationController {
             }
         }
 
-        advertisementService.updateJobAdvertisement(getOrgIdFromAuthToken(authentication), request, files);
+        advertisementService.updateAd(getOrgIdFromAuthToken(authentication), request, files);
         return ResponseEntity.ok("Job ad updated");
+    }
+
+    @Operation(
+            summary = "Interact with org ad", description = "EP for close(1)/disclose(2)/delete(3) an ad",
+            tags = {"advertisement", "organization", "delete", "job"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "No permission", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "User or Ad not found", content = @Content)
+            }
+    )
+    @DeleteMapping("/{advertisementId}/{actionId}")
+    @PreAuthorize("hasPermission(#advertisementId, 'JobEntity', 'INVITE_EMPLOYEE')")
+    public ResponseEntity<String> interactWithAd(Authentication authentication,
+                                                 @PathVariable Long advertisementId,
+                                                 @PathVariable byte actionId) {
+// TODO test the method
+
+        return ResponseEntity.ok(advertisementService.interactWithJobAd(getOrgIdFromAuthToken(authentication),
+                advertisementId,
+                actionId));
     }
 
 }

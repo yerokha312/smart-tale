@@ -171,7 +171,6 @@ public class UserService implements UserDetailsService {
         Image image = invitation.getInvitee().getImage();
         String imageUrl = image == null ? "" : image.getImageUrl();
         Map<String, String> data = Map.of(
-                "email", email,
                 "sub", "Пользователь принял приглашение",
                 "employeeId", userId.toString(),
                 "employeeName", invitation.getInvitee().getName(),
@@ -189,5 +188,34 @@ public class UserService implements UserDetailsService {
         if (deletedCount == 0) {
             throw new NotFoundException("Invitation not found");
         }
+    }
+
+    public void leaveOrganization(Long userId, Long orgId) {
+        boolean hasActiveOrders = userDetailsRepository.existsAssignedTasks(userId);
+        boolean isOwner = userDetailsRepository.checkIsOwner(userId, orgId);
+
+        if (hasActiveOrders) {
+            throw new ForbiddenException("You can not leave, you have active orders");
+        }
+
+        if (isOwner) {
+            throw new ForbiddenException("You can not leave own organization");
+        }
+
+        UserDetailsEntity user = userDetailsRepository.getReferenceById(userId);
+
+        user.setOrganization(null);
+        user.setPosition(null);
+        user.setActiveOrdersCount(0);
+
+        userDetailsRepository.save(user);
+
+        var data = Map.of(
+                "sub", "Сотрудник покинул организацию",
+                "userId", userId.toString(),
+                "userName", user.getName(),
+                "userAvatar", user.getAvatarUrl()
+        );
+        pushNotificationService.sendToOrganization(orgId, data);
     }
 }
