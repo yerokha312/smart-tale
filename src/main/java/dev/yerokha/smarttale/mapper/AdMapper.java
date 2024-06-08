@@ -112,6 +112,7 @@ public class AdMapper {
                 product.getTitle(),
                 product.getDescription(),
                 product.getPrice() == null ? BigDecimal.ZERO : product.getPrice(),
+                product.getQuantity(),
                 imageUrls,
                 product.getViews(),
                 product.isDeleted(),
@@ -178,6 +179,7 @@ public class AdMapper {
                 product.getTitle(),
                 product.getDescription(),
                 product.getPrice(),
+                product.getQuantity(),
                 imageUrls,
                 product.getPurchasedAt(),
                 publishedBy.getUserId(),
@@ -331,6 +333,7 @@ public class AdMapper {
                             ad.title(),
                             ad.description(),
                             ad.price(),
+                            ad.quantity(),
                             ad.imageUrl(),
                             ad.publishedAt(),
                             ad.isClosed()

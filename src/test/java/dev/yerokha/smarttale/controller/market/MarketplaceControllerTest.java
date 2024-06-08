@@ -383,6 +383,7 @@ class MarketplaceControllerTest {
         CreateProductRequest request = new CreateProductRequest(
                 "Created Product",
                 "Description of created Product",
+                2,
                 BigDecimal.valueOf(200_000),
                 ContactInfo.EMAIL_PHONE
         );

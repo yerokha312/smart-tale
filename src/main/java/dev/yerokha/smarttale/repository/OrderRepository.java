@@ -25,7 +25,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "    o.advertisementId, " +
            "    SUBSTRING(o.title, 1, 60), " +
            "    SUBSTRING(o.description, 1, 120), " +
-           "    o.price, " +
+           "    COALESCE(o.price, 0), " +
            "    COALESCE((" +
            "        SELECT i.imageUrl " +
            "        FROM AdvertisementImage ai " +
@@ -195,6 +195,8 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     Page<SearchItem> findSearchedItemsJPQL(String query, Long organizationId, Pageable pageable, String org);
 
     boolean existsByAdvertisementIdAndPublishedBy_UserId(Long advertisementId, Long userId);
+
+    boolean existsByAcceptedBy_OrganizationIdAndCompletedAtIsNull(Long organizationId);
 }
 
 

@@ -13,6 +13,7 @@ public record ProductFull(
         @NotNull String title,
         @NotNull String description,
         @NotNull BigDecimal price,
+        @NotNull int quantity,
         @NotNull List<String> imageUrls,
         @NotNull long views,
         @NotNull boolean isDeleted,

@@ -3,6 +3,7 @@ package dev.yerokha.smarttale.config;
 import dev.yerokha.smarttale.util.CustomPermissionEvaluator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -62,9 +63,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/v1/market/**",
                                 "/v1/account/**",
-                                "/v1/organization",
                                 "/v1/search/**")
                         .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/v1/organization").authenticated()
                         .anyRequest().hasRole("EMPLOYEE"))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(converter())))
