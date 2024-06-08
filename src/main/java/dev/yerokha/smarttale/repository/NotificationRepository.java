@@ -30,4 +30,9 @@ public interface NotificationRepository extends JpaRepository<PushNotificationEn
            "OR (n.recipientId = :orgId AND n.recipientType = 'ORGANIZATION' AND :orgId > 0) " +
            "ORDER BY n.timestamp DESC")
     Slice<PushNotificationEntity> findHistory(Long userId, Long orgId, Pageable pageable);
+
+    @Query("SELECT COUNT (n.notificationId) " +
+           "FROM PushNotificationEntity n " +
+           "WHERE n.isRead = false ")
+    int countUnreadMessages(Long userId);
 }

@@ -24,8 +24,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static dev.yerokha.smarttale.controller.account.AuthenticationControllerTest.extractToken;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -46,7 +48,9 @@ public class OtherControllerTests {
     @Autowired
     UserRepository userRepository;
     final String APP_JSON = "application/json";
-    public static String accessToken;
+    private static String accessToken;
+    private static String refreshToken;
+
     @Autowired
     private InvitationRepository invitationRepository;
 
@@ -77,6 +81,7 @@ public class OtherControllerTests {
                 .andReturn();
 
         String responseContent = result.getResponse().getContentAsString();
+        refreshToken = extractToken(responseContent, "refreshToken");
         accessToken = extractToken(responseContent, "accessToken");
     }
 
@@ -111,6 +116,15 @@ public class OtherControllerTests {
     }
 
     @Test
+    @Order(22)
+    void leaveOrganization_Should403() throws Exception {
+        mockMvc.perform(delete("/v1/account/profile/organization")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isForbidden());
+
+    }
+
+    @Test
     @Order(29)
     void acceptInvitation_Should404() throws Exception {
         login("invited1@example.com");
@@ -135,5 +149,19 @@ public class OtherControllerTests {
         var invitations = invitationRepository
                 .findAllByInviteeId(100000L, PageRequest.of(0, 10));
         Assertions.assertEquals(0, invitations.getTotalElements());
+    }
+
+    @Test
+    @Order(32)
+    void leaveOrganization() throws Exception {
+        mockMvc.perform(post("/v1/auth/refresh-token")
+                .contentType(MediaType.TEXT_PLAIN)
+                .content("Bearer " + refreshToken));
+        mockMvc.perform(delete("/v1/account/profile/organization")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        content().string("You left the organization")
+                );
     }
 }
