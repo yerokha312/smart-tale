@@ -1,8 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html
   xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:v="urn:schemas-microsoft-com:vml"
-  xmlns:o="urn:schemas-microsoft-com:office:office"
   lang="ru"
 >
   <head>
@@ -180,6 +178,18 @@
                     <p>
                       Цена:
                       <span style="margin: 0; color: #b67600" th:text="${price}"></span>
+                    </p>
+                    <p>
+                      Количество:
+                      <span style="margin: 0; color: #b67600" th:text="${quantity}"></span>
+                    </p>
+                    <p>
+                      Общая сумма:
+                      <span style="margin: 0; color: #b67600" th:text="${totalPrice}"></span>
+                    </p>
+                    <p>
+                      Статус покупки:
+                      <span style="margin: 0; color: #b67600" th:text="${status}"></span>
                     </p>
                     <p>
                       Связаться с покупателем:

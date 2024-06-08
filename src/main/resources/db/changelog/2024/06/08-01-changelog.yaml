@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1717849313276-3
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  defaultValue: '0'
+                  name: quantity
+                  type: numeric(38, 2)
+              - column:
+                  defaultValue: '0'
+                  name: total_price
+                  type: numeric(38, 2)
+            tableName: purchases
+  - changeSet:
+      id: 1717849313276-1
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: invited_at
+            newDataType: timestamp
+            tableName: invitations
+  - changeSet:
+      id: 1717849313276-2
+      author: yerbolatyergaliyev
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: timestamp
+            newDataType: timestamp
+            tableName: notifications
+
