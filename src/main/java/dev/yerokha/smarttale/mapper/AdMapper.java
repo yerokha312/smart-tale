@@ -26,6 +26,7 @@ import dev.yerokha.smarttale.entity.advertisement.JobEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
+import dev.yerokha.smarttale.entity.user.PositionEntity;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.repository.AdvertisementRepository;
 import dev.yerokha.smarttale.util.EncryptionUtil;
@@ -349,8 +350,12 @@ public class AdMapper {
                 .toList();
     }
 
-    public Job mapToJob(JobEntity job) {
+    public Job mapToJob(JobEntity job, int userHierarchy, int userAuthorities) {
         UserDetailsEntity userDetails = job.getPublishedBy();
+        PositionEntity position = job.getPosition();
+        int positionHierarchy = position.getHierarchy();
+        int positionAuthorities = position.getAuthorities();
+        boolean canModify = (positionHierarchy > userHierarchy) && ((positionAuthorities & userAuthorities) > 0);
         return new Job(
                 job.getAdvertisementId(),
                 job.getPublishedAt(),
@@ -358,8 +363,8 @@ public class AdMapper {
                 userDetails.getName(),
                 userDetails.getAvatarUrl(),
                 job.getTitle(),
-                job.getPosition().getPositionId(),
-                job.getPosition().getTitle(),
+                position.getPositionId(),
+                position.getTitle(),
                 job.getJobType(),
                 job.getLocation(),
                 job.getSalary() == null ? BigDecimal.ZERO : job.getSalary(),
@@ -369,7 +374,8 @@ public class AdMapper {
                 job.getApplicationDeadline(),
                 job.getViews(),
                 job.isDeleted(),
-                job.isClosed()
+                job.isClosed(),
+                canModify
         );
     }
 

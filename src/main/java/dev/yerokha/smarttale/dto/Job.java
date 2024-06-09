@@ -26,6 +26,7 @@ public record Job(
         LocalDate applicationDeadline,
         @NotNull long views,
         @NotNull boolean isDeleted,
-        @NotNull boolean isClosed
+        @NotNull boolean isClosed,
+        @NotNull boolean canModify
 ) {
 }
