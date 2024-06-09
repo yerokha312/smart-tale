@@ -8,8 +8,6 @@ import dev.yerokha.smarttale.entity.PushNotificationEntity;
 import dev.yerokha.smarttale.repository.NotificationRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.util.UserConnectedEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +34,6 @@ import static dev.yerokha.smarttale.enums.RecipientType.USER;
 @Service
 public class PushNotificationService {
 
-    private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationRepository notificationRepository;
     private final RedisTemplate<String, String> redisTemplate;
@@ -152,7 +149,6 @@ public class PushNotificationService {
     @EventListener
     public void handleUserConnected(UserConnectedEvent event) {
         scheduler.schedule(() -> sendQueuedNotification(event.getUserId()), 1, TimeUnit.SECONDS);
-        log.info("User {} connected", event.getUserId());
     }
 
     @Transactional

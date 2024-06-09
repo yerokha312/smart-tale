@@ -3,8 +3,6 @@ package dev.yerokha.smarttale.config;
 import dev.yerokha.smarttale.exception.InvalidTokenException;
 import dev.yerokha.smarttale.service.TokenService;
 import dev.yerokha.smarttale.util.UserConnectedEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
@@ -35,7 +33,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ApplicationEventPublisher eventPublisher;
     private static final Map<Long, Boolean> onlineUsers = new ConcurrentHashMap<>();
 
-    private static final Logger log = LoggerFactory.getLogger(WebSocketConfig.class);
 
     public WebSocketConfig(TokenService tokenService, ApplicationEventPublisher eventPublisher) {
         this.tokenService = tokenService;
@@ -65,7 +62,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor =
                         MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                log.info("Headers: {}", accessor);
                 assert accessor != null;
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String accessToken = accessor.getFirstNativeHeader("Authorization");
@@ -76,7 +72,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         accessor.setUser(user);
                         onlineUsers.put(userId, true);
                     } catch (Exception e) {
-                        log.error("Invalid token on connect {}", e.getMessage());
                         throw new InvalidTokenException("Invalid token on connect");
                     }
                 } else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
@@ -86,8 +81,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         try {
                             userId = tokenService.getUserIdFromTokenIgnoringExpiration(accessToken);
                             onlineUsers.remove(userId);
-                        } catch (Exception e) {
-                            log.error("Invalid token on disconnect");
                         } finally {
                             if (userId != null) {
                                 onlineUsers.remove(userId);
@@ -107,7 +100,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         if (connectMessage != null) {
             StompHeaderAccessor connectHeaders = StompHeaderAccessor.wrap(connectMessage);
             String accessToken = connectHeaders.getFirstNativeHeader("Authorization");
-            log.info("Authorization header: {}", accessToken);
             Long userId = tokenService.getUserIdFromToken(accessToken);
             if (userId != null) {
                 eventPublisher.publishEvent(new UserConnectedEvent(this, userId));
