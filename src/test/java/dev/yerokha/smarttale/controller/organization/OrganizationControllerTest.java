@@ -412,7 +412,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$").isArray(),
-                        jsonPath("$", hasSize(3))
+                        jsonPath("$", hasSize(4))
                 );
     }
 
@@ -434,7 +434,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.authorities", hasSize(9))
+                        jsonPath("$.authorities", hasSize(10))
                 );
     }
 
@@ -590,6 +590,46 @@ class OrganizationControllerTest {
     }
 
     @Test
+    @Order(21)
+    void closeJobAd_Should404() throws Exception {
+        mockMvc.perform(delete("/v1/organization/advertisements/4/1")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isNotFound(),
+                        content().string("Job not found")
+                );
+    }
+
+    @Test
+    @Order(21)
+    void closeJobAd_Should401() throws Exception {
+        mockMvc.perform(delete("/v1/organization/advertisements/4/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @Order(23)
+    void closeJobAd() throws Exception {
+        mockMvc.perform(delete("/v1/organization/advertisements/3/1")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        content().string("Job closed")
+                );
+    }
+
+    @Test
+    @Order(23)
+    void deleteJobAd() throws Exception {
+        mockMvc.perform(delete("/v1/organization/advertisements/3/3")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        content().string("Job deleted")
+                );
+    }
+
+    @Test
     @Order(29)
     void createOrganization() throws Exception {
         login("existing2@example.com");
@@ -722,7 +762,7 @@ class OrganizationControllerTest {
     }
 
     @Test
-    @Order(31)
+    @Order(34)
     void createPosition_Should403_CannotChoose() throws Exception {
         Position position = new Position(
                 null,

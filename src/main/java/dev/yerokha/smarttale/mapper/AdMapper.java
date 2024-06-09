@@ -171,7 +171,7 @@ public class AdMapper {
         Long userId = getUserIdFromAuthToken(authentication);
         boolean canPurchase = false;
         if (userId != null) {
-            canPurchase = !userId.equals(product.getPublishedBy().getUserId());
+            canPurchase = !userId.equals(product.getPublishedBy().getUserId()) || (product.getQuantity() < 1);
         }
         return new ProductCard(
                 product.getAdvertisementId(),

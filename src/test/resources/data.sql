@@ -31,7 +31,7 @@ INSERT INTO user_role_junction (role_id, user_id) VALUES ( 1, 100008 );
 INSERT INTO organizations(organization_id, name, registered_at, owner_id) VALUES ( 100000, 'First Organization', '2024-01-01', 100003 );
 INSERT INTO organizations(organization_id, name, registered_at) VALUES ( 100001, 'Second Organization', '2024-01-01' );
 
-INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100000, 'Position 1', 100000, 1 + 2 + 8 + 16 + 32 + 64 + 128 + 256 + 512, 0 );
+INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100000, 'Position 1', 100000, 1023, 0 );
 INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100001, 'Position 2', 100000, 64, 1 );
 INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100002, 'Position 3', 100000, 6, 1 );
 INSERT INTO positions (position_id, title, organization_id, authorities, hierarchy) VALUES ( 100003, 'Position 4', 100000, 32, 2 );

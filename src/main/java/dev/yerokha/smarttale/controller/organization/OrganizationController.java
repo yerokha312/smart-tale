@@ -476,12 +476,11 @@ public class OrganizationController {
                     @ApiResponse(responseCode = "404", description = "User or Ad not found", content = @Content)
             }
     )
-    @DeleteMapping("/{advertisementId}/{actionId}")
+    @DeleteMapping("/advertisements/{advertisementId}/{actionId}")
     @PreAuthorize("hasPermission(#advertisementId, 'JobEntity', 'INVITE_EMPLOYEE')")
     public ResponseEntity<String> interactWithAd(Authentication authentication,
                                                  @PathVariable Long advertisementId,
                                                  @PathVariable byte actionId) {
-// TODO test the method
 
         return ResponseEntity.ok(advertisementService.interactWithJobAd(getOrgIdFromAuthToken(authentication),
                 advertisementId,

@@ -910,7 +910,7 @@ public class AdvertisementService {
         if (closedJobCount > 0) {
             return "Job deleted";
         } else {
-            return "Something went wrong";
+            throw new NotFoundException("Job not found");
         }
     }
 
@@ -919,7 +919,7 @@ public class AdvertisementService {
         if (closedJobCount > 0) {
             return "Job disclosed";
         } else {
-            return "Something went wrong";
+            throw new NotFoundException("Job not found");
         }
     }
 
@@ -928,7 +928,7 @@ public class AdvertisementService {
         if (closedJobCount > 0) {
             return "Job closed";
         } else {
-            return "Something went wrong";
+            throw new NotFoundException("Job not found");
         }
     }
 }
