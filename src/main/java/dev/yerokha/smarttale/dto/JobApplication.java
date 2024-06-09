@@ -1,14 +1,16 @@
 package dev.yerokha.smarttale.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
 
 public record JobApplication(
-        Long applicationId,
-        LocalDateTime applicationDate,
-        Long applicantId,
-        String applicantName,
-        String avatarUrl,
-        String email,
-        String phoneNumber
+        @NotNull Long applicationId,
+        @NotNull LocalDateTime applicationDate,
+        @NotNull Long applicantId,
+        @NotNull String applicantName,
+        @NotNull String avatarUrl,
+        @NotNull String email,
+        @NotNull String phoneNumber
 ) {
 }

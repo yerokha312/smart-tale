@@ -437,7 +437,7 @@ public class OrganizationController {
     @GetMapping("/advertisements/{advertisementId}")
     public ResponseEntity<Job> getAdvertisement(Authentication authentication,
                                                 @PathVariable Long advertisementId) {
-        return ResponseEntity.ok(organizationService.getOneJobAd(getOrgIdFromAuthToken(authentication), advertisementId));
+        return ResponseEntity.ok(organizationService.getOneJobAd(authentication, advertisementId));
     }
 
     @Operation(

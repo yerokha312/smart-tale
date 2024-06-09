@@ -44,6 +44,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,6 +62,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
+import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
+import static dev.yerokha.smarttale.service.TokenService.getUserAuthoritiesFromToken;
+import static dev.yerokha.smarttale.service.TokenService.getUserHierarchyFromToken;
 import static java.lang.Integer.parseInt;
 import static java.time.LocalDate.parse;
 
@@ -735,9 +739,11 @@ public class OrganizationService {
         return getCustomPage(jobSummaryPage);
     }
 
-    public Job getOneJobAd(Long orgId, Long jobId) {
-        JobEntity job = getJobEntity(orgId, jobId);
-        return adMapper.mapToJob(job);
+    public Job getOneJobAd(Authentication authentication, Long jobId) {
+        JobEntity job = getJobEntity(getOrgIdFromAuthToken(authentication), jobId);
+        int hierarchy = getUserHierarchyFromToken(authentication);
+        int authorities = getUserAuthoritiesFromToken(authentication);
+        return adMapper.mapToJob(job, hierarchy, authorities);
     }
 
     JobEntity getJobEntity(Long orgId, Long jobId) {
