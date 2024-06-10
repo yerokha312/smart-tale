@@ -89,7 +89,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
 
     @Query("SELECT COUNT(jae.applicationId) " +
            "FROM JobEntity j " +
-           "JOIN JobApplicationEntity jae " +
+           "JOIN j.applications jae " +
            "WHERE j.advertisementId = :jobId")
     int countApplicantsByJobId(Long jobId);
 
