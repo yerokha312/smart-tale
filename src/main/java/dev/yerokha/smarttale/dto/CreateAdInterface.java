@@ -4,13 +4,12 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        property = "type"
+        use = JsonTypeInfo.Id.DEDUCTION
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = CreateJobRequest.class, name = "job"),
-        @JsonSubTypes.Type(value = CreateOrderRequest.class, name = "order"),
-        @JsonSubTypes.Type(value = CreateProductRequest.class, name = "product")
+        @JsonSubTypes.Type(value = CreateJobRequest.class),
+        @JsonSubTypes.Type(value = CreateOrderRequest.class),
+        @JsonSubTypes.Type(value = CreateProductRequest.class)
 })
 public interface CreateAdInterface {
 }
