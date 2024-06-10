@@ -470,6 +470,13 @@ class MarketplaceControllerTest {
     }
 
     @Test
+    @Order(36)
+    void getOneMarketJob() throws Exception {
+        mockMvc.perform(get("/v1/market/3"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @Order(35)
     void getMarketJobs() throws Exception {
         mockMvc.perform(get("/v1/market")

@@ -81,7 +81,7 @@ public class MarketplaceController {
     public ResponseEntity<AdvertisementInterface> getAd(@PathVariable Long advertisementId, Authentication authentication) {
         advertisementService.incrementViewCount(advertisementId);
 
-        return ResponseEntity.ok(advertisementService.getMarketAd(advertisementId, authentication)); //TODO personalize for requested user
+        return ResponseEntity.ok(advertisementService.getMarketAd(advertisementId, authentication));
     }
 
     @Operation(

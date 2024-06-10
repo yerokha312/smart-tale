@@ -144,6 +144,10 @@ public class AdMapper {
     private JobCard getFullJobCard(Authentication authentication, JobEntity job, List<String> imageUrls, UserDetailsEntity publishedBy, String contact) {
         OrganizationEntity organization = job.getOrganization();
         Long orgId = getOrgIdFromAuthToken(authentication);
+        boolean canApply = false;
+        if (orgId != null) {
+            canApply = !orgId.equals(organization.getOrganizationId());
+        }
         return new JobCard(
                 job.getAdvertisementId(),
                 job.getPublishedAt(),
@@ -164,7 +168,7 @@ public class AdMapper {
                 job.getLocation() == null ? "" : job.getLocation(),
                 job.getApplicationDeadline(),
                 job.getViews(),
-                !orgId.equals(organization.getOrganizationId())
+                canApply
         );
     }
 
