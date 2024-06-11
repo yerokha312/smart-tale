@@ -8,7 +8,7 @@ INSERT INTO users (user_id, email, is_enabled) VALUES ( 100000, 'existing@exampl
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100001, 'existing2@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100002, 'existing3@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100003, 'existing4@example.com', true);
-INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100003, 'Fourth', 'Existing', 'Profile', 'existing4@example.com', '+777712345600');
+INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, registered_at) VALUES (100003, 'Fourth', 'Existing', 'Profile', 'existing4@example.com', '+777712345600', '2024-04-18 12:00:00');
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100004, 'existing5@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100005, 'existing6@example.com', true);
 INSERT INTO users (user_id, email, is_enabled) VALUES ( 100006, 'existing7@example.com', true);

@@ -56,8 +56,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "LEFT JOIN ProductEntity p ON a.advertisementId = p.advertisementId " +
            "LEFT JOIN AdvertisementImage ai ON ai.advertisement = a AND ai.index = 0 " +
            "LEFT JOIN ai.image i " +
-           "LEFT JOIN OrderEntity o2 ON o2.advertisementId = a.advertisementId " +
-           "LEFT JOIN o2.acceptanceEntities ae " +
+           "LEFT JOIN o.acceptanceEntities ae " +
            "WHERE a.publishedBy.userId = :userId AND a.isDeleted = false " +
            "AND TYPE (a) NOT IN (JobEntity) " +
            "GROUP BY a, o, p, i, ai")

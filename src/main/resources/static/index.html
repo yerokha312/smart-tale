@@ -74,8 +74,8 @@
     const stompClient = new StompJs.Client({
         brokerURL: 'ws://localhost:8080/ws',
         reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+        heartbeatIncoming: 60000,
+        heartbeatOutgoing: 60000,
         debug: function (str) {
             console.log(str);
         }

@@ -8,9 +8,12 @@ import dev.yerokha.smarttale.entity.advertisement.JobApplicationEntity;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
 import dev.yerokha.smarttale.entity.advertisement.ProductEntity;
 import dev.yerokha.smarttale.entity.advertisement.PurchaseEntity;
+import dev.yerokha.smarttale.enums.ContactInfo;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -57,6 +60,10 @@ public class UserDetailsEntity {
 
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visible_contacts", columnDefinition = "varchar(100) default 'EMAIL_PHONE'")
+    private ContactInfo visibleContacts;
 
     @ManyToOne
     @JoinColumn(name = "position_id")

@@ -28,6 +28,6 @@ public record JobCard(
         @NotNull String location,
         LocalDate applicationDeadline,
         @NotNull long views,
-        @NotNull boolean canApply
+        @NotNull boolean canHandle
 ) implements AdvertisementInterface {
 }

@@ -3,6 +3,7 @@ package dev.yerokha.smarttale.controller.account;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
+import dev.yerokha.smarttale.enums.ContactInfo;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
 import dev.yerokha.smarttale.service.MailService;
@@ -112,7 +113,8 @@ class AccountControllerTest {
                 "Обновление",
                 "Profile",
                 "updatetest@example.com",
-                "+7999999999"
+                "+7999999999",
+                ContactInfo.EMAIL
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -131,7 +133,8 @@ class AccountControllerTest {
                 "Update",
                 "Profile",
                 "updatetest@example.com",
-                "+7999999999"
+                "+7999999999",
+                ContactInfo.EMAIL_PHONE
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -149,7 +152,8 @@ class AccountControllerTest {
                 "Update",
                 "Profile",
                 "existing2@example.com",
-                "+7999999999"
+                "+7999999999",
+                ContactInfo.PHONE
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -168,7 +172,8 @@ class AccountControllerTest {
                 "Update",
                 "Profile",
                 "existing@example.com",
-                "+77771234567"
+                "+77771234567",
+                ContactInfo.PHONE
         );
 
         String json = objectMapper.writeValueAsString(request);
@@ -187,7 +192,8 @@ class AccountControllerTest {
                 "Update",
                 "Profile",
                 "updatetest@example.com",
-                "+7999999999"
+                "+7999999999",
+                ContactInfo.EMAIL_PHONE
         );
 
         String json = objectMapper.writeValueAsString(request);

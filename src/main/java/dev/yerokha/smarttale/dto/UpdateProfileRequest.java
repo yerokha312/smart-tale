@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.dto;
 
+import dev.yerokha.smarttale.enums.ContactInfo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +23,10 @@ public record UpdateProfileRequest(
         @NotNull @Email @NotEmpty
         String email,
         @NotNull
-        String phoneNumber
+        String phoneNumber,
+        @NotNull
+        ContactInfo visibleContacts
+
 ) {
     public boolean isValid() {
         boolean isFirstLatin = firstName.matches("^[a-zA-Z\\s-]+$");

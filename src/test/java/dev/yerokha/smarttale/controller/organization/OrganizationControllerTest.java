@@ -237,7 +237,7 @@ class OrganizationControllerTest {
 
     @Test
     @Order(4)
-    void inviteEmployee_NotExisting() throws Exception {
+    void sendInvitation_NotExisting() throws Exception {
         InviteRequest request = new InviteRequest(
                 null,
                 null,
@@ -269,7 +269,7 @@ class OrganizationControllerTest {
 
     @Test
     @Order(5)
-    void inviteEmployee_Existing() throws Exception {
+    void sendInvitation_Existing() throws Exception {
         InviteRequest request = new InviteRequest(
                 null,
                 null,
@@ -593,7 +593,7 @@ class OrganizationControllerTest {
     @Order(21)
     void closeJobAd_Should404() throws Exception {
         mockMvc.perform(delete("/v1/organization/advertisements/4/1")
-                .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isNotFound(),
                         content().string("Job not found")

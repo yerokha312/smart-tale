@@ -1,6 +1,8 @@
 package dev.yerokha.smarttale.repository;
 
 import dev.yerokha.smarttale.dto.SearchItem;
+import dev.yerokha.smarttale.dto.UserDto;
+import dev.yerokha.smarttale.dto.UserSummary;
 import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -93,4 +95,41 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "FROM OrganizationEntity o " +
            "WHERE o.organizationId = :orgId AND o.owner.userId = :userId")
     boolean checkIsOwner(Long userId, Long orgId);
+
+    @Query("SELECT new dev.yerokha.smarttale.dto.UserSummary(" +
+           "u.userId, " +
+           "CONCAT(u.lastName, u.firstName, COALESCE(u.middleName, '')), " +
+           "COALESCE(i.imageUrl, ''), " +
+           "CAST(COALESCE(o.organizationId, 0) AS LONG), " +
+           "COALESCE(o.name, ''), " +
+           "COALESCE(i2.imageUrl, ''), " +
+           "u.isSubscribed" +
+           ") " +
+           "FROM UserDetailsEntity u " +
+           "LEFT JOIN u.image i " +
+           "LEFT JOIN u.organization o " +
+           "LEFT JOIN o.image i2 " +
+           "WHERE u.user.isEnabled = true AND u.user.isDeleted = false")
+    Page<UserSummary> findAllActiveUsers(Pageable pageable);
+
+    @Query("SELECT new dev.yerokha.smarttale.dto.UserDto(" +
+           "    u.userId, " +
+           "    CONCAT(u.lastName, u.firstName, COALESCE(u.middleName, '')), " +
+           "    COALESCE(i.imageUrl, ''), " +
+           "    COALESCE(o.organizationId, 0), " +
+           "    COALESCE(o.name, ''), " +
+           "    COALESCE(oi.imageUrl, ''), " +
+           "    COALESCE(u.position.title, ''), " +
+           "    CASE WHEN u.visibleContacts LIKE 'EMAIL%' THEN u.email ELSE '' END, " +
+           "    CASE WHEN u.visibleContacts LIKE '%PHONE' THEN u.phoneNumber ELSE '' END, " +
+           "    CAST(u.registeredAt AS LOCALDATE), " +
+           "    u.isSubscribed" +
+           ") " +
+           "FROM UserDetailsEntity u " +
+           "LEFT JOIN u.image i " +
+           "LEFT JOIN u.organization o " +
+           "LEFT JOIN o.image oi " +
+           "WHERE u.userId = :userId AND u.user.isEnabled = true AND u.user.isDeleted = false")
+    Optional<UserDto> findOneUser(Long userId);
+
 }
