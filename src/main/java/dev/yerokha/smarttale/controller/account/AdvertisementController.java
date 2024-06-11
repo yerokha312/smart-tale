@@ -90,7 +90,7 @@ public class AdvertisementController {
     public ResponseEntity<AdvertisementInterface> getMyAd(Authentication authentication,
                                                           @PathVariable Long advertisementId) {
 
-        return ResponseEntity.ok(advertisementService.getAdvertisement(getUserIdFromAuthToken(authentication),
+        return ResponseEntity.ok(advertisementService.getPersonalAdvertisementById(getUserIdFromAuthToken(authentication),
                 advertisementId));
     }
 

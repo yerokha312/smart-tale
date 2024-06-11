@@ -580,4 +580,23 @@ class MarketplaceControllerTest {
                 );
     }
 
+    @Test
+    @Order(48)
+    void getPersonalAdvertisements() throws Exception {
+        mockMvc.perform(get("/v1/account/advertisements")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.content", hasSize(2))
+                );
+    }
+
+    @Test
+    @Order(48)
+    void getPersonalAdvertisements_Job_Should404() throws Exception {
+        mockMvc.perform(get("/v1/account/advertisements/3")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound());
+    }
+
 }

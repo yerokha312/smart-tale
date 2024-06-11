@@ -176,8 +176,10 @@ public class AdvertisementService {
     }
 
     // get one Ad of user in Personal account -> My advertisements
-    public AdvertisementInterface getAdvertisement(Long userId, Long advertisementId) {
-        return adMapper.mapToFullDto(getAdEntity(userId, advertisementId));
+    public AdvertisementInterface getPersonalAdvertisementById(Long userId, Long advertisementId) {
+        Advertisement adEntity = advertisementRepository.findByUserIdAndAdIdAndDeletedFalse(userId, advertisementId)
+                .orElseThrow(() -> new NotFoundException("Advertisement not found"));
+        return adMapper.mapToFullDto(adEntity);
     }
 
     @Transactional
@@ -221,11 +223,6 @@ public class AdvertisementService {
         } else {
             return "Something went wrong";
         }
-    }
-
-    private Advertisement getAdEntity(Long userId, Long advertisementId) {
-        return advertisementRepository.findByPublishedByUserIdAndAdvertisementIdAndIsDeletedFalse(userId, advertisementId)
-                .orElseThrow(() -> new NotFoundException("Ad not found"));
     }
 
     public String updateAd(Long userIdOrOrgId, UpdateAdInterface requestInterface, List<MultipartFile> files) {

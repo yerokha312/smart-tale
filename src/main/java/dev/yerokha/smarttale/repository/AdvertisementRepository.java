@@ -32,52 +32,36 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
     int setDeletedByAdvertisementIdAndUserId(Long advertisementId, Long userId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.AdvertisementDto(" +
-           "    CASE TYPE (a) " +
-           "        WHEN OrderEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER " +
-           "        WHEN ProductEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.PRODUCT " +
+           "    CASE WHEN TYPE(a) = OrderEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER " +
+           "         WHEN TYPE(a) = ProductEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.PRODUCT " +
            "    END, " +
            "    a.advertisementId, " +
            "    SUBSTRING(a.title, 1, 60), " +
-           "    SUBSTRING(a.description, 1, 120)," +
-           "    CASE TYPE (a) " +
-           "        WHEN OrderEntity THEN COALESCE((" +
-           "            SELECT o.price " +
-           "            FROM OrderEntity o " +
-           "            WHERE a.advertisementId = o.advertisementId), 0)" +
-           "        WHEN ProductEntity THEN (" +
-           "            SELECT p.price " +
-           "            FROM ProductEntity p " +
-           "            WHERE a.advertisementId = p.advertisementId) " +
+           "    SUBSTRING(a.description, 1, 120), " +
+           "    CASE WHEN TYPE(a) = OrderEntity THEN COALESCE(o.price, 0) " +
+           "         WHEN TYPE(a) = ProductEntity THEN p.price " +
            "    END, " +
-           "    CASE TYPE (a) " +
-           "        WHEN ProductEntity THEN (" +
-           "            SELECT p.quantity " +
-           "            FROM ProductEntity p " +
-           "            WHERE a.advertisementId = p.advertisementId) " +
-           "        ELSE 0 " +
+           "    CASE WHEN TYPE(a) = ProductEntity THEN p.quantity " +
+           "         ELSE 0 " +
            "    END, " +
-           "    COALESCE((" +
-           "        SELECT i.imageUrl " +
-           "        FROM AdvertisementImage ai " +
-           "        LEFT JOIN ai.image i " +
-           "        WHERE ai.advertisement = a " +
-           "        AND ai.index = 0), ''), " +
+           "    COALESCE(i.imageUrl, ''), " +
            "    a.publishedAt, " +
-           "    CASE TYPE (a) " +
-           "        WHEN OrderEntity THEN CAST((" +
-           "            SELECT COUNT (ae.acceptanceId) " +
-           "            FROM OrderEntity o " +
-           "            JOIN o.acceptanceEntities ae " +
-           "            WHERE ae.order.advertisementId = a.advertisementId) AS INTEGER) " +
-           "        ELSE 0 " +
+           "    CASE WHEN TYPE(a) = OrderEntity THEN CAST(COUNT(ae.acceptanceId) AS INTEGER) " +
+           "         ELSE 0 " +
            "    END, " +
            "    a.isClosed" +
            ") " +
            "FROM Advertisement a " +
-           "WHERE a.publishedBy.userId = :userId AND a.isDeleted = false")
+           "LEFT JOIN OrderEntity o ON a.advertisementId = o.advertisementId " +
+           "LEFT JOIN ProductEntity p ON a.advertisementId = p.advertisementId " +
+           "LEFT JOIN AdvertisementImage ai ON ai.advertisement = a AND ai.index = 0 " +
+           "LEFT JOIN ai.image i " +
+           "LEFT JOIN OrderEntity o2 ON o2.advertisementId = a.advertisementId " +
+           "LEFT JOIN o2.acceptanceEntities ae " +
+           "WHERE a.publishedBy.userId = :userId AND a.isDeleted = false " +
+           "AND TYPE (a) NOT IN (JobEntity) " +
+           "GROUP BY a, o, p, i, ai")
     Page<AdvertisementDto> findPersonalAds(Long userId, Pageable pageable);
-
-    Optional<Advertisement> findByPublishedByUserIdAndAdvertisementIdAndIsDeletedFalse(Long userId, Long advertisementId);
 
     Optional<Advertisement> findByAdvertisementIdAndIsDeletedFalseAndIsClosedFalse(Long advertisementId);
 
@@ -135,4 +119,9 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "WHERE ai.advertisement.advertisementId = :advertisementId " +
            "ORDER BY ai.index")
     List<AdvertisementImage> findAdvertisementImages(Long advertisementId);
+
+    @Query("SELECT a FROM Advertisement a " +
+           "WHERE a.publishedBy.userId = :userId AND a.advertisementId = :advertisementId " +
+           "AND a.isDeleted = false AND TYPE (a) NOT IN (JobEntity)")
+    Optional<Advertisement> findByUserIdAndAdIdAndDeletedFalse(Long userId, Long advertisementId);
 }
