@@ -557,7 +557,7 @@ class MarketplaceControllerTest {
 
         mockMvc.perform(multipart(HttpMethod.PUT, "/v1/organization/advertisements")
                         .file(textFile)
-                .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
                         content().string("Job ad updated")

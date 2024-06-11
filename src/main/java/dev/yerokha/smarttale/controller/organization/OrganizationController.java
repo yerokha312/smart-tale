@@ -296,7 +296,7 @@ public class OrganizationController {
     }
 
     @Operation(
-            summary = "Invite employee", description = "Sends email to invited person's address",
+            summary = "Send invitation", description = "Sends email to invited person's address",
             tags = {"post", "account", "user", "employee", "organization"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Invite successful"),
@@ -308,7 +308,7 @@ public class OrganizationController {
     )
     @PostMapping("/employees")
     @PreAuthorize("hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
-    public ResponseEntity<String> inviteEmployee(Authentication authentication, @RequestBody @Valid InviteRequest request) {
+    public ResponseEntity<String> sendInvitation(Authentication authentication, @RequestBody @Valid InviteRequest request) {
         organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
         return new ResponseEntity<>(String.format("Invite sent to %s", request.email()), HttpStatus.CREATED);
     }

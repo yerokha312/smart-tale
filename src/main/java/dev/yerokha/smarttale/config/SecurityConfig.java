@@ -63,7 +63,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/v1/market/**",
                                 "/v1/account/**",
-                                "/v1/search/**")
+                                "/v1/search/**",
+                                "/v1/users/**")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/v1/organization").authenticated()
                         .anyRequest().hasRole("EMPLOYEE"))

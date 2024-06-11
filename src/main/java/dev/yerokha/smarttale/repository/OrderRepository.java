@@ -59,11 +59,11 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
            "    o.publishedBy.userId, " +
            "    CONCAT(o.publishedBy.lastName, ' ', o.publishedBy.firstName), " +
            "    COALESCE(pubImg.imageUrl, ''), " +
-           "    CASE " +
+           "    CASE " + //TODO clean the query optimize
            "        WHEN NOT EXISTS (" +
            "            SELECT ae " +
            "            FROM AcceptanceEntity ae " +
-           "            WHERE ae.order = o AND ae.organization.organizationId = :orgId) THEN true " +
+           "            WHERE ae.order = o AND ae.organization.organizationId = :orgId) AND :orgId IS NOT NULL THEN true " +
            "        ELSE false " +
            "    END)" +
            "FROM OrderEntity o " +

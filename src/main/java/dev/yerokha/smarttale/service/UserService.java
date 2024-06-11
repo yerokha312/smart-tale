@@ -4,6 +4,8 @@ import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Invitation;
 import dev.yerokha.smarttale.dto.Profile;
 import dev.yerokha.smarttale.dto.UpdateProfileRequest;
+import dev.yerokha.smarttale.dto.UserDto;
+import dev.yerokha.smarttale.dto.UserSummary;
 import dev.yerokha.smarttale.entity.Image;
 import dev.yerokha.smarttale.entity.user.InvitationEntity;
 import dev.yerokha.smarttale.entity.user.OrganizationEntity;
@@ -30,6 +32,7 @@ import java.util.Map;
 
 import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
 import static dev.yerokha.smarttale.service.TokenService.getEmailFromAuthToken;
+import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -148,7 +151,7 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public String acceptInvitation(Authentication authentication, Long invitationId) {
-        Long userId = TokenService.getUserIdFromAuthToken(authentication);
+        Long userId = getUserIdFromAuthToken(authentication);
         boolean userHasAssignedTasks = userDetailsRepository.existsAssignedTasks(userId);
         if (userHasAssignedTasks) {
             throw new ForbiddenException("You have assigned tasks");
@@ -217,5 +220,20 @@ public class UserService implements UserDetailsService {
                 "userAvatar", user.getAvatarUrl()
         );
         pushNotificationService.sendToOrganization(orgId, data);
+    }
+
+    public CustomPage<UserSummary> getUsers(Map<String, String> params) {
+        Pageable pageable = PageRequest.of(
+                Integer.parseInt(params.getOrDefault("page", "0")),
+                Integer.parseInt(params.getOrDefault("size", "10"))
+        );
+        Page<UserSummary> usersPage = userDetailsRepository.findAllActiveUsers(pageable);
+
+        return getCustomPage(usersPage);
+    }
+
+    public UserDto getOneUser(Long userId) {
+        return userDetailsRepository.findOneUser(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 }

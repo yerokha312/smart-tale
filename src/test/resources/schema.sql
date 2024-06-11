@@ -90,6 +90,7 @@ create table user_details
     last_name               varchar(255),
     middle_name             varchar(255),
     phone_number            varchar(255),
+    visible_contacts        varchar(100) default 'EMAIL_PHONE',
     primary key (details_id),
     unique (email),
     unique (phone_number),
@@ -100,7 +101,8 @@ create table user_details
     constraint fk8x5k73xp6tncp2nr9pfvgi1wg
         foreign key (position_id) references positions,
     constraint fkee49wu3twsclnm2pbvd3pq6n8
-        foreign key (details_id) references users
+        foreign key (details_id) references users,
+    constraint user_details_displayed_contacts_type_check CHECK (user_details.visible_contacts IN ('EMAIL_PHONE', 'EMAIL', 'PHONE'))
 );
 
 create table abstract_advertisements

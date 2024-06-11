@@ -16,6 +16,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -31,17 +32,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final TokenService tokenService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ThreadPoolTaskScheduler taskScheduler;
     private static final Map<Long, Boolean> onlineUsers = new ConcurrentHashMap<>();
 
 
-    public WebSocketConfig(TokenService tokenService, ApplicationEventPublisher eventPublisher) {
+    public WebSocketConfig(TokenService tokenService, ApplicationEventPublisher eventPublisher, ThreadPoolTaskScheduler taskScheduler) {
         this.tokenService = tokenService;
         this.eventPublisher = eventPublisher;
+        this.taskScheduler = taskScheduler;
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic", "/user", "/org");
+        registry.enableSimpleBroker("/topic", "/user", "/org")
+                .setTaskScheduler(taskScheduler)
+                .setHeartbeatValue(new long[]{120000, 120000});
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");
     }
