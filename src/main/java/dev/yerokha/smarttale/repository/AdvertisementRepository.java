@@ -32,14 +32,14 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
     int setDeletedByAdvertisementIdAndUserId(Long advertisementId, Long userId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.AdvertisementDto(" +
-           "    CASE WHEN TYPE(a) = OrderEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER " +
-           "         WHEN TYPE(a) = ProductEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.PRODUCT " +
-           "    END, " +
+           "    CASE TYPE (a) " +
+           "        WHEN OrderEntity THEN dev.yerokha.smarttale.enums.PersonalAdvertisementType.ORDER " +
+           "        ELSE dev.yerokha.smarttale.enums.PersonalAdvertisementType.PRODUCT END, " +
            "    a.advertisementId, " +
            "    SUBSTRING(a.title, 1, 60), " +
            "    SUBSTRING(a.description, 1, 120), " +
            "    CASE WHEN TYPE(a) = OrderEntity THEN COALESCE(o.price, 0) " +
-           "         WHEN TYPE(a) = ProductEntity THEN p.price " +
+           "         ELSE p.price " +
            "    END, " +
            "    CASE WHEN TYPE(a) = ProductEntity THEN p.quantity " +
            "         ELSE 0 " +
@@ -49,8 +49,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "    CASE WHEN TYPE(a) = OrderEntity THEN CAST(COUNT(ae.acceptanceId) AS INTEGER) " +
            "         ELSE 0 " +
            "    END, " +
-           "    a.isClosed" +
-           ") " +
+           "    a.isClosed) " +
            "FROM Advertisement a " +
            "LEFT JOIN OrderEntity o ON a.advertisementId = o.advertisementId " +
            "LEFT JOIN ProductEntity p ON a.advertisementId = p.advertisementId " +
@@ -58,8 +57,8 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "LEFT JOIN ai.image i " +
            "LEFT JOIN o.acceptanceEntities ae " +
            "WHERE a.publishedBy.userId = :userId AND a.isDeleted = false " +
-           "AND TYPE (a) NOT IN (JobEntity) " +
-           "GROUP BY a, o, p, i, ai")
+           "AND TYPE(a) NOT IN (JobEntity) " +
+           "GROUP BY a, o, p, i.imageUrl")
     Page<AdvertisementDto> findPersonalAds(Long userId, Pageable pageable);
 
     Optional<Advertisement> findByAdvertisementIdAndIsDeletedFalseAndIsClosedFalse(Long advertisementId);
