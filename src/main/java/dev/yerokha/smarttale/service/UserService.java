@@ -114,6 +114,9 @@ public class UserService implements UserDetailsService {
                 organization == null ? 0 : organization.getOrganizationId(),
                 organization == null ? "" : organization.getName(),
                 organization != null && organization.getImage() != null ? organization.getImage().getImageUrl() : "",
+                organization != null ? userDetails.getPosition().getTitle() : "",
+                userDetails.getVisibleContacts(),
+                userDetails.getRegisteredAt().toLocalDate(),
                 userDetails.isSubscribed() ? userDetails.getSubscriptionEndDate() : null
         );
     }

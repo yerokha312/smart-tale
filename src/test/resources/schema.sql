@@ -84,7 +84,7 @@ create table user_details
     last_seen_at            timestamp(6),
     organization_id         bigint,
     position_id             bigint,
-    registered_at           timestamp(6),
+    registered_at           timestamp(6) default now(),
     email                   varchar(255) not null,
     first_name              varchar(255),
     last_name               varchar(255),

@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.dto;
 
+import dev.yerokha.smarttale.enums.ContactInfo;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
@@ -15,6 +16,9 @@ public record Profile(
         @NotNull Long organizationId,
         @NotNull String organizationName,
         @NotNull String organizationLogoUrl,
+        @NotNull String position,
+        @NotNull ContactInfo contactInfo,
+        @NotNull LocalDate registeredAt,
         LocalDate subscriptionEndDate
 ) {
 }
