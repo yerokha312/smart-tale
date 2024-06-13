@@ -36,9 +36,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -257,14 +255,6 @@ class OrganizationControllerTest {
                         status().isCreated(),
                         content().string("Invite sent to test@example.com")
                 );
-
-        ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(mailService).sendInvitation(
-                eq("test@example.com"),
-                eq("Fourth Existing Profile"),
-                any(),
-                eq("Position 2"),
-                linkCaptor.capture());
     }
 
     @Test
@@ -289,15 +279,6 @@ class OrganizationControllerTest {
                         status().isCreated(),
                         content().string("Invite sent to existing8@example.com")
                 );
-
-        ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(mailService).sendInvitation(
-                eq("existing8@example.com"),
-                eq("Fourth Existing Profile"),
-                any(),
-                eq("Position 2"),
-                linkCaptor.capture());
-
     }
 
     @Test

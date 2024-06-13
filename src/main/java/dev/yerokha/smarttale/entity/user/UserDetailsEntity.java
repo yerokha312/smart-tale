@@ -136,6 +136,7 @@ public class UserDetailsEntity {
         this.phoneNumber = phoneNumber;
     }
 
+    // if last name is null, then early return empty string
     public String getName() {
         return (this.lastName == null ? "" : this.lastName + " " + this.firstName + " " +
                                              (this.middleName == null ? "" : this.middleName)).trim();

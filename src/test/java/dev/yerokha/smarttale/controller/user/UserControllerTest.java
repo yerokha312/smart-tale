@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.controller.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.yerokha.smarttale.dto.InviteUserRequest;
 import dev.yerokha.smarttale.dto.VerificationRequest;
 import dev.yerokha.smarttale.repository.UserRepository;
 import dev.yerokha.smarttale.service.ImageService;
@@ -100,5 +101,22 @@ public class UserControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.canInvite").value(false));
+    }
+
+    @Test
+    @Order(4)
+    void inviteUserById() throws Exception {
+        InviteUserRequest request = new InviteUserRequest(
+                100000L,
+                100001L
+        );
+
+        String json = objectMapper.writeValueAsString(request);
+        mockMvc.perform(post("/v1/users/invite")
+                .header("Authorization", "Bearer " + accessToken)
+                .content(json)
+                .contentType(APP_JSON)
+        )
+                .andExpect(status().isCreated());
     }
 }

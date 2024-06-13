@@ -330,7 +330,7 @@ public class OrganizationController {
     @PostMapping("/employees")
     @PreAuthorize("hasPermission(#request.positionId(), 'PositionEntity', 'INVITE_EMPLOYEE')")
     public ResponseEntity<String> sendInvitation(Authentication authentication, @RequestBody @Valid InviteRequest request) {
-        organizationService.inviteEmployee(getUserIdFromAuthToken(authentication), request);
+        organizationService.inviteEmployeeByEmail(getUserIdFromAuthToken(authentication), request);
         return new ResponseEntity<>(String.format("Invite sent to %s", request.email()), HttpStatus.CREATED);
     }
 

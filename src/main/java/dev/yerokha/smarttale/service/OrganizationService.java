@@ -6,6 +6,7 @@ import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
+import dev.yerokha.smarttale.dto.InviteUserRequest;
 import dev.yerokha.smarttale.dto.InviterInvitation;
 import dev.yerokha.smarttale.dto.Job;
 import dev.yerokha.smarttale.dto.JobSummary;
@@ -71,8 +72,6 @@ import static java.time.LocalDate.parse;
 @Service
 public class OrganizationService {
 
-    private static final String REG_PAGE = "";
-    private static final String LOGIN_PAGE = "";
     private final OrderRepository orderRepository;
     private final MailService mailService;
     private final InvitationRepository invitationRepository;
@@ -276,88 +275,101 @@ public class OrganizationService {
         return orderRepository.findCurrentOrdersByEmployeeId(employeeId);
     }
 
-    public void inviteEmployee(Long inviterId, InviteRequest request) {
+    public void inviteEmployeeByUserId(Long inviterId, InviteUserRequest request) {
         UserDetailsEntity inviter = getUserDetailsEntity(inviterId);
-
         OrganizationEntity organization = inviter.getOrganization();
-        PositionEntity position = positionRepository.findByOrganizationOrganizationIdAndPositionId(
-                        organization.getOrganizationId(), request.positionId())
+        PositionEntity position = findPosition(organization.getOrganizationId(), request.positionId());
+
+        UserDetailsEntity invitee = getUserDetailsEntity(request.inviteeId());
+        InvitationEntity invitation = createOrUpdateInvitation(inviter, organization, position, invitee);
+
+        sendNotifications(inviter, organization, position, invitee, invitation);
+    }
+
+    public void inviteEmployeeByEmail(Long inviterId, InviteRequest request) {
+        UserDetailsEntity inviter = getUserDetailsEntity(inviterId);
+        OrganizationEntity organization = inviter.getOrganization();
+        PositionEntity position = findPosition(organization.getOrganizationId(), request.positionId());
+
+        UserDetailsEntity invitee = findOrCreateInvitee(request);
+        InvitationEntity invitation = createOrUpdateInvitation(inviter, organization, position, invitee);
+
+        sendNotifications(inviter, organization, position, invitee, invitation);
+    }
+
+    private PositionEntity findPosition(Long organizationId, Long positionId) {
+        return positionRepository.findByOrganizationOrganizationIdAndPositionId(organizationId, positionId)
                 .orElseThrow(() -> new NotFoundException("Position not found"));
+    }
 
-        UserDetailsEntity invitee = getInvitee(request);
+    private UserDetailsEntity findOrCreateInvitee(InviteRequest request) {
+        return userDetailsRepository.findByEmail(request.email())
+                .orElseGet(() -> createUserDetailsEntity(request));
+    }
 
-        Optional<InvitationEntity> existingInvitationOpt = invitationRepository
-                .findByInviteeIdAndOrganizationId(invitee.getUserId(), organization.getOrganizationId());
+    private UserDetailsEntity createUserDetailsEntity(InviteRequest request) {
+        UserEntity newUser = new UserEntity();
+        newUser.setEmail(request.email());
+        newUser.setInvited(true);
 
-        InvitationEntity invitation;
-        if (existingInvitationOpt.isPresent()) {
-            invitation = existingInvitationOpt.get();
-            invitation.setInvitedAt(LocalDateTime.now());
-            invitation.setInviter(inviter);
-            invitation.setPosition(position);
-        } else {
-            invitation = new InvitationEntity(LocalDateTime.now(), inviter, invitee, organization, position);
+        UserDetailsEntity userDetails = new UserDetailsEntity();
+        userDetails.setUser(newUser);
+        userDetails.setEmail(request.email());
+        userDetails.setPhoneNumber(request.phoneNumber());
+
+        Optional.ofNullable(request.lastName()).ifPresent(userDetails::setLastName);
+        Optional.ofNullable(request.firstName()).ifPresent(userDetails::setFirstName);
+        Optional.ofNullable(request.middleName()).ifPresent(userDetails::setMiddleName);
+
+        try {
+            return userDetailsRepository.save(userDetails);
+        } catch (Exception e) {
+            throw new AlreadyTakenException("Phone number already taken");
         }
+    }
 
-        invitationRepository.save(invitation);
+    private InvitationEntity createOrUpdateInvitation(UserDetailsEntity inviter, OrganizationEntity organization, PositionEntity position, UserDetailsEntity invitee) {
+        return invitationRepository.findByInviteeIdAndOrganizationId(invitee.getUserId(), organization.getOrganizationId())
+                .map(invitation -> updateExistingInvitation(invitation, inviter, position))
+                .orElseGet(() -> createNewInvitation(inviter, invitee, organization, position));
+    }
 
+    private InvitationEntity updateExistingInvitation(InvitationEntity invitation, UserDetailsEntity inviter, PositionEntity position) {
+        invitation.setInvitedAt(LocalDateTime.now());
+        invitation.setInviter(inviter);
+        invitation.setPosition(position);
+        return invitationRepository.save(invitation);
+    }
+
+    private InvitationEntity createNewInvitation(UserDetailsEntity inviter, UserDetailsEntity invitee, OrganizationEntity organization, PositionEntity position) {
+        InvitationEntity invitation = new InvitationEntity(LocalDateTime.now(), inviter, invitee, organization, position);
+        return invitationRepository.save(invitation);
+    }
+
+    private void sendNotifications(UserDetailsEntity inviter, OrganizationEntity organization, PositionEntity position, UserDetailsEntity invitee, InvitationEntity invitation) {
+        sendInvitationEmailNotification(invitee, invitation, inviter, organization, position);
+        sendInvitationPushNotification(organization, invitee, invitation.getInvitationId());
+    }
+
+    private void sendInvitationEmailNotification(UserDetailsEntity invitee, InvitationEntity invitation, UserDetailsEntity inviter, OrganizationEntity organization, PositionEntity position) {
         String name = invitee.getName();
+        boolean isNewUser = name.isEmpty();
         Long invitationId = invitation.getInvitationId();
         String code = EncryptionUtil.encrypt(String.valueOf(invitationId));
-        String link = REG_PAGE + "?code=" + code;
-        if (name != null) {
-            link = LOGIN_PAGE + "?code=" + code;
-        }
 
-        mailService.sendInvitation(request.email(),
-                inviter.getName(),
-                organization,
-                position.getTitle(),
-                link);
+        mailService.sendInvitation(
+                inviter.getEmail(), inviter.getName(), organization, position.getTitle(), code, isNewUser);
+    }
 
+    private void sendInvitationPushNotification(OrganizationEntity organization, UserDetailsEntity invitee, Long invitationId) {
         Map<String, String> data = new HashMap<>();
         data.put("sub", "Приглашение в организацию");
         data.put("orgId", organization.getOrganizationId().toString());
         data.put("orgName", organization.getName());
-        data.put("logo", organization.getImage() == null ? "" : organization.getImage().getImageUrl());
+        data.put("logo", Optional.ofNullable(organization.getImage()).map(Image::getImageUrl).orElse(""));
         data.put("invId", invitationId.toString());
 
         pushNotificationService.sendToUser(invitee.getUserId(), data);
-    }
-
-    private UserDetailsEntity getInvitee(InviteRequest request) {
-        return userDetailsRepository.findByEmail(request.email())
-                .orElseGet(() -> {
-                    UserEntity newUser = new UserEntity();
-                    newUser.setEmail(request.email());
-                    newUser.setInvited(true);
-
-                    UserDetailsEntity userDetails = new UserDetailsEntity();
-                    userDetails.setUser(newUser);
-                    userDetails.setEmail(request.email());
-                    userDetails.setPhoneNumber(request.phoneNumber());
-
-                    String lastName = request.lastName();
-                    if (lastName != null) {
-                        userDetails.setLastName(lastName);
-                    }
-
-                    String firstName = request.firstName();
-                    if (firstName != null) {
-                        userDetails.setFirstName(firstName);
-                    }
-
-                    String middleName = request.middleName();
-                    if (middleName != null) {
-                        userDetails.setMiddleName(middleName);
-                    }
-
-                    try {
-                        return userDetailsRepository.save(userDetails);
-                    } catch (Exception e) {
-                        throw new AlreadyTakenException("Phone number already taken");
-                    }
-                });
     }
 
     public List<PositionSummary> getPositionsDropdown(Long userId) {
