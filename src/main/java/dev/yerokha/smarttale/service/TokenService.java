@@ -239,10 +239,15 @@ public class TokenService {
     }
 
     private LoginResponse getNewTokenPair(Jwt decodedToken, String email) {
-        int tokenAuthorities = intValue(decodedToken.getClaim("authorities"));
-        int tokenHierarchy = intValue(decodedToken.getClaim("hierarchy"));
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (user.isDeleted()) {
+            throw new InvalidTokenException("User is deleted");
+        }
+
+        int tokenAuthorities = intValue(decodedToken.getClaim("authorities"));
+        int tokenHierarchy = intValue(decodedToken.getClaim("hierarchy"));
 
         UserDetailsEntity userDetails = userDetailsRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));

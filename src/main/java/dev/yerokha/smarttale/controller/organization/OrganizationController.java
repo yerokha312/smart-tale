@@ -73,7 +73,7 @@ public class OrganizationController {
     )
     @GetMapping
     public ResponseEntity<Organization> getOrganization(Authentication authentication) {
-        return ResponseEntity.ok(organizationService.getOrganization(getUserIdFromAuthToken(authentication)));
+        return ResponseEntity.ok(organizationService.getOwnOrganization(getUserIdFromAuthToken(authentication)));
     }
 
     @Operation(

@@ -61,7 +61,12 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "GROUP BY a, o, p, i.imageUrl")
     Page<AdvertisementDto> findPersonalAds(Long userId, Pageable pageable);
 
-    Optional<Advertisement> findByAdvertisementIdAndIsDeletedFalseAndIsClosedFalse(Long advertisementId);
+    @Query("SELECT a " +
+           "FROM Advertisement a " +
+           "WHERE a.isClosed = false AND a.isDeleted = false " +
+           "AND a.publishedBy.user.isDeleted = false " +
+           "AND a.advertisementId = :advertisementId")
+    Optional<Advertisement> findMarketAdvertisement(Long advertisementId);
 
     @Query("SELECT COUNT(ae.acceptanceId) = 0 " +
            "FROM OrderEntity o " +
@@ -69,7 +74,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
            "WHERE o.advertisementId = :orderId AND ae.organization.organizationId = :orgId")
     boolean canAcceptOrder(Long orgId, Long orderId);
 
-    @Query("SELECT COUNT(jae.applicationId) " +
+    @Query("SELECT DISTINCT COUNT(jae.applicant.userId) " +
            "FROM JobEntity j " +
            "JOIN j.applications jae " +
            "WHERE j.advertisementId = :jobId")

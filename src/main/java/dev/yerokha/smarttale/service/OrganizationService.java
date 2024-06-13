@@ -287,11 +287,11 @@ public class OrganizationService {
     }
 
     public void inviteEmployeeByEmail(Long inviterId, InviteRequest request) {
+        UserDetailsEntity invitee = findOrCreateInvitee(request);
         UserDetailsEntity inviter = getUserDetailsEntity(inviterId);
         OrganizationEntity organization = inviter.getOrganization();
         PositionEntity position = findPosition(organization.getOrganizationId(), request.positionId());
 
-        UserDetailsEntity invitee = findOrCreateInvitee(request);
         InvitationEntity invitation = createOrUpdateInvitation(inviter, organization, position, invitee);
 
         sendNotifications(inviter, organization, position, invitee, invitation);
@@ -392,7 +392,7 @@ public class OrganizationService {
                 .toList();
     }
 
-    public Organization getOrganization(Long userId) {
+    public Organization getOwnOrganization(Long userId) {
         OrganizationEntity organization = getOrganizationByEmployeeId(userId);
 
         return mapToOrganization(organization);
@@ -576,8 +576,8 @@ public class OrganizationService {
     }
 
     @Transactional
-    public void updateTask(Long userId, UpdateTaskRequest request) {
-        OrganizationEntity organization = getOrganizationByEmployeeId(userId);
+    public void updateTask(Long organizationId, UpdateTaskRequest request) {
+        OrganizationEntity organization = getOrganizationEntity(organizationId);
         OrderEntity order = orderRepository.findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(
                         organization.getOrganizationId(), request.taskId())
                 .orElseThrow(() -> new NotFoundException("Task not found"));

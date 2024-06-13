@@ -45,14 +45,16 @@ public class UserService implements UserDetailsService {
     private final MailService mailService;
     private final InvitationRepository invitationRepository;
     private final PushNotificationService pushNotificationService;
+    private final AuthenticationService authenticationService;
 
-    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService, MailService mailService, InvitationRepository invitationRepository, PushNotificationService pushNotificationService) {
+    public UserService(UserRepository userRepository, UserDetailsRepository userDetailsRepository, ImageService imageService, MailService mailService, InvitationRepository invitationRepository, PushNotificationService pushNotificationService, AuthenticationService authenticationService) {
         this.userRepository = userRepository;
         this.userDetailsRepository = userDetailsRepository;
         this.imageService = imageService;
         this.mailService = mailService;
         this.invitationRepository = invitationRepository;
         this.pushNotificationService = pushNotificationService;
+        this.authenticationService = authenticationService;
     }
 
     @Override
@@ -200,13 +202,13 @@ public class UserService implements UserDetailsService {
 
     public void leaveOrganization(Long userId, Long orgId) {
         boolean hasActiveOrders = userDetailsRepository.existsAssignedTasks(userId);
-        boolean isOwner = userDetailsRepository.checkIsOwner(userId, orgId);
+        boolean isOrganizationOwner = userDetailsRepository.checkIsOwner(userId, orgId);
 
         if (hasActiveOrders) {
             throw new ForbiddenException("You can not leave, you have active orders");
         }
 
-        if (isOwner) {
+        if (isOrganizationOwner) {
             throw new ForbiddenException("You can not leave own organization");
         }
 
@@ -243,4 +245,69 @@ public class UserService implements UserDetailsService {
         return userDetailsRepository.findOneUser(userId, authorities, orgId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
+
+    public String deleteAccount(Long userId, Long orgId, String email) {
+        boolean isOrganizationOwner = userDetailsRepository.checkIsOwner(userId, orgId);
+
+        if (isOrganizationOwner) {
+            throw new ForbiddenException("You can not delete account as organization owner");
+        }
+
+        UserDetailsEntity userDetails = userDetailsRepository.getReferenceById(userId);
+        userDetails.setActiveOrdersCount(0);
+        userDetails.setPosition(null);
+        userDetails.setOrganization(null);
+        userDetails.setAssignedTasks(null);
+        userDetails.setApplications(null);
+        userDetails.setInvitations(null);
+
+        UserEntity userEntity = userRepository.getReferenceById(userId);
+        userEntity.setDeleted(true);
+        userEntity.setAuthorities(authenticationService.getUserRole());
+
+        userDetailsRepository.save(userDetails);
+
+        pushNotificationService.sendToOrganization(
+                orgId,
+                Map.of(
+                        "sub", "Сотрудник удалил свой аккаунт",
+                        "employeeId", userId.toString(),
+                        "employeeName", userDetails.getName(),
+                        "employeeAvatar", userDetails.getAvatarUrl()
+                )
+        );
+
+        return email;
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
