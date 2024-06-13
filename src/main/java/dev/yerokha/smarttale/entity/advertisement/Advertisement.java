@@ -17,14 +17,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "abstract_advertisements")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -79,5 +82,32 @@ public class Advertisement {
         this.description = description;
         this.advertisementImages = advertisementImages;
         this.contactInfo = contactInfo;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof Advertisement that)) return false;
+        return Objects.equals(advertisementId, that.advertisementId) && Objects.equals(publishedAt, that.publishedAt) && Objects.equals(publishedBy, that.publishedBy);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(advertisementId, publishedAt, publishedBy);
+    }
+
+    @Override
+    public String toString() {
+        return "Advertisement{" +
+               "advertisementId=" + advertisementId +
+               ", publishedAt=" + publishedAt +
+               ", publishedBy=" + publishedBy +
+               ", title='" + title + '\'' +
+               ", description='" + description + '\'' +
+               ", contactInfo=" + contactInfo +
+               ", views=" + views +
+               ", isDeleted=" + isDeleted +
+               ", isClosed=" + isClosed +
+               '}';
     }
 }

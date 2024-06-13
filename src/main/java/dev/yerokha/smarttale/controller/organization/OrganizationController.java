@@ -31,6 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -284,7 +285,7 @@ public class OrganizationController {
                     @ApiResponse(responseCode = "400", description = "Bad request"),
                     @ApiResponse(responseCode = "401", description = "Unauthorized"),
                     @ApiResponse(responseCode = "403", description = "No permission"),
-                    @ApiResponse(responseCode = "404", description = "User, org or position not found"),
+                    @ApiResponse(responseCode = "404", description = "User, org or position not found")
             }
     )
     @PutMapping("/positions")
@@ -293,6 +294,26 @@ public class OrganizationController {
         organizationService.updatePosition(getOrgIdFromAuthToken(authentication), position);
 
         return new ResponseEntity<>("Position updated", HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Rename position", description = "If user did not change anything except position title, then send patch request",
+            tags = {"patch", "position", "organization"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission"),
+                    @ApiResponse(responseCode = "404", description = "User, org or position not found")
+            }
+    )
+    @PatchMapping("/positions")
+    @PreAuthorize("hasPermission(#position, 'UPDATE_POSITION')")
+    public ResponseEntity<String> renamePosition(Authentication authentication, @Valid @RequestBody Position position) {
+
+        organizationService.renamePosition(getOrgIdFromAuthToken(authentication), position);
+
+        return ResponseEntity.ok("Position renamed");
     }
 
     @Operation(

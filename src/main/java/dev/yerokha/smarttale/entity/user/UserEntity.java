@@ -15,17 +15,18 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "users")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -40,8 +41,6 @@ public class UserEntity implements UserDetails {
     private String email;
 
     @JsonBackReference
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private UserDetailsEntity details;
 
@@ -100,4 +99,28 @@ public class UserEntity implements UserDetails {
         return isEnabled;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof UserEntity that)) return false;
+        return Objects.equals(userId, that.userId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(userId);
+    }
+
+    @Override
+    public String toString() {
+        return "UserEntity{" +
+               "userId=" + userId +
+               ", email='" + email + '\'' +
+               ", authorities=" + authorities +
+               ", isEnabled=" + isEnabled +
+               ", isDeleted=" + isDeleted +
+               ", isInvited=" + isInvited +
+               ", verificationCode='" + verificationCode + '\'' +
+               '}';
+    }
 }

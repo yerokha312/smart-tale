@@ -34,8 +34,8 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getOneUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getOneUser(userId));
+    public ResponseEntity<UserDto> getOneUser(@PathVariable Long userId, Authentication authentication) {
+        return ResponseEntity.ok(userService.getOneUser(userId, authentication));
     }
 
     @PostMapping("/{userId}")

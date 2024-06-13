@@ -98,6 +98,7 @@ public class UserControllerTest {
     void getOneUser() throws Exception {
         mockMvc.perform(get("/v1/users/100003")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canInvite").value(false));
     }
 }

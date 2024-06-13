@@ -543,6 +543,21 @@ public class OrganizationService {
         return userDetailsRepository.findEmployeeEmailsByPositionId(positionId);
     }
 
+    public void renamePosition(Long organizationId, Position position) {
+        Long positionId = position.positionId();
+        boolean positionExists = positionRepository
+                .existsByOrganizationOrganizationIdAndPositionId(organizationId, positionId);
+        PositionEntity positionEntity;
+        if (positionExists) {
+            positionEntity = positionRepository.getReferenceById(positionId);
+        } else {
+            throw new NotFoundException("Position not found");
+        }
+
+        positionEntity.setTitle(position.title());
+        positionRepository.save(positionEntity);
+    }
+
     private UserDetailsEntity getUserDetailsEntity(Long userId) {
         return userDetailsRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));

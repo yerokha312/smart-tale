@@ -123,13 +123,19 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "    CASE WHEN u.visibleContacts LIKE 'EMAIL%' THEN u.email ELSE '' END, " +
            "    CASE WHEN u.visibleContacts LIKE '%PHONE' THEN u.phoneNumber ELSE '' END, " +
            "    CAST(u.registeredAt AS LOCALDATE), " +
-           "    u.isSubscribed" +
+           "    u.isSubscribed, " +
+           "    CASE " +
+           "        WHEN o.organizationId = :orgId " +
+           "            OR :orgId IS NULL " +
+           "            OR (BITAND(CAST(:authorities AS INTEGER), 8) < 1) THEN false " +
+           "        ELSE true " +
+           "    END" +
            ") " +
            "FROM UserDetailsEntity u " +
            "LEFT JOIN u.image i " +
            "LEFT JOIN u.organization o " +
            "LEFT JOIN o.image oi " +
            "WHERE u.userId = :userId AND u.user.isEnabled = true AND u.user.isDeleted = false")
-    Optional<UserDto> findOneUser(Long userId);
+    Optional<UserDto> findOneUser(Long userId, int authorities, Long orgId);
 
 }

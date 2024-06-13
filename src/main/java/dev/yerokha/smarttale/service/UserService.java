@@ -32,6 +32,8 @@ import java.util.Map;
 
 import static dev.yerokha.smarttale.mapper.CustomPageMapper.getCustomPage;
 import static dev.yerokha.smarttale.service.TokenService.getEmailFromAuthToken;
+import static dev.yerokha.smarttale.service.TokenService.getOrgIdFromAuthToken;
+import static dev.yerokha.smarttale.service.TokenService.getUserAuthoritiesFromToken;
 import static dev.yerokha.smarttale.service.TokenService.getUserIdFromAuthToken;
 
 @Service
@@ -235,8 +237,10 @@ public class UserService implements UserDetailsService {
         return getCustomPage(usersPage);
     }
 
-    public UserDto getOneUser(Long userId) {
-        return userDetailsRepository.findOneUser(userId)
+    public UserDto getOneUser(Long userId, Authentication authentication) {
+        int authorities = getUserAuthoritiesFromToken(authentication);
+        Long orgId = getOrgIdFromAuthToken(authentication);
+        return userDetailsRepository.findOneUser(userId, authorities, orgId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 }
