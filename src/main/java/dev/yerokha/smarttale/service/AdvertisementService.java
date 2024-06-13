@@ -429,7 +429,7 @@ public class AdvertisementService {
 
     private Advertisement getAdByIdNotDeletedNotClosed(Long advertisementId) {
         return advertisementRepository
-                .findByAdvertisementIdAndIsDeletedFalseAndIsClosedFalse(advertisementId)
+                .findMarketAdvertisement(advertisementId)
                 .orElseThrow(() -> new NotFoundException("Advertisement not found"));
     }
 

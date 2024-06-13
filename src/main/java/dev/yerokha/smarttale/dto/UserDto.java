@@ -15,6 +15,7 @@ public record UserDto(
         @NotNull String email,
         @NotNull String phoneNumber,
         @NotNull LocalDate registeredAt,
-        @NotNull boolean isSubscribed
+        @NotNull boolean isSubscribed,
+        @NotNull boolean canInvite
 ) {
 }

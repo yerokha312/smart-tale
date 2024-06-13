@@ -94,15 +94,18 @@ public class AdMapper {
     }
 
     private List<AcceptanceRequest> mapToAcceptanceDto(Set<AcceptanceEntity> entities) {
-        return entities.stream().map(e -> {
+        return entities.stream()
+                .map(e -> {
                     OrganizationEntity organization = e.getOrganization();
                     return new AcceptanceRequest(
                             organization.getOrganizationId(),
                             organization.getName(),
                             organization.getLogoUrl(),
-                            EncryptionUtil.encrypt(String.valueOf(e.getAcceptanceId()))
+                            EncryptionUtil.encrypt(String.valueOf(e.getAcceptanceId())),
+                            e.getRequestedAt()
                     );
                 })
+                .sorted(Comparator.comparing(AcceptanceRequest::requestedAt).reversed())
                 .toList();
     }
 

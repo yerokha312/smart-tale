@@ -220,6 +220,10 @@ public class AuthenticationService {
             throw new DisabledException("User is not enabled");
         }
 
+        if (user.isDeleted()) {
+            return "Your account is deleted, please restore before login";
+        }
+
         String userJson;
         try {
             userJson = objectMapper.writeValueAsString(user);

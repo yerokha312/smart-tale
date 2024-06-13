@@ -142,7 +142,7 @@ public class MonitoringController {
     public ResponseEntity<String> updateTask(Authentication authentication,
                                              @RequestBody @Valid UpdateTaskRequest request) {
 
-        organizationService.updateTask(getUserIdFromAuthToken(authentication), request);
+        organizationService.updateTask(getOrgIdFromAuthToken(authentication), request);
 
         return ResponseEntity.ok("Task updated");
     }

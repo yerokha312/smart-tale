@@ -29,6 +29,11 @@ public class MailService {
     private String FROM;
     @Value("${ADMIN_EMAIL}")
     private String ADMIN_EMAIL;
+    @Value("${REG_PAGE}")
+    private String REG_PAGE;
+    @Value("${LOGIN_PAGE}")
+    private String LOGIN_PAGE;
+
 
     @Autowired
     public MailService(JavaMailSender mailSender, SpringTemplateEngine engine) {
@@ -73,14 +78,16 @@ public class MailService {
     }
 
     @Async
-    public void sendInvitation(String to, String name, OrganizationEntity organization, String position, String link) {
+    public void sendInvitation(String to, String inviterName, OrganizationEntity organization, String position, String code, boolean isNewUser) {
         Context context = new Context();
+        String link = (isNewUser) ? REG_PAGE + "?code=" + code : LOGIN_PAGE + "?code=" + code;
+        assert inviterName != null;
         context.setVariables(Map.of(
-                "name", name,
+                "name", inviterName,
                 "email", to,
                 "organizationUrl", organization.getOrganizationId(),
                 "organizationName", organization.getName(),
-                "organizationLogo", organization.getImage() == null ? "" : organization.getImage(),
+                "organizationLogo", organization.getLogoUrl(),
                 "position", position,
                 "link", link));
 

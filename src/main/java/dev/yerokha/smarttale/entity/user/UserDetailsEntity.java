@@ -24,7 +24,6 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -33,11 +32,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Getter
 @Setter
-@ToString
 @Entity
 @Table(name = "user_details")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -74,35 +73,27 @@ public class UserDetailsEntity {
     private Set<InvitationEntity> invitations;
 
     @JsonManagedReference
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @MapsId
     @JoinColumn(name = "details_id")
     private UserEntity user;
 
     @OneToMany(mappedBy = "publishedBy")
-    @ToString.Exclude
     private List<OrderEntity> orders;
 
-    @ToString.Exclude
     @OneToMany(mappedBy = "publishedBy")
     private List<ProductEntity> products;
 
-    @ToString.Exclude
     @OneToMany(mappedBy = "purchasedBy")
     private List<PurchaseEntity> purchases = new ArrayList<>();
 
-    @ToString.Exclude
     @OneToMany(mappedBy = "applicant")
     private List<JobApplicationEntity> applications;
 
-    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private OrganizationEntity organization;
 
-    @ToString.Exclude
     @ManyToMany
     @JoinTable(
             name = "task_employee_junction",
@@ -145,6 +136,7 @@ public class UserDetailsEntity {
         this.phoneNumber = phoneNumber;
     }
 
+    // if last name is null, then early return empty string
     public String getName() {
         return (this.lastName == null ? "" : this.lastName + " " + this.firstName + " " +
                                              (this.middleName == null ? "" : this.middleName)).trim();
@@ -168,5 +160,32 @@ public class UserDetailsEntity {
 
     public String getAvatarUrl() {
         return this.image == null ? "" : this.image.getImageUrl();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof UserDetailsEntity that)) return false;
+        return Objects.equals(userId, that.userId) && Objects.equals(registeredAt, that.registeredAt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId, registeredAt);
+    }
+
+    @Override
+    public String toString() {
+        return "UserDetailsEntity{" +
+               "userId=" + userId +
+               ", firstName='" + firstName + '\'' +
+               ", lastName='" + lastName + '\'' +
+               ", middleName='" + middleName + '\'' +
+               ", email='" + email + '\'' +
+               ", phoneNumber='" + phoneNumber + '\'' +
+               ", visibleContacts=" + visibleContacts +
+               ", position=" + position +
+               ", registeredAt=" + registeredAt +
+               '}';
     }
 }

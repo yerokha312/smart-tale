@@ -21,8 +21,8 @@ public record Purchase(
         @NotNull Long publishedBy,
         @NotNull String publisherName,
         @NotNull String publisherAvatarUrl,
-        @NotNull String phoneNumber,
-        @NotNull String email,
+        @NotNull String publisherPhoneNumber,
+        @NotNull String publisherEmail,
         @NotNull boolean canRepeatPurchase
 ) {
 }

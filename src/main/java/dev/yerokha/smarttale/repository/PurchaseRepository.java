@@ -26,12 +26,10 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
            "    p.quantity, " +
            "    pp.price, " +
            "    p.totalPrice, " +
-           "    COALESCE((" +
-           "        SELECT i.imageUrl " +
+           "    (SELECT i.imageUrl " +
            "        FROM AdvertisementImage ai " +
            "        LEFT JOIN ai.image i " +
-           "        WHERE ai.advertisement = pp " +
-           "        ORDER BY ai.index ASC), ''), " +
+           "        WHERE ai.advertisement = pp AND ai.index = 0), " +
            "    pp.publishedBy.userId, " +
            "    CONCAT(pp.publishedBy.lastName, ' ', pp.publishedBy.firstName), " +
            "    COALESCE(pubImg.imageUrl, ''), " +
@@ -41,7 +39,9 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
            "FROM PurchaseEntity p " +
            "JOIN p.product pp " +
            "LEFT JOIN pp.publishedBy.image pubImg " +
-           "WHERE p.purchasedBy.userId = :userId AND p.purchaseId = :purchaseId")
+           "WHERE p.purchasedBy.userId = :userId AND p.purchaseId = :purchaseId " +
+           "AND pp.isDeleted = false AND pp.isClosed = false " +
+           "AND pp.quantity > 0")
     Optional<Purchase> findByPurchaseIdAndUserId(Long purchaseId, Long userId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.PurchaseSummary(" +

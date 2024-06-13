@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -175,5 +176,13 @@ public class AccountController {
         userService.leaveOrganization(getUserIdFromAuthToken(authentication), getOrgIdFromAuthToken(authentication));
 
         return ResponseEntity.ok("You left the organization");
+    }
+
+    @DeleteMapping(consumes = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> deleteAccount(Authentication authentication,
+                                                @RequestBody @Email @Valid String email) {
+        userService.deleteAccount(getUserIdFromAuthToken(authentication), getOrgIdFromAuthToken(authentication), email);
+
+        return ResponseEntity.ok("Account deleted");
     }
 }

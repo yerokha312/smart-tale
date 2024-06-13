@@ -47,6 +47,12 @@ public class TokenRevocationAspect {
         revokeTokens(email);
     }
 
+    @AfterReturning(pointcut = "execution(* dev.yerokha.smarttale.service.UserService.deleteAccount(..))",
+            returning = "email")
+    public void afterDeleteAccount(String email) {
+        revokeTokens(email);
+    }
+
     public void revokeTokens(String email) {
         tokenService.revokeAllTokens(email);
 
