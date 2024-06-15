@@ -14,7 +14,6 @@ import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.repository.TokenRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
-import dev.yerokha.smarttale.util.Authorities;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -34,7 +33,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -257,11 +255,8 @@ public class TokenService {
                 PositionEntity emptyPosition = new PositionEntity(null, 0, 0, null);
                 return new LoginResponse(
                         generateAccessToken(user, emptyPosition),
-                        generateRefreshToken(user, emptyPosition),
-                        user.getUserId(),
-                        0,
-                        0,
-                        Collections.emptyList());
+                        generateRefreshToken(user, emptyPosition)
+                );
             } else { // case user (not employee) logged out and using old refresh
                 throw new InvalidTokenException("Token is revoked");
             }
@@ -285,11 +280,8 @@ public class TokenService {
 
         return new LoginResponse(
                 accessToken,
-                refreshToken,
-                user.getUserId(),
-                position.getOrganization().getOrganizationId(),
-                position.getHierarchy(),
-                Authorities.getNamesByValues(position.getAuthorities()));
+                refreshToken
+        );
     }
 
     private LoginResponse getNewAccessToken(String refreshToken, Jwt decodedToken, String email) {
@@ -314,11 +306,7 @@ public class TokenService {
         setValue(key, encrypt(token), ACCESS_TOKEN_EXPIRATION, TimeUnit.MINUTES);
         return new LoginResponse(
                 token,
-                refreshToken.substring(7),
-                userId,
-                organizationId,
-                hierarchy,
-                Authorities.getNamesByValues(authorities)
+                refreshToken.substring(7)
         );
     }
 

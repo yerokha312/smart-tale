@@ -16,7 +16,6 @@ import dev.yerokha.smarttale.repository.InvitationRepository;
 import dev.yerokha.smarttale.repository.RoleRepository;
 import dev.yerokha.smarttale.repository.UserDetailsRepository;
 import dev.yerokha.smarttale.repository.UserRepository;
-import dev.yerokha.smarttale.util.Authorities;
 import dev.yerokha.smarttale.util.EncryptionUtil;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -180,11 +178,7 @@ public class AuthenticationService {
         PositionEntity position = userDetails.getPosition();
         return new LoginResponse(
                 tokenService.generateAccessToken(user, position),
-                tokenService.generateRefreshToken(user, position),
-                user.getUserId(),
-                position == null ? 0 : position.getOrganization().getOrganizationId(),
-                position == null ? 0 : position.getHierarchy(),
-                position == null ? Collections.emptyList() : Authorities.getNamesByValues(position.getAuthorities())
+                tokenService.generateRefreshToken(user, position)
         );
     }
 
