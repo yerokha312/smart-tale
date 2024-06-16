@@ -6,6 +6,7 @@ import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.OrderDashboard;
 import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.entity.advertisement.OrderEntity;
+import dev.yerokha.smarttale.entity.user.UserDetailsEntity;
 import dev.yerokha.smarttale.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,6 +73,8 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     Page<Card> findMarketOrders(Long orgId, Pageable pageable);
 
     Optional<OrderEntity> findByPublishedByUserIdAndAdvertisementId(Long userId, Long orderId);
+
+    Optional<OrderEntity> findByAdvertisementIdAndAcceptanceEntities_Organization_OrganizationId(Long orderId, Long organizationId);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.OrderAccepted(" +
            "    o.advertisementId, " +
@@ -197,6 +200,11 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     boolean existsByAdvertisementIdAndPublishedBy_UserId(Long advertisementId, Long userId);
 
     boolean existsByAcceptedBy_OrganizationIdAndCompletedAtIsNull(Long organizationId);
+
+    boolean existsByAcceptedBy_OrganizationIdAndAdvertisementId(Long organizationId, Long orderId);
+
+    @Query("SELECT o.contractors FROM OrderEntity o WHERE o.advertisementId = :orderId")
+    List<UserDetailsEntity> findContractorsByOrderId(Long orderId);
 }
 
 
