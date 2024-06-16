@@ -22,6 +22,6 @@ public record ProductCard(
         @NotNull String publisherPhoneNumber,
         @NotNull String publisherEmail,
         @NotNull long views,
-        @NotNull boolean canHandle
+        @NotNull boolean canPurchase
 ) implements AdvertisementInterface {
 }

@@ -70,7 +70,7 @@ public class MonitoringController {
     )
     @GetMapping("/{orderId}")
     public ResponseEntity<MonitoringOrder> getOrder(Authentication authentication, @PathVariable Long orderId) {
-        return ResponseEntity.ok(advertisementService.getMonitoringOrder(getUserIdFromAuthToken(authentication), orderId));
+        return ResponseEntity.ok(advertisementService.getMonitoringOrder(getOrgIdFromAuthToken(authentication), orderId));
     }
 
     @Operation(
@@ -162,7 +162,7 @@ public class MonitoringController {
     public ResponseEntity<String> deleteTask(Authentication authentication,
                                              @PathVariable Long orderId) {
 
-        advertisementService.deleteTask(getUserIdFromAuthToken(authentication), orderId);
+        advertisementService.deleteTask(getOrgIdFromAuthToken(authentication), orderId);
 
         return ResponseEntity.ok("Task deleted");
     }

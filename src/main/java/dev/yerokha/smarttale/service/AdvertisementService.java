@@ -70,7 +70,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static dev.yerokha.smarttale.enums.OrderStatus.CHECKING;
@@ -792,16 +792,22 @@ public class AdvertisementService {
                 .toList();
     }
 
-    public MonitoringOrder getMonitoringOrder(Long userId, Long orderId) {
-        OrganizationEntity organization = userService.getUserDetailsEntity(userId).getOrganization();
-
-        OrderEntity order = getOrderEntity(orderId);
-
-        if (!order.getAcceptedBy().getOrganizationId().equals(organization.getOrganizationId())) {
-            throw new NotFoundException("Order not found");
-        }
+    public MonitoringOrder getMonitoringOrder(Long orgId, Long orderId) {
+        OrderEntity order = findMonitoringOrder(orgId, orderId)
+                .orElseGet(() -> findPendingMonitoringOrder(orgId, orderId));
 
         return adMapper.mapToMonitoringOrder(order);
+    }
+
+    private OrderEntity findPendingMonitoringOrder(Long orgId, Long orderId) {
+        return orderRepository
+                .findByAdvertisementIdAndAcceptanceEntities_Organization_OrganizationId(orderId, orgId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+    }
+
+    private Optional<OrderEntity> findMonitoringOrder(Long orgId, Long orderId) {
+        return orderRepository
+                .findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(orgId, orderId);
     }
 
     @Transactional
@@ -856,14 +862,12 @@ public class AdvertisementService {
     }
 
     @Transactional
-    public void deleteTask(Long userId, Long orderId) {
-        OrderEntity order = getOrderEntity(orderId);
-        OrganizationEntity organization = userService.getUserDetailsEntity(userId).getOrganization();
-        if (order.getAcceptedBy() == null || !Objects.equals(order.getAcceptedBy().getOrganizationId(),
-                organization.getOrganizationId())) {
-            deleteUnacceptedOrderTask(orderId, organization);
-        } else {
-            List<UserDetailsEntity> contractors = order.getContractors();
+    public void deleteTask(Long orgId, Long orderId) {
+        boolean orderBelongsToOrganization = orderRepository
+                .existsByAcceptedBy_OrganizationIdAndAdvertisementId(orgId, orderId);
+        if (orderBelongsToOrganization) {
+            OrderEntity order = orderRepository.getReferenceById(orderId);
+            List<UserDetailsEntity> contractors = orderRepository.findContractorsByOrderId(orderId);
             order.setAcceptedBy(null);
             order.setAcceptedAt(null);
             order.setStatus(null);
@@ -874,22 +878,16 @@ public class AdvertisementService {
                 userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
                 userDetailsRepository.save(contractor);
             }
+
             order.setContractors(null);
             orderRepository.save(order);
-            organization.getAcceptedOrders().removeIf(o -> o.getAdvertisementId().equals(orderId));
-            organizationRepository.save(organization);
         }
 
+        deleteUnacceptedOrderTask(orderId, orgId);
     }
 
-    private void deleteUnacceptedOrderTask(Long orderId, OrganizationEntity organization) {
-        AcceptanceEntity acceptance = organization.getAcceptanceEntities().stream()
-                .filter(a -> a.getOrder().getAdvertisementId().equals(orderId))
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("Acceptance not found"));
-
-        organization.getAcceptanceEntities().remove(acceptance);
-        acceptanceRepository.delete(acceptance);
+    private void deleteUnacceptedOrderTask(Long orderId, Long organizationId) {
+        acceptanceRepository.deleteByOrder_AdvertisementIdAndOrganization_OrganizationId(orderId, organizationId);
     }
 
     @Transactional

@@ -23,6 +23,6 @@ public record OrderCard(
         @NotNull String publisherPhoneNumber,
         @NotNull String publisherEmail,
         @NotNull long views,
-        @NotNull boolean canHandle
+        @NotNull boolean canAccept
 ) implements AdvertisementInterface {
 }
