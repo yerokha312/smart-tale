@@ -4,6 +4,7 @@ import dev.yerokha.smarttale.dto.NotificationHistoryRequest;
 import dev.yerokha.smarttale.service.PushNotificationService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -23,5 +24,10 @@ public class NotificationWebSocketController {
     @MessageMapping("/notifications/history")
     public void getHistory(@Payload NotificationHistoryRequest request) {
         pushNotificationService.getHistory(request);
+    }
+
+    @SubscribeMapping("/welcome")
+    public String handleGreeting() {
+        return "Добро пожаловать в SmartTale!";
     }
 }
