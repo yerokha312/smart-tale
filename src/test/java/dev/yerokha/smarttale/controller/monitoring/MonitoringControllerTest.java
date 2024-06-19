@@ -375,4 +375,15 @@ class MonitoringControllerTest {
         Assertions.assertEquals(3, user1.getActiveOrdersCount());
     }
 
+    @Test
+    @Order(21)
+    void getEmployeeListBeforeAssigningToTask() throws Exception {
+        mockMvc.perform(get("/v1/monitoring/employees")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$", hasSize(3))
+                );
+    }
+
 }

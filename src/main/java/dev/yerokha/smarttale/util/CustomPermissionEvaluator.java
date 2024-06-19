@@ -85,6 +85,9 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                       && (userHierarchy < position.hierarchy());
             }
             case "ASSIGN_EMPLOYEES" -> {
+                if (targetDomainObject.equals("getEmployeesBeforeAssign")) {
+                    yield (userAuthorities & requiredPermissionBitmask) > 0;
+                }
                 UpdateTaskRequest request = (UpdateTaskRequest) targetDomainObject;
                 List<UserDetailsEntity> contractors = userDetailsRepository.findAllById(request.addedEmployees());
                 yield contractors.stream()

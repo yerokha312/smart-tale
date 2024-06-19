@@ -4,6 +4,7 @@ import dev.yerokha.smarttale.dto.CreateOrgRequest;
 import dev.yerokha.smarttale.dto.CustomPage;
 import dev.yerokha.smarttale.dto.Employee;
 import dev.yerokha.smarttale.dto.EmployeeDto;
+import dev.yerokha.smarttale.dto.EmployeeSummary;
 import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.InviteUserRequest;
@@ -789,7 +790,11 @@ public class OrganizationService {
         if (!isOwner) {
             throw new ForbiddenException("You are not allowed to delete organization");
         }
+    }
 
-
+    public List<EmployeeSummary> getEmployeesBeforeAssign(Authentication authentication) {
+        Long orgId = getOrgIdFromAuthToken(authentication);
+        int hierarchy = getUserHierarchyFromToken(authentication);
+        return userDetailsRepository.findEmployeesBeforeAssign(orgId, hierarchy);
     }
 }

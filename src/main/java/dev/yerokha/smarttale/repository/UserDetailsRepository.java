@@ -1,5 +1,6 @@
 package dev.yerokha.smarttale.repository;
 
+import dev.yerokha.smarttale.dto.EmployeeSummary;
 import dev.yerokha.smarttale.dto.SearchItem;
 import dev.yerokha.smarttale.dto.UserDto;
 import dev.yerokha.smarttale.dto.UserSummary;
@@ -138,4 +139,13 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "WHERE u.userId = :userId AND u.user.isEnabled = true AND u.user.isDeleted = false")
     Optional<UserDto> findOneUser(Long userId, int authorities, Long orgId);
 
+    @Query("SELECT new dev.yerokha.smarttale.dto.EmployeeSummary(" +
+           "u.userId, " +
+           "CONCAT(u.lastName, ' ', u.firstName), " +
+           "u.position.title" +
+           ") " +
+           "FROM UserDetailsEntity u " +
+           "WHERE u.organization.organizationId = :orgId AND u.position.hierarchy > :hierarchy " +
+           "ORDER BY u.position.title ASC")
+    List<EmployeeSummary> findEmployeesBeforeAssign(Long orgId, int hierarchy);
 }
