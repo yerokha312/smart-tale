@@ -271,7 +271,7 @@ class MonitoringControllerTest {
     }
 
     @Test
-    @Order(12)
+    @Order(12) //check
     void getEmployee_AfterAssignment() throws Exception {
         mockMvc.perform(get("/v1/organization/employees/100004")
                         .header("Authorization", "Bearer " + accessToken))
@@ -382,7 +382,7 @@ class MonitoringControllerTest {
                 .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$", hasSize(3))
+                        jsonPath("$", hasSize(4))
                 );
     }
 

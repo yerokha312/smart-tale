@@ -204,7 +204,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(6))
+                        jsonPath("$.totalElements").value(7))
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
@@ -223,7 +223,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(6))
+                        jsonPath("$.totalElements").value(7))
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
@@ -321,7 +321,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(7),
+                        jsonPath("$.totalElements").value(8),
                         jsonPath("$.content[*].status").value(hasItem("Invited")))
                 .andReturn();
 
@@ -346,7 +346,7 @@ class OrganizationControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.content").isArray(),
-                        jsonPath("$.totalElements").value(7),
+                        jsonPath("$.totalElements").value(8),
                         jsonPath("$.content[*].status").value(hasItem("Invited")))
                 .andReturn();
 
@@ -487,7 +487,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.totalElements").value(7)
+                        jsonPath("$.totalElements").value(8)
                 );
     }
 
@@ -506,7 +506,7 @@ class OrganizationControllerTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.totalElements").value(6)
+                        jsonPath("$.totalElements").value(7)
                 );
     }
 

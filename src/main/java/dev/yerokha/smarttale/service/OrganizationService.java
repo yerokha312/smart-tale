@@ -17,6 +17,7 @@ import dev.yerokha.smarttale.dto.OrganizationSummary;
 import dev.yerokha.smarttale.dto.Position;
 import dev.yerokha.smarttale.dto.PositionDto;
 import dev.yerokha.smarttale.dto.PositionSummary;
+import dev.yerokha.smarttale.dto.PositionTitleAndHierarchy;
 import dev.yerokha.smarttale.dto.Task;
 import dev.yerokha.smarttale.dto.UpdateTaskRequest;
 import dev.yerokha.smarttale.entity.AdvertisementImage;
@@ -169,7 +170,7 @@ public class OrganizationService {
     private Employee mapToEmployee(UserDetailsEntity user, Long organizationId) {
         String name = user.getName();
         List<OrderAccepted> orders = getCurrentOrders(user.getUserId(), organizationId);
-        String position = getPosition(user, organizationId);
+        PositionTitleAndHierarchy position = positionTitleAndHierarchy(user, organizationId);
         String status = orders == null || name.isEmpty() ? "Invited" : "Authorized";
 
         return new Employee(
@@ -177,7 +178,8 @@ public class OrganizationService {
                 name,
                 user.getEmail(),
                 orders == null ? Collections.emptyList() : orders,
-                position,
+                position.title(),
+                position.hierarchy(),
                 status
         );
     }
@@ -224,13 +226,15 @@ public class OrganizationService {
     }
 
     private EmployeeDto mapToEmployeeDto(Long organizationId, UserDetailsEntity employee) {
+        PositionTitleAndHierarchy positionTitleAndHierarchy = positionTitleAndHierarchy(employee, organizationId);
         return new EmployeeDto(
                 employee.getUserId(),
                 employee.getName(),
                 employee.getImage() == null ? null : employee.getImage().getImageUrl(),
                 employee.getEmail(),
                 employee.getPhoneNumber(),
-                getPosition(employee, organizationId)
+                positionTitleAndHierarchy.title(),
+                positionTitleAndHierarchy.hierarchy()
         );
     }
 
@@ -253,17 +257,18 @@ public class OrganizationService {
                 .map(adMapper::toTask);
     }
 
-    private String getPosition(UserDetailsEntity employee, Long organizationId) {
+    private PositionTitleAndHierarchy positionTitleAndHierarchy(UserDetailsEntity employee, Long organizationId) {
         if (employee.getOrganization() == null || !employee.getOrganization().getOrganizationId().equals(organizationId)) {
-            return Objects.requireNonNull(employee.getInvitations().stream()
+            PositionEntity position = Objects.requireNonNull(employee.getInvitations().stream()
                             .filter(inv -> inv.getOrganization().getOrganizationId().equals(organizationId))
                             .findFirst()
                             .orElse(null))
-                    .getPosition()
-                    .getTitle();
+                    .getPosition();
+            return new PositionTitleAndHierarchy(position.getTitle(), position.getHierarchy());
         }
 
-        return employee.getPosition().getTitle();
+        PositionEntity position = employee.getPosition();
+        return new PositionTitleAndHierarchy(position.getTitle(), position.getHierarchy());
     }
 
     private List<OrderAccepted> getCurrentOrders(Long employeeId,
