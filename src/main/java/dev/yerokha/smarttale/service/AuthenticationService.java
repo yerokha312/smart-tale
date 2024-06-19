@@ -278,6 +278,15 @@ public class AuthenticationService {
         details.setPosition(invitation.getPosition());
         details.setRegisteredAt(LocalDateTime.now());
 
+        String userJson;
+        try {
+            userJson = objectMapper.writeValueAsString(user);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize object");
+        }
+
+        setValue(request.email(), userJson, 15, TimeUnit.MINUTES);
+
         userRepository.save(user);
         invitationRepository.deleteAllByInvitee_UserIdJPQL(user.getUserId());
     }
