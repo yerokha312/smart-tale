@@ -364,7 +364,7 @@ public class OrganizationService {
         String code = EncryptionUtil.encrypt(String.valueOf(invitationId));
 
         mailService.sendInvitation(
-                inviter.getEmail(), inviter.getName(), organization, position.getTitle(), code, isNewUser);
+                invitee.getEmail(), inviter.getName(), organization, position.getTitle(), code, isNewUser);
     }
 
     private void sendInvitationPushNotification(OrganizationEntity organization, UserDetailsEntity invitee, Long invitationId) {
