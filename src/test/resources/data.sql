@@ -43,7 +43,7 @@ UPDATE user_details SET organization_id = 100000, position_id = 100000 WHERE det
 
 INSERT INTO user_details (details_id, last_name, first_name, email, phone_number) VALUES (100000, 'Existing', 'Profile', 'existing@example.com', '+7999999999');
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, is_subscribed) VALUES (100001, 'Second', 'Existing', 'Profile', 'existing2@example.com', '+77771234567', true);
-INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number) VALUES (100002, 'Third', 'Existing', 'Profile', 'existing3@example.com', '+777712345690');
+INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100002, 'Third', 'Existing', 'Profile', 'existing3@example.com', '+777712345690', 100000, 100002, 6);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100004, 'Fifth', 'Existing', 'Profile', 'existing5@example.com', '+777712345100', 100000, 100001, 4);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100005, 'Sixth', 'Existing', 'Profile', 'existing6@example.com', '+777712345200', 100000, 100002, 4);
 INSERT INTO user_details (details_id, last_name, first_name, middle_name, email, phone_number, organization_id, position_id, active_orders_count) VALUES (100006, 'Seventh', 'Existing', 'Profile', 'existing7@example.com', '+777712345300', 100000, 100003, 5);

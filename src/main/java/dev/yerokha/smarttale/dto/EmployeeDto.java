@@ -9,6 +9,7 @@ public record EmployeeDto(
         @NotNull String avatarUrl,
         @NotNull String email,
         @NotNull String phoneNumber,
-        @NotNull String position
+        @NotNull String position,
+        @NotNull int hierarchy
 ) {
 }

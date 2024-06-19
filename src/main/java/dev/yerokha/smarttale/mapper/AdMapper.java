@@ -283,16 +283,21 @@ public class AdMapper {
                 author.getAvatarUrl(),
                 contact.contains("EMAIL") ? author.getEmail() : "",
                 contact.contains("PHONE") ? author.getPhoneNumber() : "",
-                order.getContractors() == null ? emptyList() : order.getContractors().stream()
-                        .map(emp -> new AssignedEmployee(
-                                emp.getUserId(),
-                                emp.getName(),
-                                emp.getAvatarUrl(),
-                                order.getPrice() == null ? BigDecimal.ZERO : order.getPrice()
-                        ))
-                        .toList(),
+                getContractors(order),
                 order.getViews()
         );
+    }
+
+    private static List<AssignedEmployee> getContractors(OrderEntity order) {
+        return order.getContractors() == null ? emptyList() : order.getContractors().stream()
+                .map(emp -> new AssignedEmployee(
+                        emp.getUserId(),
+                        emp.getName(),
+                        emp.getAvatarUrl(),
+                        order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
+                        emp.getPosition().getHierarchy()
+                ))
+                .toList();
     }
 
     public Task toTask(OrderEntity order) {
@@ -306,14 +311,7 @@ public class AdMapper {
                 order.getPrice() == null ? BigDecimal.ZERO : order.getPrice(),
                 order.getComment() == null ? "" : order.getComment(),
                 order.getCompletedAt() == null ? order.getAcceptedAt() : order.getCompletedAt(),
-                order.getContractors().stream()
-                        .map(emp -> new AssignedEmployee(
-                                emp.getUserId(),
-                                emp.getName(),
-                                emp.getAvatarUrl(),
-                                order.getPrice()
-                        ))
-                        .toList(),
+                getContractors(order),
                 publishedBy.getUserId(),
                 publishedBy.getName(),
                 publishedBy.getAvatarUrl(),

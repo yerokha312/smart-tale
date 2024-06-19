@@ -11,6 +11,7 @@ public record Employee(
         @NotNull String email,
         @NotNull List<OrderAccepted> orderList,
         @NotNull String position,
+        @NotNull int hierarchy,
         @NotNull String status
 ) {
 }

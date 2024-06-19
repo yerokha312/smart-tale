@@ -9,6 +9,7 @@ public record AssignedEmployee(
         @NotNull Long userId,
         @NotNull String name,
         @NotNull String avatarUrl,
-        @NotNull BigDecimal reward
+        @NotNull BigDecimal reward,
+        @NotNull int hierarchy
 ) {
 }
