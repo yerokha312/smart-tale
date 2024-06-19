@@ -1,6 +1,7 @@
 package dev.yerokha.smarttale.controller.monitoring;
 
 import dev.yerokha.smarttale.dto.CustomPage;
+import dev.yerokha.smarttale.dto.EmployeeSummary;
 import dev.yerokha.smarttale.dto.MonitoringOrder;
 import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.OrderDashboard;
@@ -165,5 +166,20 @@ public class MonitoringController {
         advertisementService.deleteTask(getOrgIdFromAuthToken(authentication), orderId);
 
         return ResponseEntity.ok("Task deleted");
+    }
+
+    @Operation(
+            summary = "Get employees to assign", description = "Retrieve employees list whose hierarchy is lower",
+            tags = {"get", "employee", "monitoring"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "403", description = "No permission to assign employees")
+            }
+    )
+    @GetMapping("/employees")
+    @PreAuthorize("hasPermission('getEmployeesBeforeAssign', 'ASSIGN_EMPLOYEES')")
+    public ResponseEntity<List<EmployeeSummary>> getEmployeesBeforeAssign(Authentication authentication) {
+        return ResponseEntity.ok(organizationService.getEmployeesBeforeAssign(authentication));
     }
 }
