@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -82,17 +83,18 @@ public class MailService {
         Context context = new Context();
         String link = (isNewUser) ? REG_PAGE + "?code=" + code : LOGIN_PAGE + "?code=" + code;
         assert inviterName != null;
-        context.setVariables(Map.of(
-                "name", inviterName,
-                "email", to,
-                "organizationUrl", organization.getOrganizationId(),
-                "organizationName", organization.getName(),
-                "organizationLogo", organization.getLogoUrl(),
-                "position", position,
-                "link", link));
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("name", inviterName);
+        variables.put("email", to);
+        variables.put("organizationUrl", organization.getOrganizationId());
+        variables.put("organizationName", organization.getName());
+        variables.put("organizationLogo", organization.getLogoUrl());
+        variables.put("position", position);
+        variables.put("link", link);
+        context.setVariables(variables);
 
         String emailBody = engine.process("invitation_letter", context);
-        send(ADMIN_EMAIL, "Приглашение в организацию", emailBody);
+        send(to, "Приглашение в организацию", emailBody);
     }
 
     @Async

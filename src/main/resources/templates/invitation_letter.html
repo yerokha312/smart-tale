@@ -1,5 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html
+        xmlns:th="http://www.thymeleaf.org"
         xmlns="http://www.w3.org/1999/xhtml"
         lang="ru"
 >
@@ -27,11 +28,11 @@
         padding: 0;
       }
 
-      a {
-        text-decoration: none;
-        color: #e8fbfa;
-        font-size: 16px;
-      }
+      /*a {*/
+      /*  text-decoration: none;*/
+      /*  color: #e8fbfa;*/
+      /*  font-size: 16px;*/
+      /*}*/
     </style>
     <!--[if (gte mso 9)|(IE)]>
       <style type="text/css">
@@ -63,6 +64,12 @@
         p,
         a {
           font-family: sans-serif, Arial, Helvetica !important;
+        }
+        .email {
+          color: #0034b6 !important;
+        }
+        .link {
+          color: #b67600 !important;
         }
       </style>
     <![endif]-->
@@ -193,8 +200,11 @@
                     <p>
                       Авторизуйтесь по ссылке ниже,
                       <br>
-                      используя вашу почту <span th:text="${email}"></span>
-                      <span style="margin: 0; color: #b67600" th:href="${link}"></span>
+                      используя вашу почту:
+                      <span class="email" style="color: blue" th:text="${email}"></span>
+                      <br>
+                      ссылка:
+                      <a class="link" style="color: blue" th:href="${link}" target="_blank">Нажмите здесь</a>
                     </p>
 
                     <p
