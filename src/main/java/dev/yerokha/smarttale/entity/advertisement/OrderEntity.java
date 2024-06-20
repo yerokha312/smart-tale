@@ -86,12 +86,12 @@ public class OrderEntity extends Advertisement {
         this.contractors.add(contractor);
     }
 
-    public void removeContractor(UserDetailsEntity contractor) {
+    public void removeContractor(Long contractorId) {
         if (this.contractors == null || this.contractors.isEmpty()) {
             throw new IllegalArgumentException("Contractors list is empty");
         }
 
-        this.contractors.remove(contractor);
+        this.contractors.removeIf(contractor -> contractor.getUserId().equals(contractorId));
     }
 
 }

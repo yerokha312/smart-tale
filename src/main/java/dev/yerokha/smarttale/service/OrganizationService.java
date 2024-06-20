@@ -583,17 +583,16 @@ public class OrganizationService {
 
     @Transactional
     public void updateTask(Long organizationId, UpdateTaskRequest request) {
-        OrganizationEntity organization = getOrganizationEntity(organizationId);
         OrderEntity order = orderRepository.findByAcceptedByOrganizationIdAndCompletedAtIsNullAndAdvertisementId(
-                        organization.getOrganizationId(), request.taskId())
+                        organizationId, request.taskId())
                 .orElseThrow(() -> new NotFoundException("Task not found"));
 
         if (!request.addedEmployees().isEmpty()) {
-            assignContractors(request, organization, order);
+            assignContractors(request, order);
         }
 
         if (!request.removedEmployees().isEmpty()) {
-            removeContractors(request, organization, order);
+            removeContractors(request, order);
         }
 
         if (request.comment() != null && !request.comment().isEmpty()) {
@@ -603,15 +602,10 @@ public class OrganizationService {
         orderRepository.save(order);
     }
 
-    public void removeContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
-        List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
-                organization.getOrganizationId(), request.removedEmployees());
-
-        for (UserDetailsEntity contractor : contractors) {
-            order.removeContractor(contractor);
-            contractor.removeAssignedTask(order);
-            userDetailsRepository.updateActiveOrdersCount(-1, contractor.getUserId());
-            userDetailsRepository.save(contractor);
+    public void removeContractors(UpdateTaskRequest request, OrderEntity order) {
+        for (Long employeeId : request.removedEmployees()) {
+            order.removeContractor(employeeId);
+            userDetailsRepository.updateActiveOrdersCount(-1, employeeId);
             String imageUrl = order.getAdvertisementImages().stream()
                     .filter(ai -> ai.getIndex() == 0)
                     .map(AdvertisementImage::getImage)
@@ -626,21 +620,15 @@ public class OrganizationService {
                     "image", imageUrl,
                     "status", order.getStatus().name()
             );
-
-            pushNotificationService.sendToUser(contractor.getUserId(), data);
+            pushNotificationService.sendToUser(employeeId, data);
         }
-
     }
 
-    public void assignContractors(UpdateTaskRequest request, OrganizationEntity organization, OrderEntity order) {
-        List<UserDetailsEntity> contractors = userDetailsRepository.findAllByOrganizationOrganizationIdAndUserIdIn(
-                organization.getOrganizationId(), request.addedEmployees());
-
-        for (UserDetailsEntity contractor : contractors) {
+    public void assignContractors(UpdateTaskRequest request, OrderEntity order) {
+        for (Long employeeId : request.addedEmployees()) {
+            UserDetailsEntity contractor = userDetailsRepository.getReferenceById(employeeId);
             order.addContractor(contractor);
-            contractor.addAssignedTask(order);
-            userDetailsRepository.updateActiveOrdersCount(1, contractor.getUserId());
-            userDetailsRepository.save(contractor);
+            userDetailsRepository.updateActiveOrdersCount(1, employeeId);
             String imageUrl = order.getAdvertisementImages().stream()
                     .filter(ai -> ai.getIndex() == 0)
                     .map(AdvertisementImage::getImage)
@@ -655,9 +643,8 @@ public class OrganizationService {
                     "image", imageUrl,
                     "status", order.getStatus().name()
             );
-            pushNotificationService.sendToUser(contractor.getUserId(), data);
+            pushNotificationService.sendToUser(employeeId, data);
         }
-
     }
 
     public List<PositionSummary> getAllPositions(Long organizationId) {
