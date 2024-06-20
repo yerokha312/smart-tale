@@ -20,6 +20,7 @@ public record MonitoringOrder(
         @NotNull List<String> imageUrls,
         @NotNull OrderStatus status,
         @NotNull Long publisherId,
+        @NotNull String publisherName,
         @NotNull String publisherAvatarUrl,
         @NotNull String publisherEmail,
         @NotNull String publisherPhone,

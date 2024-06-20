@@ -280,6 +280,7 @@ public class AdMapper {
                 imageUrls,
                 order.getStatus(),
                 author.getUserId(),
+                author.getName(),
                 author.getAvatarUrl(),
                 contact.contains("EMAIL") ? author.getEmail() : "",
                 contact.contains("PHONE") ? author.getPhoneNumber() : "",
