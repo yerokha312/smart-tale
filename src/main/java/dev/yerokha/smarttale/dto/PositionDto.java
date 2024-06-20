@@ -8,6 +8,7 @@ public record PositionDto(
         @NotNull Long positionId,
         @NotNull String title,
         @NotNull int hierarchy,
-        @NotNull List<String> authorities
+        @NotNull List<String> authorities,
+        @NotNull boolean isEmpty
 ) {
 }

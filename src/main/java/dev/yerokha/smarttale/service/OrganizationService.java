@@ -393,8 +393,7 @@ public class OrganizationService {
                 .sorted(Comparator.comparing(PositionEntity::getTitle))
                 .map(pos -> new PositionSummary(
                         pos.getPositionId(),
-                        pos.getTitle()
-                ))
+                        pos.getTitle()))
                 .toList();
     }
 
@@ -651,8 +650,7 @@ public class OrganizationService {
         return getOrganizationEntity(organizationId).getPositions().stream()
                 .map(pos -> new PositionSummary(
                         pos.getPositionId(),
-                        pos.getTitle()
-                ))
+                        pos.getTitle()))
                 .toList();
     }
 
@@ -663,11 +661,14 @@ public class OrganizationService {
 
         List<String> authorities = Authorities.getNamesByValues(position.getAuthorities());
 
+        boolean isEmpty = !(Hibernate.size(position.getEmployees()) > 0);
+
         return new PositionDto(
                 positionId,
                 position.getTitle(),
                 position.getHierarchy(),
-                authorities
+                authorities,
+                isEmpty
         );
     }
 
