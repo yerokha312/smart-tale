@@ -34,6 +34,8 @@ public class MailService {
     private String REG_PAGE;
     @Value("${LOGIN_PAGE}")
     private String LOGIN_PAGE;
+    @Value("${ORDER_CONFIRMATION_BUTTON_URL}")
+    private String orderConfirmationUrl;
 
 
     @Autowired
@@ -137,7 +139,7 @@ public class MailService {
                 "organizationUrl", request.organizationUrl(),
                 "organizationName", request.organizationName(),
                 "organizationLogo", request.organizationLogo(),
-                "confirmUrl", encryptedCode
+                "confirmUrl", orderConfirmationUrl + encryptedCode
         ));
 
         String emailBody = engine.process("acceptance_request_letter", context);

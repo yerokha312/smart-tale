@@ -147,6 +147,7 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "ORDER BY u.position.title ASC")
     List<EmployeeSummary> findEmployeesBeforeAssign(Long orgId, int hierarchy);
 
+    @Modifying
     @Query("DELETE FROM JobApplicationEntity jae WHERE jae.applicant.userId = :applicantId")
     void deleteAllJobApplicationByApplicantId(Long applicantId);
 }
