@@ -7,6 +7,7 @@ import dev.yerokha.smarttale.dto.EmployeeTasksResponse;
 import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.InviterInvitation;
 import dev.yerokha.smarttale.dto.Job;
+import dev.yerokha.smarttale.dto.JobApplication;
 import dev.yerokha.smarttale.dto.JobSummary;
 import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.Organization;
@@ -506,6 +507,23 @@ public class OrganizationController {
         return ResponseEntity.ok(advertisementService.interactWithJobAd(getOrgIdFromAuthToken(authentication),
                 advertisementId,
                 actionId));
+    }
+
+    @Operation(
+            summary = "Accept new employee", description = "Accept a job application in Job advertisement",
+            tags = {"post", "employee", "organization", "job"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "No permission", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Entity not found", content = @Content)
+            }
+    )
+    @PostMapping("/application")
+    @PreAuthorize("hasPermission('application', 'INVITE_EMPLOYEE')")
+    public ResponseEntity<String> acceptApplication(@RequestBody JobApplication jobApplication, Authentication authentication) {
+        organizationService.acceptApplication(jobApplication, getOrgIdFromAuthToken(authentication));
+        return ResponseEntity.ok("Application accepted");
     }
 
 }
