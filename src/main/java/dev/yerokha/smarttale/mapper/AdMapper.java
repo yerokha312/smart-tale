@@ -376,7 +376,7 @@ public class AdMapper {
                 job.getSalary() == null ? BigDecimal.ZERO : job.getSalary(),
                 job.getDescription(),
                 getImageUrls(job.getAdvertisementImages()),
-                getJobApplications(job.getApplications()),
+                getJobApplications(job.getApplications(), position.getPositionId()),
                 job.getApplicationDeadline(),
                 job.getViews(),
                 job.isDeleted(),
@@ -385,7 +385,7 @@ public class AdMapper {
         );
     }
 
-    private List<JobApplication> getJobApplications(List<JobApplicationEntity> applications) {
+    private List<JobApplication> getJobApplications(List<JobApplicationEntity> applications, Long positionId) {
         if (applications == null || applications.isEmpty()) {
             return Collections.emptyList();
         }
@@ -394,6 +394,7 @@ public class AdMapper {
                     UserDetailsEntity applicant = a.getApplicant();
                     return new JobApplication(
                             a.getApplicationId(),
+                            positionId,
                             a.getApplicationDate(),
                             applicant.getUserId(),
                             applicant.getName(),

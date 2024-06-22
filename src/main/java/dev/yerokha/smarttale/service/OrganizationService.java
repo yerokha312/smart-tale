@@ -10,6 +10,7 @@ import dev.yerokha.smarttale.dto.InviteRequest;
 import dev.yerokha.smarttale.dto.InviteUserRequest;
 import dev.yerokha.smarttale.dto.InviterInvitation;
 import dev.yerokha.smarttale.dto.Job;
+import dev.yerokha.smarttale.dto.JobApplication;
 import dev.yerokha.smarttale.dto.JobSummary;
 import dev.yerokha.smarttale.dto.OrderAccepted;
 import dev.yerokha.smarttale.dto.Organization;
@@ -789,5 +790,18 @@ public class OrganizationService {
         Long orgId = getOrgIdFromAuthToken(authentication);
         int hierarchy = getUserHierarchyFromToken(authentication);
         return userDetailsRepository.findEmployeesBeforeAssign(orgId, hierarchy);
+    }
+
+    @Transactional
+    public void acceptApplication(JobApplication jobApplication, Long organizationId) {
+        UserDetailsEntity applicant = userDetailsRepository.getReferenceById(jobApplication.applicantId());
+        OrganizationEntity organization = organizationRepository.getReferenceById(organizationId);
+        PositionEntity position = positionRepository.getReferenceById(jobApplication.positionId());
+        applicant.setOrganization(organization);
+        applicant.setPosition(position);
+        applicant.setActiveOrdersCount(0);
+        applicant.setAssignedTasks(null);
+        userDetailsRepository.deleteAllJobApplicationByApplicantId(jobApplication.applicationId());
+        userDetailsRepository.save(applicant);
     }
 }

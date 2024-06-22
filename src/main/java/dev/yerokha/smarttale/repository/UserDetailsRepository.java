@@ -48,8 +48,6 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
                    "WHERE details_id = :userId", nativeQuery = true)
     void updateActiveOrdersCount(int amount, Long userId);
 
-    List<UserDetailsEntity> findAllByOrganizationOrganizationIdAndUserIdIn(Long organizationId, List<Long> employeeIds);
-
     @Query("SELECT ud.userId " +
            "FROM UserDetailsEntity ud " +
            "WHERE ud.organization.organizationId = :organizationId")
@@ -148,4 +146,8 @@ public interface UserDetailsRepository extends JpaRepository<UserDetailsEntity, 
            "WHERE u.organization.organizationId = :orgId AND u.position.hierarchy > :hierarchy " +
            "ORDER BY u.position.title ASC")
     List<EmployeeSummary> findEmployeesBeforeAssign(Long orgId, int hierarchy);
+
+    @Modifying
+    @Query("DELETE FROM JobApplicationEntity jae WHERE jae.applicant.userId = :applicantId")
+    void deleteAllJobApplicationByApplicantId(Long applicantId);
 }
