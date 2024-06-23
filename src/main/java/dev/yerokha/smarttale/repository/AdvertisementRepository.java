@@ -119,6 +119,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
 
     @Query("SELECT ai " +
            "FROM AdvertisementImage ai " +
+           "LEFT JOIN FETCH ai.image " +
            "WHERE ai.advertisement.advertisementId = :advertisementId " +
            "ORDER BY ai.index")
     List<AdvertisementImage> findAdvertisementImages(Long advertisementId);

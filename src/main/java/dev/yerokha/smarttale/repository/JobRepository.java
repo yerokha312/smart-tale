@@ -36,7 +36,7 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
            "    END) " +
            "FROM JobEntity j " +
            "LEFT JOIN j.organization.image orgImg " +
-           "WHERE j.isDeleted = false AND j.isClosed = false AND j.applicationDeadline >= CURRENT_DATE")
+           "WHERE j.isDeleted = false AND j.isClosed = false")
     Page<Card> findMarketJobs(Long orgId, Pageable pageable);
 
     @Query("SELECT new dev.yerokha.smarttale.dto.JobSummary(" +
@@ -79,5 +79,9 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
            "WHERE j.organization.organizationId = :orgId AND j.advertisementId = :jobId")
     int setJobDeletedByOrganizationIdAndJobId(Long orgId, Long jobId);
 
+    @Query("SELECT COUNT (j.advertisementId) > 0 " +
+           "FROM JobEntity j " +
+           "WHERE j.advertisementId = :advertisementId " +
+           "AND j.organization.organizationId = :orgId")
     boolean existsByAdvertisementIdAndOrganization_OrganizationId(Long advertisementId, Long orgId);
 }

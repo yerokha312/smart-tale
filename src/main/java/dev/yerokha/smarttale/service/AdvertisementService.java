@@ -42,6 +42,7 @@ import dev.yerokha.smarttale.exception.MissedException;
 import dev.yerokha.smarttale.exception.NotFoundException;
 import dev.yerokha.smarttale.mapper.AdMapper;
 import dev.yerokha.smarttale.repository.AcceptanceRepository;
+import dev.yerokha.smarttale.repository.AdvertisementImageRepository;
 import dev.yerokha.smarttale.repository.AdvertisementRepository;
 import dev.yerokha.smarttale.repository.JobRepository;
 import dev.yerokha.smarttale.repository.OrderRepository;
@@ -106,6 +107,7 @@ public class AdvertisementService {
     private final JobRepository jobRepository;
     private final PositionRepository positionRepository;
     private final PushNotificationService pushNotificationService;
+    private final AdvertisementImageRepository advertisementImageRepository;
 
     public AdvertisementService(ProductRepository productRepository,
                                 OrderRepository orderRepository,
@@ -120,7 +122,7 @@ public class AdvertisementService {
                                 UserDetailsRepository userDetailsRepository,
                                 AdMapper adMapper,
                                 OrganizationService organizationService,
-                                JobRepository jobRepository, PositionRepository positionRepository, PushNotificationService pushNotificationService) {
+                                JobRepository jobRepository, PositionRepository positionRepository, PushNotificationService pushNotificationService, AdvertisementImageRepository advertisementImageRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.advertisementRepository = advertisementRepository;
@@ -137,6 +139,7 @@ public class AdvertisementService {
         this.jobRepository = jobRepository;
         this.positionRepository = positionRepository;
         this.pushNotificationService = pushNotificationService;
+        this.advertisementImageRepository = advertisementImageRepository;
     }
 
     // get Ads in Personal account -> My advertisements
@@ -225,6 +228,7 @@ public class AdvertisementService {
         }
     }
 
+    @Transactional
     public String updateAd(Long userIdOrOrgId, UpdateAdInterface requestInterface, List<MultipartFile> files) {
         if (requestInterface instanceof UpdateOrderRequest request) {
             return updateOrder(userIdOrOrgId, request, files);
@@ -353,7 +357,12 @@ public class AdvertisementService {
                 }
                 case MOVE ->
                         Collections.swap(existingImages, imageOperation.arrayPosition(), imageOperation.targetPosition());
-                case REMOVE -> existingImages.remove(imageOperation.arrayPosition());
+                case REMOVE -> {
+                    AdvertisementImage removed = existingImages.remove(imageOperation.arrayPosition());
+                    removed.setAdvertisement(null);
+                    removed.setImage(null);
+                    advertisementImageRepository.delete(removed);
+                }
                 case REPLACE -> {
                     Image newImage = imageService.processImage(files.get(imageOperation.filePosition()));
                     AdvertisementImage advertisementImage = existingImages.get(imageOperation.arrayPosition());
@@ -363,6 +372,7 @@ public class AdvertisementService {
         }
 
         IntStream.range(0, existingImages.size()).forEach(i -> existingImages.get(i).setIndex(i));
+        advertisementImageRepository.saveAll(existingImages);
     }
 
     public CustomPage<PurchaseSummary> getPurchases(Long userId, Map<String, String> params) {
