@@ -21,7 +21,7 @@ public record CreateOrderRequest(
         BigDecimal price,
         String size,
         @FutureOrPresent
-        LocalDate deadline,
+        LocalDate deadlineAt,
         @NotNull
         ContactInfo contactInfo
 ) implements CreateAdInterface {

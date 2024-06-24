@@ -12,7 +12,7 @@ public record JobSummary(
         String description,
         JobType jobType,
         BigDecimal salary,
-        String image,
+        String imageUrl,
         int applicantsCount,
         boolean isClosed
 ) {
