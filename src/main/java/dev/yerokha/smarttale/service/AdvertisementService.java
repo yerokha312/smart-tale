@@ -696,7 +696,7 @@ public class AdvertisementService {
         order.setPrice(request.price());
         order.setPublishedAt(LocalDateTime.now());
         order.setSize(request.size());
-        order.setDeadlineAt(request.deadline());
+        order.setDeadlineAt(request.deadlineAt());
         order.setContactInfo(request.contactInfo());
 
         if (files != null && !files.isEmpty()) {
